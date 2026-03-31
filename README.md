@@ -3,8 +3,9 @@
 - Daiana Chinellato
 - Facundo Sola
 
+
 ## Documentación
-1. [Documentación del proyecto](https://docs.google.com/document/d/1idN0nMrU14dppRBvilRWNK-GQ6nmxF0acxeDvIJIo_k/edit?usp=sharing)
+1. [Documentación del proyecto - V1](https://docs.google.com/document/d/1idN0nMrU14dppRBvilRWNK-GQ6nmxF0acxeDvIJIo_k/edit?usp=sharing)
 2. [TotalTech (Sitio Web) - Mockups](https://www.canva.com/design/DAGoTYBn5R4/PfSsqsz8WeJDvvYYRsEFwQ/edit?utm_content=DAGoTYBn5R4&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 3. [Modo Admin - Mockup](https://www.canva.com/design/DAGqLYRgPZY/HbV_7BlRgIPMg8gacrfS9g/edit?utm_content=DAGqLYRgPZY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 4. [Entidades en TotalTech](https://docs.google.com/document/d/1PgBgvqaqTyXGyQlAV0TaM2t2NB27jsaP67cjlDrJkS4/edit?usp=sharing)
