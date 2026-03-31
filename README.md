@@ -11,3 +11,6 @@
 4. [Entidades en TotalTech](https://docs.google.com/document/d/1PgBgvqaqTyXGyQlAV0TaM2t2NB27jsaP67cjlDrJkS4/edit?usp=sharing)
 5. [Caso de uso - finalizar compra](https://docs.google.com/document/d/1mUmk0ukjldsHGFpCCWxbOn7o7U-sOEqPokAhohkMDGo/edit?tab=t.0)
 6. [Diagrama de Clases](https://lucid.app/lucidchart/0f14ca39-b612-47e3-9553-0a5563bd2c7a/edit?invitationId=inv_5640e91e-a9b6-4d73-8e42-e457f405b683&page=0_0#)
+
+### 2026
+1. [Documentación del Proyecto-V2](https://drive.google.com/drive/folders/17Abiy8YNVnRDhoZ459KW4iJ1ks2JFkFt?usp=drive_link)
