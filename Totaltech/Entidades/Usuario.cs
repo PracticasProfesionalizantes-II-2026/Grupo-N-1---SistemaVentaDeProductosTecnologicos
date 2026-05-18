@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entidades
+namespace Totaltech.Entidades
 {
  
     public class Usuario
@@ -24,19 +24,8 @@ namespace Entidades
    
         public RolUsuario Rol { get; set; } = RolUsuario.Cliente;
 
-        public ICollection<Direccion> Direcciones { get; set; } = new List<Direccion>();
 
- 
-        public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
-
-    
-        public ICollection<Prefacturacion> Prefacturaciones { get; set; } = new List<Prefacturacion>();
-    }
-
-    public class Prefacturacion
-    {
-        [Key]
-        public int IdPrefacturacion { get; set; }
+     
     }
 
     public enum RolUsuario

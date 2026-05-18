@@ -7,7 +7,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entidades
+namespace Totaltech.Entidades
 {
     public class Pedido
     {
@@ -32,19 +32,13 @@ namespace Entidades
         [Required]
         public int IdDireccion { get; set; }
 
-        [ForeignKey(nameof(IdUsuario))]
+  
         public Usuario? Usuario { get; set; }
+          
+       
 
       
-        /// Dirección vinculada al pedido.
       
-        [ForeignKey(nameof(IdDireccion))]
-        public Direccion? Direccion { get; set; }
-
-      
-        /// Prefactura generada a partir del pedido.
-     
-        public Prefacturacion? Prefacturacion { get; set; }
     }
 
 
