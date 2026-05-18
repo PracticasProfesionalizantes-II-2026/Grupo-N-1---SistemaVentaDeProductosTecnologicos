@@ -9,9 +9,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entidades
 {
-    /// <summary>
-    /// Representa una dirección asociada a un usuario para envíos o facturación.
-    /// </summary>
+
     public class Direccion
     {
   

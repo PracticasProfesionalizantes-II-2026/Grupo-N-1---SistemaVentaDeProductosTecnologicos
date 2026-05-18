@@ -9,7 +9,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entidades
 {
-    /// Representa una orden de compra realizada por un usuario.
     public class Pedido
     {
       
@@ -28,8 +27,6 @@ namespace Entidades
         [Required]
         public EstadoPedido Estado { get; set; } = EstadoPedido.Pendiente;
 
-        /// Método de pago utilizado para abonar el pedido.
-        /// 
 
       
         [Required]

@@ -21,9 +21,6 @@ namespace Entidades
         [DataType(DataType.DateTime)]
         public DateTime FechaRegistro { get; set; }
 
-        /// <summary>
-        /// Rol asignado al usuario para determinar permisos y accesos.
-        /// </summary>
    
         public RolUsuario Rol { get; set; } = RolUsuario.Cliente;
 

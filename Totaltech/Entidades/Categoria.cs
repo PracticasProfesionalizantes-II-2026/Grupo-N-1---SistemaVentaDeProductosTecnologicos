@@ -5,10 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entidades
 {
-    /// <summary>
-    /// Representa una categoría de productos.
-    /// Clase mínima para las relaciones con Producto y Promoción.
-    /// </summary>
+
     public class Categoria
     {
         [Key]
