@@ -1,17 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entidades
+namespace Totaltech.Entidades
 {
-
     public class Proveedor
     {
-
         [Key]
         public int IdProveedor { get; set; }
 
@@ -21,23 +13,19 @@ namespace Entidades
         [MaxLength(20)]
         public string Cuit { get; set; } = string.Empty;
 
-
         [Required]
         public string EmailComercial { get; set; } = string.Empty;
 
         [Phone]
         public string TelefonoComercial { get; set; } = string.Empty;
 
-
         [Required]
         public string CondicionIva { get; set; } = string.Empty;
 
-        [Required]
-        public string DireccionFiscal { get; set; } = string.Empty;
+        public int? IdDireccion { get; set; }
 
         public int PlazoPagoDias { get; set; }
 
- 
         public int TiempoEntregaDias { get; set; }
 
         [Required]
@@ -45,6 +33,6 @@ namespace Entidades
 
         public bool Activo { get; set; } = true;
 
-
+        public Direccion? Direccion { get; set; }
     }
 }

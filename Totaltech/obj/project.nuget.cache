@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "YY0OyUzfqHk=",
+  "dgSpecHash": "Xj+EV0YZP5E=",
   "success": true,
-  "projectFilePath": "C:\\Users\\facu_\\OneDrive\\Documents\\GitHub\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
+  "projectFilePath": "C:\\Users\\facu_\\Documents\\GitHub\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\facu_\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.7\\microsoft.aspnetcore.openapi.10.0.7.nupkg.sha512",
     "C:\\Users\\facu_\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
