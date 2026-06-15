@@ -24,6 +24,7 @@ builder.Services.AddScoped<IDetalleCarritosRepositorio, DetalleCarritosRepositor
 builder.Services.AddScoped<IPagosRepositorio, PagosRepositorio>();
 builder.Services.AddScoped<IComprasRepositorio, ComprasRepositorio>();
 builder.Services.AddScoped<IReportesRepositorio, ReportesRepositorio>();
+builder.Services.AddScoped<IConsultasRepositorio, ConsultasRepositorio>();
 
 builder.Services.AddScoped<IUsuariosLogica, UsuariosLogica>();
 builder.Services.AddScoped<IDireccionesLogica, DireccionesLogica>();
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IDetalleCarritosLogica, DetalleCarritosLogica>();
 builder.Services.AddScoped<IPagosLogica, PagosLogica>();
 builder.Services.AddScoped<IComprasLogica, ComprasLogica>();
 builder.Services.AddScoped<IReportesLogica, ReportesLogica>();
+builder.Services.AddScoped<IConsultasLogica, ConsultasLogica>();
 
 var app = builder.Build();
 
@@ -47,6 +49,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapUsuariosEndpoints();
+app.MapAuthEndpoints();
 app.MapDireccionesEndpoints();
 app.MapProveedoresEndpoints();
 app.MapProductosEndpoints();
@@ -58,5 +61,6 @@ app.MapDetalleCarritosEndpoints();
 app.MapPagosEndpoints();
 app.MapComprasEndpoints();
 app.MapReportesEndpoints();
+app.MapConsultasEndpoints();
 
 app.Run();

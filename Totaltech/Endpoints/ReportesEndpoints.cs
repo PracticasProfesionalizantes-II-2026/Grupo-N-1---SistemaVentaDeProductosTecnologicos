@@ -55,6 +55,24 @@ namespace Totaltech.Endpoints
                 await logica.EliminarAsync(reporte);
                 return Results.NoContent();
             });
+
+            group.MapGet("/ventas", async (IReportesLogica logica) =>
+            {
+                var reporte = await logica.ObtenerVentasAsync();
+                return Results.Ok(reporte);
+            });
+
+            group.MapGet("/ingresos", async (IReportesLogica logica) =>
+            {
+                var reporte = await logica.ObtenerIngresosAsync();
+                return Results.Ok(reporte);
+            });
+
+            group.MapGet("/productos-mas-vendidos", async (IReportesLogica logica) =>
+            {
+                var reporte = await logica.ObtenerProductosMasVendidosAsync();
+                return Results.Ok(reporte);
+            });
         }
     }
 }

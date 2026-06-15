@@ -85,6 +85,18 @@ namespace Totaltech.Endpoints
                 var eliminado = await logica.EliminarProductoAsync(idCarrito, idProducto);
                 return eliminado ? Results.NoContent() : Results.NotFound();
             });
+
+            group.MapPost("/{idCarrito:int}/confirmar", async (int idCarrito, ConfirmarCarritoDto request, ICarritosLogica logica) =>
+            {
+                var pedido = await logica.ConfirmarAsync(idCarrito, request);
+
+                if (pedido is null)
+                {
+                    return Results.BadRequest("No se pudo confirmar el carrito. Verifique que exista, tenga productos y una direccion valida.");
+                }
+
+                return Results.Created($"/pedidos/{pedido.IdPedido}", pedido);
+            });
         }
     }
 }

@@ -73,6 +73,24 @@ namespace Totaltech.Endpoints
                 var actualizado = await logica.ActualizarEstadoAsync(id, request.Estado);
                 return actualizado ? Results.NoContent() : Results.NotFound();
             });
+
+            group.MapPost("/{idPedido:int}/pagos", async (int idPedido, Pago pago, IPagosLogica logica) =>
+            {
+                var creado = await logica.CrearParaPedidoAsync(idPedido, pago);
+
+                if (creado is null)
+                {
+                    return Results.NotFound();
+                }
+
+                return Results.Created($"/pagos/{creado.IdPago}", creado);
+            });
+
+            group.MapGet("/{idPedido:int}/pagos", async (int idPedido, IPagosLogica logica) =>
+            {
+                var pagos = await logica.ObtenerPorPedidoAsync(idPedido);
+                return Results.Ok(pagos);
+            });
         }
     }
 }
