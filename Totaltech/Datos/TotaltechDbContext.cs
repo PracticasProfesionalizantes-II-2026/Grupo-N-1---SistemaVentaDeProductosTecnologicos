@@ -33,6 +33,8 @@ namespace Totaltech.Datos
 
         public DbSet<Reporte> Reportes { get; set; }
 
+        public DbSet<Consulta> Consultas { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -119,6 +121,12 @@ namespace Totaltech.Datos
                 .HasOne(reporte => reporte.Usuario)
                 .WithMany()
                 .HasForeignKey(reporte => reporte.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Consulta>()
+                .HasOne(consulta => consulta.Usuario)
+                .WithMany()
+                .HasForeignKey(consulta => consulta.IdUsuario)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
