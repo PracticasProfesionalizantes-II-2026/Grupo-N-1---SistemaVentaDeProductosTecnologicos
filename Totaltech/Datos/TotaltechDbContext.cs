@@ -25,6 +25,8 @@ namespace Totaltech.Datos
 
         public DbSet<Carrito> Carritos { get; set; }
 
+        public DbSet<DetalleCarrito> DetalleCarritos { get; set; }
+
         public DbSet<Pago> Pagos { get; set; }
 
         public DbSet<Compra> Compras { get; set; }
@@ -39,6 +41,18 @@ namespace Totaltech.Datos
                 .HasOne(carrito => carrito.Usuario)
                 .WithMany()
                 .HasForeignKey(carrito => carrito.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DetalleCarrito>()
+                .HasOne(detalle => detalle.Carrito)
+                .WithMany()
+                .HasForeignKey(detalle => detalle.IdCarrito)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DetalleCarrito>()
+                .HasOne(detalle => detalle.Producto)
+                .WithMany()
+                .HasForeignKey(detalle => detalle.IdProducto)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Compra>()
