@@ -9,6 +9,7 @@ namespace Totaltech.Logica
         Task<List<Carrito>> ObtenerPorUsuarioAsync(int idUsuario);
         Task<DetalleCarrito?> AgregarProductoAsync(int idCarrito, AgregarProductoCarritoDto dto);
         Task<bool> EliminarProductoAsync(int idCarrito, int idProducto);
+        Task<Pedido?> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto);
     }
 
     public class CarritosLogica : Logica<Carrito>, ICarritosLogica
@@ -16,15 +17,21 @@ namespace Totaltech.Logica
         private readonly ICarritosRepositorio _carritosRepositorio;
         private readonly IDetalleCarritosRepositorio _detalleCarritosRepositorio;
         private readonly IProductosRepositorio _productosRepositorio;
+        private readonly IPedidosRepositorio _pedidosRepositorio;
+        private readonly IDetallePedidosRepositorio _detallePedidosRepositorio;
 
         public CarritosLogica(
             ICarritosRepositorio carritosRepositorio,
             IDetalleCarritosRepositorio detalleCarritosRepositorio,
-            IProductosRepositorio productosRepositorio) : base(carritosRepositorio)
+            IProductosRepositorio productosRepositorio,
+            IPedidosRepositorio pedidosRepositorio,
+            IDetallePedidosRepositorio detallePedidosRepositorio) : base(carritosRepositorio)
         {
             _carritosRepositorio = carritosRepositorio;
             _detalleCarritosRepositorio = detalleCarritosRepositorio;
             _productosRepositorio = productosRepositorio;
+            _pedidosRepositorio = pedidosRepositorio;
+            _detallePedidosRepositorio = detallePedidosRepositorio;
         }
 
         public Task<List<Carrito>> ObtenerPorUsuarioAsync(int idUsuario)
@@ -67,6 +74,52 @@ namespace Totaltech.Logica
 
             await _detalleCarritosRepositorio.EliminarPorCarritoYProductoAsync(idCarrito, idProducto);
             return true;
+        }
+
+        public async Task<Pedido?> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto)
+        {
+            var carrito = await _carritosRepositorio.ObtenerPorIdAsync(idCarrito);
+
+            if (carrito is null || dto.IdDireccion <= 0)
+            {
+                return null;
+            }
+
+            var detallesCarrito = await _detalleCarritosRepositorio.ObtenerPorCarritoAsync(idCarrito);
+
+            if (detallesCarrito.Count == 0)
+            {
+                return null;
+            }
+
+            var pedido = new Pedido
+            {
+                IdUsuario = carrito.IdUsuario,
+                IdDireccion = dto.IdDireccion,
+                FechaPedido = DateTime.Now,
+                Estado = EstadoPedido.Pendiente
+            };
+
+            await _pedidosRepositorio.CrearAsync(pedido);
+
+            foreach (var detalleCarrito in detallesCarrito)
+            {
+                var detallePedido = new DetallePedido
+                {
+                    IdPedido = pedido.IdPedido,
+                    IdProducto = detalleCarrito.IdProducto,
+                    Cantidad = detalleCarrito.Cantidad,
+                    PrecioUnitario = detalleCarrito.PrecioUnitario,
+                    Subtotal = detalleCarrito.Subtotal
+                };
+
+                await _detallePedidosRepositorio.CrearAsync(detallePedido);
+            }
+
+            carrito.Estado = EstadoCarrito.Confirmado;
+            await _carritosRepositorio.ActualizarAsync(carrito);
+
+            return pedido;
         }
     }
 }
