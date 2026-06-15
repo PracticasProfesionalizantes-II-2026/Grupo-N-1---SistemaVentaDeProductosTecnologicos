@@ -7,7 +7,54 @@ namespace Totaltech.Endpoints
     {
         public static void MapPedidosEndpoints(this WebApplication app)
         {
-            var group = app.MapCrud<Pedido, IPedidosLogica>("/pedidos", "Pedidos", pedido => pedido.IdPedido);
+            var group = app.MapGroup("/pedidos").WithTags("Pedidos");
+
+            group.MapGet("/", async (IPedidosLogica logica) =>
+            {
+                var pedidos = await logica.ObtenerTodosAsync();
+                return Results.Ok(pedidos);
+            });
+
+            group.MapGet("/{id:int}", async (int id, IPedidosLogica logica) =>
+            {
+                var pedido = await logica.ObtenerPorIdAsync(id);
+                return pedido is null ? Results.NotFound() : Results.Ok(pedido);
+            });
+
+            group.MapPost("/", async (Pedido pedido, IPedidosLogica logica) =>
+            {
+                await logica.CrearAsync(pedido);
+                return Results.Created($"/pedidos/{pedido.IdPedido}", pedido);
+            });
+
+            group.MapPut("/{id:int}", async (int id, Pedido pedido, IPedidosLogica logica) =>
+            {
+                if (id != pedido.IdPedido)
+                {
+                    return Results.BadRequest("El id de la URL no coincide con el id del body.");
+                }
+
+                var existente = await logica.ObtenerPorIdAsync(id);
+                if (existente is null)
+                {
+                    return Results.NotFound();
+                }
+
+                await logica.ActualizarAsync(pedido);
+                return Results.NoContent();
+            });
+
+            group.MapDelete("/{id:int}", async (int id, IPedidosLogica logica) =>
+            {
+                var pedido = await logica.ObtenerPorIdAsync(id);
+                if (pedido is null)
+                {
+                    return Results.NotFound();
+                }
+
+                await logica.EliminarAsync(pedido);
+                return Results.NoContent();
+            });
 
             group.MapGet("/usuario/{idUsuario:int}", async (int idUsuario, IPedidosLogica logica) =>
             {

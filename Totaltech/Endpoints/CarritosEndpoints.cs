@@ -8,7 +8,54 @@ namespace Totaltech.Endpoints
     {
         public static void MapCarritosEndpoints(this WebApplication app)
         {
-            var group = app.MapCrud<Carrito, ICarritosLogica>("/carritos", "Carritos", carrito => carrito.IdCarrito);
+            var group = app.MapGroup("/carritos").WithTags("Carritos");
+
+            group.MapGet("/", async (ICarritosLogica logica) =>
+            {
+                var carritos = await logica.ObtenerTodosAsync();
+                return Results.Ok(carritos);
+            });
+
+            group.MapGet("/{id:int}", async (int id, ICarritosLogica logica) =>
+            {
+                var carrito = await logica.ObtenerPorIdAsync(id);
+                return carrito is null ? Results.NotFound() : Results.Ok(carrito);
+            });
+
+            group.MapPost("/", async (Carrito carrito, ICarritosLogica logica) =>
+            {
+                await logica.CrearAsync(carrito);
+                return Results.Created($"/carritos/{carrito.IdCarrito}", carrito);
+            });
+
+            group.MapPut("/{id:int}", async (int id, Carrito carrito, ICarritosLogica logica) =>
+            {
+                if (id != carrito.IdCarrito)
+                {
+                    return Results.BadRequest("El id de la URL no coincide con el id del body.");
+                }
+
+                var existente = await logica.ObtenerPorIdAsync(id);
+                if (existente is null)
+                {
+                    return Results.NotFound();
+                }
+
+                await logica.ActualizarAsync(carrito);
+                return Results.NoContent();
+            });
+
+            group.MapDelete("/{id:int}", async (int id, ICarritosLogica logica) =>
+            {
+                var carrito = await logica.ObtenerPorIdAsync(id);
+                if (carrito is null)
+                {
+                    return Results.NotFound();
+                }
+
+                await logica.EliminarAsync(carrito);
+                return Results.NoContent();
+            });
 
             group.MapGet("/usuario/{idUsuario:int}", async (int idUsuario, ICarritosLogica logica) =>
             {

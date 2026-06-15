@@ -7,7 +7,54 @@ namespace Totaltech.Endpoints
     {
         public static void MapProductosEndpoints(this WebApplication app)
         {
-            var group = app.MapCrud<Producto, IProductosLogica>("/productos", "Productos", producto => producto.IdProducto);
+            var group = app.MapGroup("/productos").WithTags("Productos");
+
+            group.MapGet("/", async (IProductosLogica logica) =>
+            {
+                var productos = await logica.ObtenerTodosAsync();
+                return Results.Ok(productos);
+            });
+
+            group.MapGet("/{id:int}", async (int id, IProductosLogica logica) =>
+            {
+                var producto = await logica.ObtenerPorIdAsync(id);
+                return producto is null ? Results.NotFound() : Results.Ok(producto);
+            });
+
+            group.MapPost("/", async (Producto producto, IProductosLogica logica) =>
+            {
+                await logica.CrearAsync(producto);
+                return Results.Created($"/productos/{producto.IdProducto}", producto);
+            });
+
+            group.MapPut("/{id:int}", async (int id, Producto producto, IProductosLogica logica) =>
+            {
+                if (id != producto.IdProducto)
+                {
+                    return Results.BadRequest("El id de la URL no coincide con el id del body.");
+                }
+
+                var existente = await logica.ObtenerPorIdAsync(id);
+                if (existente is null)
+                {
+                    return Results.NotFound();
+                }
+
+                await logica.ActualizarAsync(producto);
+                return Results.NoContent();
+            });
+
+            group.MapDelete("/{id:int}", async (int id, IProductosLogica logica) =>
+            {
+                var producto = await logica.ObtenerPorIdAsync(id);
+                if (producto is null)
+                {
+                    return Results.NotFound();
+                }
+
+                await logica.EliminarAsync(producto);
+                return Results.NoContent();
+            });
 
             group.MapGet("/buscar", async (string? texto, IProductosLogica logica) =>
             {
