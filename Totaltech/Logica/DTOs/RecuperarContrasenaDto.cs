@@ -1,4 +1,7 @@
 namespace Totaltech.Logica.DTOs
 {
-    public record RecuperarContrasenaDto(string Email);
+    public class RecuperarContrasenaDto
+    {
+        public string Email { get; set; } = string.Empty;
+    }
 }

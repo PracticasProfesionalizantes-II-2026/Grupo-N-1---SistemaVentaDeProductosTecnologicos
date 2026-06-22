@@ -1,68 +1,99 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IDetallePedidosLogica : ILogica<DetallePedido>
+    public interface IDetallePedidosLogica
     {
+        Task<List<DetallePedido>> ObtenerTodosAsync();
+        Task<DetallePedido?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(DetallePedido detalle);
+        Task<string?> ActualizarAsync(DetallePedido detalle);
+        Task<bool> EliminarAsync(int id);
     }
 
-    public class DetallePedidosLogica : Logica<DetallePedido>, IDetallePedidosLogica
+    public class DetallePedidosLogica : IDetallePedidosLogica
     {
+        private readonly IDetallePedidosRepositorio _repositorio;
         private readonly IPedidosRepositorio _pedidosRepositorio;
         private readonly IProductosRepositorio _productosRepositorio;
 
-        public DetallePedidosLogica(IDetallePedidosRepositorio repositorio, IPedidosRepositorio pedidosRepositorio, IProductosRepositorio productosRepositorio) : base(repositorio)
+        public DetallePedidosLogica(
+            IDetallePedidosRepositorio repositorio,
+            IPedidosRepositorio pedidosRepositorio,
+            IProductosRepositorio productosRepositorio)
         {
+            _repositorio = repositorio;
             _pedidosRepositorio = pedidosRepositorio;
             _productosRepositorio = productosRepositorio;
         }
 
-        public override async Task<ResultadoOperacion<DetallePedido>> CrearValidadoAsync(DetallePedido detalle)
+        public Task<List<DetallePedido>> ObtenerTodosAsync()
         {
-            var validacion = await ValidarDetalleAsync(detalle);
+            return _repositorio.ObtenerTodosAsync();
+        }
 
-            if (!validacion.Exitoso)
+        public Task<DetallePedido?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<string?> CrearAsync(DetallePedido detalle)
+        {
+            var error = await ValidarDetalleAsync(detalle);
+            if (error is not null)
             {
-                return ResultadoOperacion<DetallePedido>.BadRequest(validacion.Error ?? "El detalle de pedido no es valido.");
+                return error;
             }
 
             detalle.Subtotal = detalle.PrecioUnitario * detalle.Cantidad;
-            return await base.CrearValidadoAsync(detalle);
+            await _repositorio.CrearAsync(detalle);
+            return null;
         }
 
-        public override async Task<ResultadoOperacion<DetallePedido>> ActualizarValidadoAsync(int id, DetallePedido detalle)
+        public async Task<string?> ActualizarAsync(DetallePedido detalle)
         {
-            var validacion = await ValidarDetalleAsync(detalle);
-
-            if (!validacion.Exitoso)
+            var error = await ValidarDetalleAsync(detalle);
+            if (error is not null)
             {
-                return ResultadoOperacion<DetallePedido>.BadRequest(validacion.Error ?? "El detalle de pedido no es valido.");
+                return error;
             }
 
             detalle.Subtotal = detalle.PrecioUnitario * detalle.Cantidad;
-            return await base.ActualizarValidadoAsync(id, detalle);
+            await _repositorio.ActualizarAsync(detalle);
+            return null;
         }
 
-        private async Task<ResultadoOperacion> ValidarDetalleAsync(DetallePedido detalle)
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var detalle = await _repositorio.ObtenerPorIdAsync(id);
+            if (detalle is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(detalle);
+            return true;
+        }
+
+        private async Task<string?> ValidarDetalleAsync(DetallePedido detalle)
         {
             if (detalle.Cantidad <= 0 || detalle.PrecioUnitario < 0)
             {
-                return ResultadoOperacion.BadRequest("La cantidad debe ser mayor a cero y el precio no puede ser negativo.");
+                return "La cantidad debe ser mayor a cero y el precio no puede ser negativo.";
             }
 
             if (!await _pedidosRepositorio.ExisteAsync(detalle.IdPedido))
             {
-                return ResultadoOperacion.BadRequest("El pedido indicado no existe.");
+                return "El pedido indicado no existe.";
             }
 
             if (!await _productosRepositorio.ExisteAsync(detalle.IdProducto))
             {
-                return ResultadoOperacion.BadRequest("El producto indicado no existe.");
+                return "El producto indicado no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

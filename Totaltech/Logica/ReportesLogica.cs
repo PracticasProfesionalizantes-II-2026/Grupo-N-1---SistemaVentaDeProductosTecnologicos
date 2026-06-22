@@ -4,22 +4,73 @@ using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IReportesLogica : ILogica<Reporte>
+    public interface IReportesLogica
     {
+        Task<List<Reporte>> ObtenerTodosAsync();
+        Task<Reporte?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Reporte reporte);
+        Task<string?> ActualizarAsync(Reporte reporte);
+        Task<bool> EliminarAsync(int id);
         Task<ReporteVentasDto> ObtenerVentasAsync();
         Task<ReporteIngresosDto> ObtenerIngresosAsync();
         Task<List<ProductoMasVendidoDto>> ObtenerProductosMasVendidosAsync();
     }
 
-    public class ReportesLogica : Logica<Reporte>, IReportesLogica
+    public class ReportesLogica : IReportesLogica
     {
         private readonly IReportesRepositorio _repositorio;
         private readonly IUsuariosRepositorio _usuariosRepositorio;
 
-        public ReportesLogica(IReportesRepositorio repositorio, IUsuariosRepositorio usuariosRepositorio) : base(repositorio)
+        public ReportesLogica(IReportesRepositorio repositorio, IUsuariosRepositorio usuariosRepositorio)
         {
             _repositorio = repositorio;
             _usuariosRepositorio = usuariosRepositorio;
+        }
+
+        public Task<List<Reporte>> ObtenerTodosAsync()
+        {
+            return _repositorio.ObtenerTodosAsync();
+        }
+
+        public Task<Reporte?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<string?> CrearAsync(Reporte reporte)
+        {
+            var error = await ValidarReporteAsync(reporte);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.CrearAsync(reporte);
+            return null;
+        }
+
+        public async Task<string?> ActualizarAsync(Reporte reporte)
+        {
+            var error = await ValidarReporteAsync(reporte);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.ActualizarAsync(reporte);
+            return null;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var reporte = await _repositorio.ObtenerPorIdAsync(id);
+            if (reporte is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(reporte);
+            return true;
         }
 
         public Task<ReporteVentasDto> ObtenerVentasAsync()
@@ -37,43 +88,19 @@ namespace Totaltech.Logica
             return _repositorio.ObtenerProductosMasVendidosAsync();
         }
 
-        public override async Task<ResultadoOperacion<Reporte>> CrearValidadoAsync(Reporte reporte)
-        {
-            var validacion = await ValidarReporteAsync(reporte);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Reporte>.BadRequest(validacion.Error ?? "El reporte no es valido.");
-            }
-
-            return await base.CrearValidadoAsync(reporte);
-        }
-
-        public override async Task<ResultadoOperacion<Reporte>> ActualizarValidadoAsync(int id, Reporte reporte)
-        {
-            var validacion = await ValidarReporteAsync(reporte);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Reporte>.BadRequest(validacion.Error ?? "El reporte no es valido.");
-            }
-
-            return await base.ActualizarValidadoAsync(id, reporte);
-        }
-
-        private async Task<ResultadoOperacion> ValidarReporteAsync(Reporte reporte)
+        private async Task<string?> ValidarReporteAsync(Reporte reporte)
         {
             if (!await _usuariosRepositorio.ExisteAsync(reporte.IdUsuario))
             {
-                return ResultadoOperacion.BadRequest("El usuario indicado no existe.");
+                return "El usuario indicado no existe.";
             }
 
             if (reporte.FechaInicio != default && reporte.FechaFin != default && reporte.FechaInicio > reporte.FechaFin)
             {
-                return ResultadoOperacion.BadRequest("La fecha de inicio no puede ser posterior a la fecha de fin.");
+                return "La fecha de inicio no puede ser posterior a la fecha de fin.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

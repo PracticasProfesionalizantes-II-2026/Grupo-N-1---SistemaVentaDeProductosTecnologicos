@@ -1,29 +1,44 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IComprasLogica : ILogica<Compra>
+    public interface IComprasLogica
     {
+        Task<List<Compra>> ObtenerTodosAsync();
+        Task<Compra?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Compra compra);
+        Task<string?> ActualizarAsync(Compra compra);
+        Task<bool> EliminarAsync(int id);
     }
 
-    public class ComprasLogica : Logica<Compra>, IComprasLogica
+    public class ComprasLogica : IComprasLogica
     {
+        private readonly IComprasRepositorio _repositorio;
         private readonly IProveedoresRepositorio _proveedoresRepositorio;
 
-        public ComprasLogica(IComprasRepositorio repositorio, IProveedoresRepositorio proveedoresRepositorio) : base(repositorio)
+        public ComprasLogica(IComprasRepositorio repositorio, IProveedoresRepositorio proveedoresRepositorio)
         {
+            _repositorio = repositorio;
             _proveedoresRepositorio = proveedoresRepositorio;
         }
 
-        public override async Task<ResultadoOperacion<Compra>> CrearValidadoAsync(Compra compra)
+        public Task<List<Compra>> ObtenerTodosAsync()
         {
-            var validacion = await ValidarCompraAsync(compra);
+            return _repositorio.ObtenerTodosAsync();
+        }
 
-            if (!validacion.Exitoso)
+        public Task<Compra?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<string?> CrearAsync(Compra compra)
+        {
+            var error = await ValidarCompraAsync(compra);
+            if (error is not null)
             {
-                return ResultadoOperacion<Compra>.BadRequest(validacion.Error ?? "La compra no es valida.");
+                return error;
             }
 
             if (compra.FechaCompra == default)
@@ -31,16 +46,16 @@ namespace Totaltech.Logica
                 compra.FechaCompra = DateTime.Now;
             }
 
-            return await base.CrearValidadoAsync(compra);
+            await _repositorio.CrearAsync(compra);
+            return null;
         }
 
-        public override async Task<ResultadoOperacion<Compra>> ActualizarValidadoAsync(int id, Compra compra)
+        public async Task<string?> ActualizarAsync(Compra compra)
         {
-            var validacion = await ValidarCompraAsync(compra);
-
-            if (!validacion.Exitoso)
+            var error = await ValidarCompraAsync(compra);
+            if (error is not null)
             {
-                return ResultadoOperacion<Compra>.BadRequest(validacion.Error ?? "La compra no es valida.");
+                return error;
             }
 
             if (compra.FechaCompra == default)
@@ -48,22 +63,35 @@ namespace Totaltech.Logica
                 compra.FechaCompra = DateTime.Now;
             }
 
-            return await base.ActualizarValidadoAsync(id, compra);
+            await _repositorio.ActualizarAsync(compra);
+            return null;
         }
 
-        private async Task<ResultadoOperacion> ValidarCompraAsync(Compra compra)
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var compra = await _repositorio.ObtenerPorIdAsync(id);
+            if (compra is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(compra);
+            return true;
+        }
+
+        private async Task<string?> ValidarCompraAsync(Compra compra)
         {
             if (compra.Total < 0)
             {
-                return ResultadoOperacion.BadRequest("El total de la compra no puede ser negativo.");
+                return "El total de la compra no puede ser negativo.";
             }
 
             if (!await _proveedoresRepositorio.ExisteAsync(compra.IdProveedor))
             {
-                return ResultadoOperacion.BadRequest("El proveedor indicado no existe.");
+                return "El proveedor indicado no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

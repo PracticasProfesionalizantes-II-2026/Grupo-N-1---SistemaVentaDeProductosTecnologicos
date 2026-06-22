@@ -5,15 +5,20 @@ using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface ICarritosLogica : ILogica<Carrito>
+    public interface ICarritosLogica
     {
+        Task<List<Carrito>> ObtenerTodosAsync();
+        Task<Carrito?> ObtenerPorIdAsync(int id);
         Task<List<Carrito>> ObtenerPorUsuarioAsync(int idUsuario);
-        Task<ResultadoOperacion<DetalleCarrito>> AgregarProductoAsync(int idCarrito, AgregarProductoCarritoDto dto);
-        Task<ResultadoOperacion> EliminarProductoAsync(int idCarrito, int idProducto);
-        Task<ResultadoOperacion<Pedido>> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto);
+        Task<string?> CrearAsync(Carrito carrito);
+        Task<string?> ActualizarAsync(Carrito carrito);
+        Task<bool> EliminarAsync(int id);
+        Task<(DetalleCarrito? Detalle, string? Error)> AgregarProductoAsync(int idCarrito, AgregarProductoCarritoDto dto);
+        Task<string?> EliminarProductoAsync(int idCarrito, int idProducto);
+        Task<(Pedido? Pedido, string? Error)> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto);
     }
 
-    public class CarritosLogica : Logica<Carrito>, ICarritosLogica
+    public class CarritosLogica : ICarritosLogica
     {
         private readonly TotaltechDbContext _context;
         private readonly ICarritosRepositorio _carritosRepositorio;
@@ -32,7 +37,7 @@ namespace Totaltech.Logica
             IPedidosRepositorio pedidosRepositorio,
             IDetallePedidosRepositorio detallePedidosRepositorio,
             IUsuariosRepositorio usuariosRepositorio,
-            IDireccionesRepositorio direccionesRepositorio) : base(carritosRepositorio)
+            IDireccionesRepositorio direccionesRepositorio)
         {
             _context = context;
             _carritosRepositorio = carritosRepositorio;
@@ -44,18 +49,27 @@ namespace Totaltech.Logica
             _direccionesRepositorio = direccionesRepositorio;
         }
 
+        public Task<List<Carrito>> ObtenerTodosAsync()
+        {
+            return _carritosRepositorio.ObtenerTodosAsync();
+        }
+
+        public Task<Carrito?> ObtenerPorIdAsync(int id)
+        {
+            return _carritosRepositorio.ObtenerPorIdAsync(id);
+        }
+
         public Task<List<Carrito>> ObtenerPorUsuarioAsync(int idUsuario)
         {
             return _carritosRepositorio.ObtenerPorUsuarioAsync(idUsuario);
         }
 
-        public override async Task<ResultadoOperacion<Carrito>> CrearValidadoAsync(Carrito carrito)
+        public async Task<string?> CrearAsync(Carrito carrito)
         {
-            var validacion = await ValidarCarritoAsync(carrito);
-
-            if (!validacion.Exitoso)
+            var error = await ValidarCarritoAsync(carrito);
+            if (error is not null)
             {
-                return ResultadoOperacion<Carrito>.BadRequest(validacion.Error ?? "El carrito no es valido.");
+                return error;
             }
 
             if (carrito.FechaCreacion == default)
@@ -63,16 +77,16 @@ namespace Totaltech.Logica
                 carrito.FechaCreacion = DateTime.Now;
             }
 
-            return await base.CrearValidadoAsync(carrito);
+            await _carritosRepositorio.CrearAsync(carrito);
+            return null;
         }
 
-        public override async Task<ResultadoOperacion<Carrito>> ActualizarValidadoAsync(int id, Carrito carrito)
+        public async Task<string?> ActualizarAsync(Carrito carrito)
         {
-            var validacion = await ValidarCarritoAsync(carrito);
-
-            if (!validacion.Exitoso)
+            var error = await ValidarCarritoAsync(carrito);
+            if (error is not null)
             {
-                return ResultadoOperacion<Carrito>.BadRequest(validacion.Error ?? "El carrito no es valido.");
+                return error;
             }
 
             if (carrito.FechaCreacion == default)
@@ -80,32 +94,44 @@ namespace Totaltech.Logica
                 carrito.FechaCreacion = DateTime.Now;
             }
 
-            return await base.ActualizarValidadoAsync(id, carrito);
+            await _carritosRepositorio.ActualizarAsync(carrito);
+            return null;
         }
 
-        public async Task<ResultadoOperacion<DetalleCarrito>> AgregarProductoAsync(int idCarrito, AgregarProductoCarritoDto dto)
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var carrito = await _carritosRepositorio.ObtenerPorIdAsync(id);
+            if (carrito is null)
+            {
+                return false;
+            }
+
+            await _carritosRepositorio.EliminarAsync(carrito);
+            return true;
+        }
+
+        public async Task<(DetalleCarrito? Detalle, string? Error)> AgregarProductoAsync(int idCarrito, AgregarProductoCarritoDto dto)
         {
             if (dto.Cantidad <= 0)
             {
-                return ResultadoOperacion<DetalleCarrito>.BadRequest("La cantidad debe ser mayor a cero.");
+                return (null, "La cantidad debe ser mayor a cero.");
             }
 
             var carrito = await _carritosRepositorio.ObtenerPorIdAsync(idCarrito);
-            var producto = await _productosRepositorio.ObtenerPorIdAsync(dto.IdProducto);
-
             if (carrito is null)
             {
-                return ResultadoOperacion<DetalleCarrito>.NotFound("El carrito indicado no existe.");
-            }
-
-            if (producto is null)
-            {
-                return ResultadoOperacion<DetalleCarrito>.NotFound("El producto indicado no existe.");
+                return (null, "El carrito indicado no existe.");
             }
 
             if (carrito.Estado != EstadoCarrito.Activo)
             {
-                return ResultadoOperacion<DetalleCarrito>.BadRequest("Solo se pueden modificar carritos activos.");
+                return (null, "Solo se pueden modificar carritos activos.");
+            }
+
+            var producto = await _productosRepositorio.ObtenerPorIdAsync(dto.IdProducto);
+            if (producto is null)
+            {
+                return (null, "El producto indicado no existe.");
             }
 
             var detalleExistente = await _detalleCarritosRepositorio.ObtenerPorCarritoYProductoAsync(idCarrito, dto.IdProducto);
@@ -113,7 +139,7 @@ namespace Totaltech.Logica
 
             if (producto.Stock < nuevaCantidad)
             {
-                return ResultadoOperacion<DetalleCarrito>.BadRequest("No hay stock suficiente para agregar ese producto.");
+                return (null, "No hay stock suficiente para agregar ese producto.");
             }
 
             var precio = dto.PrecioUnitario > 0 ? dto.PrecioUnitario : producto.Precio;
@@ -125,7 +151,7 @@ namespace Totaltech.Logica
                 detalleExistente.Subtotal = precio * nuevaCantidad;
 
                 await _detalleCarritosRepositorio.ActualizarAsync(detalleExistente);
-                return ResultadoOperacion<DetalleCarrito>.Ok(detalleExistente);
+                return (detalleExistente, null);
             }
 
             var detalle = new DetalleCarrito
@@ -138,70 +164,62 @@ namespace Totaltech.Logica
             };
 
             await _detalleCarritosRepositorio.CrearAsync(detalle);
-            return ResultadoOperacion<DetalleCarrito>.Ok(detalle);
+            return (detalle, null);
         }
 
-        public async Task<ResultadoOperacion> EliminarProductoAsync(int idCarrito, int idProducto)
+        public async Task<string?> EliminarProductoAsync(int idCarrito, int idProducto)
         {
             var carrito = await _carritosRepositorio.ObtenerPorIdAsync(idCarrito);
-
             if (carrito is null)
             {
-                return ResultadoOperacion.NotFound("El carrito indicado no existe.");
+                return "El carrito indicado no existe.";
             }
 
             var eliminado = await _detalleCarritosRepositorio.EliminarPorCarritoYProductoAsync(idCarrito, idProducto);
-            return eliminado
-                ? ResultadoOperacion.Ok()
-                : ResultadoOperacion.NotFound("El producto no existe dentro del carrito.");
+            return eliminado ? null : "El producto no existe dentro del carrito.";
         }
 
-        public async Task<ResultadoOperacion<Pedido>> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto)
+        public async Task<(Pedido? Pedido, string? Error)> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto)
         {
             var carrito = await _carritosRepositorio.ObtenerPorIdAsync(idCarrito);
-
             if (carrito is null)
             {
-                return ResultadoOperacion<Pedido>.NotFound("El carrito indicado no existe.");
+                return (null, "El carrito indicado no existe.");
             }
 
             if (carrito.Estado != EstadoCarrito.Activo)
             {
-                return ResultadoOperacion<Pedido>.BadRequest("Solo se pueden confirmar carritos activos.");
+                return (null, "Solo se pueden confirmar carritos activos.");
             }
 
             if (!await _direccionesRepositorio.ExisteAsync(dto.IdDireccion))
             {
-                return ResultadoOperacion<Pedido>.BadRequest("La direccion indicada no existe.");
+                return (null, "La direccion indicada no existe.");
             }
 
             var detallesCarrito = await _detalleCarritosRepositorio.ObtenerPorCarritoAsync(idCarrito);
-
             if (detallesCarrito.Count == 0)
             {
-                return ResultadoOperacion<Pedido>.BadRequest("El carrito no tiene productos.");
+                return (null, "El carrito no tiene productos.");
             }
 
             var productos = new Dictionary<int, Producto>();
-
             foreach (var detalleCarrito in detallesCarrito)
             {
                 var producto = await _productosRepositorio.ObtenerPorIdAsync(detalleCarrito.IdProducto);
-
                 if (producto is null)
                 {
-                    return ResultadoOperacion<Pedido>.BadRequest("Uno de los productos del carrito ya no existe.");
+                    return (null, "Uno de los productos del carrito ya no existe.");
                 }
 
                 if (producto.Stock < detalleCarrito.Cantidad)
                 {
-                    return ResultadoOperacion<Pedido>.BadRequest($"No hay stock suficiente para el producto {producto.Nombre}.");
+                    return (null, $"No hay stock suficiente para el producto {producto.Nombre}.");
                 }
 
                 productos[producto.IdProducto] = producto;
             }
 
-            // El pedido, sus detalles, el stock y el estado del carrito deben cambiar juntos.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var pedido = new Pedido
@@ -236,17 +254,17 @@ namespace Totaltech.Logica
             await _carritosRepositorio.ActualizarAsync(carrito);
 
             await transaction.CommitAsync();
-            return ResultadoOperacion<Pedido>.Ok(pedido);
+            return (pedido, null);
         }
 
-        private async Task<ResultadoOperacion> ValidarCarritoAsync(Carrito carrito)
+        private async Task<string?> ValidarCarritoAsync(Carrito carrito)
         {
             if (!await _usuariosRepositorio.ExisteAsync(carrito.IdUsuario))
             {
-                return ResultadoOperacion.BadRequest("El usuario indicado no existe.");
+                return "El usuario indicado no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

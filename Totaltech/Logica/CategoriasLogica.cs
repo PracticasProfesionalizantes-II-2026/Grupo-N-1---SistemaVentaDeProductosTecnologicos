@@ -1,37 +1,80 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface ICategoriasLogica : ILogica<Categoria>
+    public interface ICategoriasLogica
     {
+        Task<List<Categoria>> ObtenerTodosAsync();
+        Task<Categoria?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Categoria categoria);
+        Task<string?> ActualizarAsync(Categoria categoria);
+        Task<bool> EliminarAsync(int id);
     }
 
-    public class CategoriasLogica : Logica<Categoria>, ICategoriasLogica
+    public class CategoriasLogica : ICategoriasLogica
     {
-        public CategoriasLogica(ICategoriasRepositorio repositorio) : base(repositorio)
+        private readonly ICategoriasRepositorio _repositorio;
+
+        public CategoriasLogica(ICategoriasRepositorio repositorio)
         {
+            _repositorio = repositorio;
         }
 
-        public override Task<ResultadoOperacion<Categoria>> CrearValidadoAsync(Categoria categoria)
+        public Task<List<Categoria>> ObtenerTodosAsync()
+        {
+            return _repositorio.ObtenerTodosAsync();
+        }
+
+        public Task<Categoria?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<string?> CrearAsync(Categoria categoria)
+        {
+            var error = ValidarCategoria(categoria);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.CrearAsync(categoria);
+            return null;
+        }
+
+        public async Task<string?> ActualizarAsync(Categoria categoria)
+        {
+            var error = ValidarCategoria(categoria);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.ActualizarAsync(categoria);
+            return null;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var categoria = await _repositorio.ObtenerPorIdAsync(id);
+            if (categoria is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(categoria);
+            return true;
+        }
+
+        private static string? ValidarCategoria(Categoria categoria)
         {
             if (string.IsNullOrWhiteSpace(categoria.Nombre))
             {
-                return Task.FromResult(ResultadoOperacion<Categoria>.BadRequest("El nombre de la categoria es obligatorio."));
+                return "El nombre de la categoria es obligatorio.";
             }
 
-            return base.CrearValidadoAsync(categoria);
-        }
-
-        public override async Task<ResultadoOperacion<Categoria>> ActualizarValidadoAsync(int id, Categoria categoria)
-        {
-            if (string.IsNullOrWhiteSpace(categoria.Nombre))
-            {
-                return ResultadoOperacion<Categoria>.BadRequest("El nombre de la categoria es obligatorio.");
-            }
-
-            return await base.ActualizarValidadoAsync(id, categoria);
+            return null;
         }
     }
 }

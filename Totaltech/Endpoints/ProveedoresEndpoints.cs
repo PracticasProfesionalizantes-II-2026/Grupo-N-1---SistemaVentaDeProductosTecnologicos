@@ -1,5 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using Totaltech.Entidades;
 using Totaltech.Logica;
-using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -7,46 +8,54 @@ namespace Totaltech.Endpoints
     {
         public static void MapProveedoresEndpoints(this WebApplication app)
         {
-            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/proveedores").WithTags("Proveedores");
 
             group.MapGet("/", async (IProveedoresLogica logica) =>
             {
                 var proveedores = await logica.ObtenerTodosAsync();
-                return Results.Ok(proveedores.Select(proveedor => proveedor.ToResponse()));
+                return Results.Ok(proveedores);
             });
 
             group.MapGet("/{id:int}", async (int id, IProveedoresLogica logica) =>
             {
                 var proveedor = await logica.ObtenerPorIdAsync(id);
-                return proveedor is null ? Results.NotFound() : Results.Ok(proveedor.ToResponse());
+                return proveedor is null ? Results.NotFound() : Results.Ok(proveedor);
             });
 
-            group.MapPost("/", async (CrearProveedorRequest request, IProveedoresLogica logica) =>
+            group.MapPost("/", async (Proveedor proveedor, IProveedoresLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var error = await logica.CrearAsync(proveedor);
+                if (error is not null)
                 {
-                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
-                    return EndpointResults.FromResult(resultado, proveedor => Results.Created($"/proveedores/{proveedor.IdProveedor}", proveedor.ToResponse()));
-                });
+                    return Results.BadRequest(error);
+                }
+
+                return Results.Created($"/proveedores/{proveedor.IdProveedor}", proveedor);
             });
 
-            group.MapPut("/{id:int}", async (int id, ActualizarProveedorRequest request, IProveedoresLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, Proveedor proveedor, IProveedoresLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                if (await logica.ObtenerPorIdAsync(id) is null)
                 {
-                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
-                    return EndpointResults.FromResult(resultado, proveedor => Results.Ok(proveedor.ToResponse()));
-                });
+                    return Results.NotFound();
+                }
+
+                proveedor.IdProveedor = id;
+                var error = await logica.ActualizarAsync(proveedor);
+                return error is null ? Results.Ok(proveedor) : Results.BadRequest(error);
             });
 
             group.MapDelete("/{id:int}", async (int id, IProveedoresLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                try
                 {
-                    var resultado = await logica.EliminarPorIdAsync(id);
-                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
-                });
+                    var eliminado = await logica.EliminarAsync(id);
+                    return eliminado ? Results.NoContent() : Results.NotFound();
+                }
+                catch (DbUpdateException)
+                {
+                    return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
+                }
             });
         }
     }

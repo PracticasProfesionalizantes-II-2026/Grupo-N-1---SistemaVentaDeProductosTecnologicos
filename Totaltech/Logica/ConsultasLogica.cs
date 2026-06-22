@@ -1,23 +1,37 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IConsultasLogica : ILogica<Consulta>
+    public interface IConsultasLogica
     {
+        Task<List<Consulta>> ObtenerTodosAsync();
+        Task<Consulta?> ObtenerPorIdAsync(int id);
         Task<List<Consulta>> ObtenerPorUsuarioAsync(int idUsuario);
+        Task<string?> CrearAsync(Consulta consulta);
+        Task<string?> ActualizarAsync(Consulta consulta);
+        Task<bool> EliminarAsync(int id);
     }
 
-    public class ConsultasLogica : Logica<Consulta>, IConsultasLogica
+    public class ConsultasLogica : IConsultasLogica
     {
         private readonly IConsultasRepositorio _repositorio;
         private readonly IUsuariosRepositorio _usuariosRepositorio;
 
-        public ConsultasLogica(IConsultasRepositorio repositorio, IUsuariosRepositorio usuariosRepositorio) : base(repositorio)
+        public ConsultasLogica(IConsultasRepositorio repositorio, IUsuariosRepositorio usuariosRepositorio)
         {
             _repositorio = repositorio;
             _usuariosRepositorio = usuariosRepositorio;
+        }
+
+        public Task<List<Consulta>> ObtenerTodosAsync()
+        {
+            return _repositorio.ObtenerTodosAsync();
+        }
+
+        public Task<Consulta?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
         }
 
         public Task<List<Consulta>> ObtenerPorUsuarioAsync(int idUsuario)
@@ -25,13 +39,12 @@ namespace Totaltech.Logica
             return _repositorio.ObtenerPorUsuarioAsync(idUsuario);
         }
 
-        public override async Task<ResultadoOperacion<Consulta>> CrearValidadoAsync(Consulta consulta)
+        public async Task<string?> CrearAsync(Consulta consulta)
         {
-            var validacion = await ValidarConsultaAsync(consulta);
-
-            if (!validacion.Exitoso)
+            var error = await ValidarConsultaAsync(consulta);
+            if (error is not null)
             {
-                return ResultadoOperacion<Consulta>.BadRequest(validacion.Error ?? "La consulta no es valida.");
+                return error;
             }
 
             if (consulta.FechaConsulta == default)
@@ -40,16 +53,15 @@ namespace Totaltech.Logica
             }
 
             await _repositorio.CrearAsync(consulta);
-            return ResultadoOperacion<Consulta>.Ok(consulta);
+            return null;
         }
 
-        public override async Task<ResultadoOperacion<Consulta>> ActualizarValidadoAsync(int id, Consulta consulta)
+        public async Task<string?> ActualizarAsync(Consulta consulta)
         {
-            var validacion = await ValidarConsultaAsync(consulta);
-
-            if (!validacion.Exitoso)
+            var error = await ValidarConsultaAsync(consulta);
+            if (error is not null)
             {
-                return ResultadoOperacion<Consulta>.BadRequest(validacion.Error ?? "La consulta no es valida.");
+                return error;
             }
 
             if (consulta.FechaConsulta == default)
@@ -57,22 +69,35 @@ namespace Totaltech.Logica
                 consulta.FechaConsulta = DateTime.Now;
             }
 
-            return await base.ActualizarValidadoAsync(id, consulta);
+            await _repositorio.ActualizarAsync(consulta);
+            return null;
         }
 
-        private async Task<ResultadoOperacion> ValidarConsultaAsync(Consulta consulta)
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var consulta = await _repositorio.ObtenerPorIdAsync(id);
+            if (consulta is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(consulta);
+            return true;
+        }
+
+        private async Task<string?> ValidarConsultaAsync(Consulta consulta)
         {
             if (string.IsNullOrWhiteSpace(consulta.Email) || string.IsNullOrWhiteSpace(consulta.Mensaje))
             {
-                return ResultadoOperacion.BadRequest("El email y el mensaje son obligatorios.");
+                return "El email y el mensaje son obligatorios.";
             }
 
             if (consulta.IdUsuario.HasValue && !await _usuariosRepositorio.ExisteAsync(consulta.IdUsuario.Value))
             {
-                return ResultadoOperacion.BadRequest("El usuario indicado no existe.");
+                return "El usuario indicado no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

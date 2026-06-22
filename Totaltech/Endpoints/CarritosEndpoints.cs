@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
 
@@ -7,80 +9,99 @@ namespace Totaltech.Endpoints
     {
         public static void MapCarritosEndpoints(this WebApplication app)
         {
-            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/carritos").WithTags("Carritos");
 
             group.MapGet("/", async (ICarritosLogica logica) =>
             {
                 var carritos = await logica.ObtenerTodosAsync();
-                return Results.Ok(carritos.Select(carrito => carrito.ToResponse()));
+                return Results.Ok(carritos);
             });
 
             group.MapGet("/{id:int}", async (int id, ICarritosLogica logica) =>
             {
                 var carrito = await logica.ObtenerPorIdAsync(id);
-                return carrito is null ? Results.NotFound() : Results.Ok(carrito.ToResponse());
+                return carrito is null ? Results.NotFound() : Results.Ok(carrito);
             });
 
-            group.MapPost("/", async (CrearCarritoRequest request, ICarritosLogica logica) =>
+            group.MapPost("/", async (Carrito carrito, ICarritosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var error = await logica.CrearAsync(carrito);
+                if (error is not null)
                 {
-                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
-                    return EndpointResults.FromResult(resultado, carrito => Results.Created($"/carritos/{carrito.IdCarrito}", carrito.ToResponse()));
-                });
+                    return Results.BadRequest(error);
+                }
+
+                return Results.Created($"/carritos/{carrito.IdCarrito}", carrito);
             });
 
-            group.MapPut("/{id:int}", async (int id, ActualizarCarritoRequest request, ICarritosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, Carrito carrito, ICarritosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                if (await logica.ObtenerPorIdAsync(id) is null)
                 {
-                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
-                    return EndpointResults.FromResult(resultado, carrito => Results.Ok(carrito.ToResponse()));
-                });
+                    return Results.NotFound();
+                }
+
+                carrito.IdCarrito = id;
+                var error = await logica.ActualizarAsync(carrito);
+                return error is null ? Results.Ok(carrito) : Results.BadRequest(error);
             });
 
             group.MapDelete("/{id:int}", async (int id, ICarritosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                try
                 {
-                    var resultado = await logica.EliminarPorIdAsync(id);
-                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
-                });
+                    var eliminado = await logica.EliminarAsync(id);
+                    return eliminado ? Results.NoContent() : Results.NotFound();
+                }
+                catch (DbUpdateException)
+                {
+                    return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
+                }
             });
 
             group.MapGet("/usuario/{idUsuario:int}", async (int idUsuario, ICarritosLogica logica) =>
             {
                 var carritos = await logica.ObtenerPorUsuarioAsync(idUsuario);
-                return Results.Ok(carritos.Select(carrito => carrito.ToResponse()));
+                return Results.Ok(carritos);
             });
 
             group.MapPost("/{idCarrito:int}/productos", async (int idCarrito, AgregarProductoCarritoDto request, ICarritosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var resultado = await logica.AgregarProductoAsync(idCarrito, request);
+                if (resultado.Error is not null)
                 {
-                    var resultado = await logica.AgregarProductoAsync(idCarrito, request);
-                    return EndpointResults.FromResult(resultado, detalle => Results.Created($"/detallecarritos/{detalle.IdDetalleCarrito}", detalle.ToResponse()));
-                });
+                    return EsNoEncontrado(resultado.Error) ? Results.NotFound(resultado.Error) : Results.BadRequest(resultado.Error);
+                }
+
+                return Results.Created($"/detallecarritos/{resultado.Detalle!.IdDetalleCarrito}", resultado.Detalle);
             });
 
             group.MapDelete("/{idCarrito:int}/productos/{idProducto:int}", async (int idCarrito, int idProducto, ICarritosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var error = await logica.EliminarProductoAsync(idCarrito, idProducto);
+                if (error is not null)
                 {
-                    var resultado = await logica.EliminarProductoAsync(idCarrito, idProducto);
-                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
-                });
+                    return EsNoEncontrado(error) ? Results.NotFound(error) : Results.BadRequest(error);
+                }
+
+                return Results.NoContent();
             });
 
             group.MapPost("/{idCarrito:int}/confirmar", async (int idCarrito, ConfirmarCarritoDto request, ICarritosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var resultado = await logica.ConfirmarAsync(idCarrito, request);
+                if (resultado.Error is not null)
                 {
-                    var resultado = await logica.ConfirmarAsync(idCarrito, request);
-                    return EndpointResults.FromResult(resultado, pedido => Results.Created($"/pedidos/{pedido.IdPedido}", pedido.ToResponse()));
-                });
+                    return EsNoEncontrado(resultado.Error) ? Results.NotFound(resultado.Error) : Results.BadRequest(resultado.Error);
+                }
+
+                return Results.Created($"/pedidos/{resultado.Pedido!.IdPedido}", resultado.Pedido);
             });
+        }
+
+        private static bool EsNoEncontrado(string error)
+        {
+            return error.Contains("no existe", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

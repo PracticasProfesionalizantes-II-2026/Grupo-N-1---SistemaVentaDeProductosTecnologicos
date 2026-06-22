@@ -1,28 +1,81 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IProductosLogica : ILogica<Producto>
+    public interface IProductosLogica
     {
+        Task<List<Producto>> ObtenerTodosAsync();
+        Task<Producto?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Producto producto);
+        Task<string?> ActualizarAsync(Producto producto);
+        Task<bool> EliminarAsync(int id);
         Task<List<Producto>> BuscarAsync(string? texto);
         Task<List<Producto>> ObtenerPorCategoriaAsync(int idCategoria);
         Task<List<Producto>> ObtenerDisponiblesAsync();
         Task<bool> ActualizarStockAsync(int id, int stock);
     }
 
-    public class ProductosLogica : Logica<Producto>, IProductosLogica
+    public class ProductosLogica : IProductosLogica
     {
         private readonly IProductosRepositorio _repositorio;
         private readonly ICategoriasRepositorio _categoriasRepositorio;
         private readonly IProveedoresRepositorio _proveedoresRepositorio;
 
-        public ProductosLogica(IProductosRepositorio repositorio, ICategoriasRepositorio categoriasRepositorio, IProveedoresRepositorio proveedoresRepositorio) : base(repositorio)
+        public ProductosLogica(
+            IProductosRepositorio repositorio,
+            ICategoriasRepositorio categoriasRepositorio,
+            IProveedoresRepositorio proveedoresRepositorio)
         {
             _repositorio = repositorio;
             _categoriasRepositorio = categoriasRepositorio;
             _proveedoresRepositorio = proveedoresRepositorio;
+        }
+
+        public Task<List<Producto>> ObtenerTodosAsync()
+        {
+            return _repositorio.ObtenerTodosAsync();
+        }
+
+        public Task<Producto?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<string?> CrearAsync(Producto producto)
+        {
+            var error = await ValidarProductoAsync(producto);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.CrearAsync(producto);
+            return null;
+        }
+
+        public async Task<string?> ActualizarAsync(Producto producto)
+        {
+            var error = await ValidarProductoAsync(producto);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.ActualizarAsync(producto);
+            return null;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var producto = await _repositorio.ObtenerPorIdAsync(id);
+            if (producto is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(producto);
+            return true;
         }
 
         public Task<List<Producto>> BuscarAsync(string? texto)
@@ -43,7 +96,6 @@ namespace Totaltech.Logica
         public async Task<bool> ActualizarStockAsync(int id, int stock)
         {
             var producto = await _repositorio.ObtenerPorIdAsync(id);
-
             if (producto is null)
             {
                 return false;
@@ -54,53 +106,29 @@ namespace Totaltech.Logica
             return true;
         }
 
-        public override async Task<ResultadoOperacion<Producto>> CrearValidadoAsync(Producto producto)
-        {
-            var validacion = await ValidarProductoAsync(producto);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Producto>.BadRequest(validacion.Error ?? "El producto no es valido.");
-            }
-
-            return await base.CrearValidadoAsync(producto);
-        }
-
-        public override async Task<ResultadoOperacion<Producto>> ActualizarValidadoAsync(int id, Producto producto)
-        {
-            var validacion = await ValidarProductoAsync(producto);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Producto>.BadRequest(validacion.Error ?? "El producto no es valido.");
-            }
-
-            return await base.ActualizarValidadoAsync(id, producto);
-        }
-
-        private async Task<ResultadoOperacion> ValidarProductoAsync(Producto producto)
+        private async Task<string?> ValidarProductoAsync(Producto producto)
         {
             if (string.IsNullOrWhiteSpace(producto.Nombre))
             {
-                return ResultadoOperacion.BadRequest("El nombre del producto es obligatorio.");
+                return "El nombre del producto es obligatorio.";
             }
 
             if (producto.Precio < 0 || producto.Stock < 0)
             {
-                return ResultadoOperacion.BadRequest("El precio y el stock no pueden ser negativos.");
+                return "El precio y el stock no pueden ser negativos.";
             }
 
             if (!await _categoriasRepositorio.ExisteAsync(producto.IdCategoria))
             {
-                return ResultadoOperacion.BadRequest("La categoria indicada no existe.");
+                return "La categoria indicada no existe.";
             }
 
             if (!await _proveedoresRepositorio.ExisteAsync(producto.IdProveedor))
             {
-                return ResultadoOperacion.BadRequest("El proveedor indicado no existe.");
+                return "El proveedor indicado no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

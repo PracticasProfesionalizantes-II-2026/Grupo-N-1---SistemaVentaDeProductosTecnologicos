@@ -1,4 +1,8 @@
 namespace Totaltech.Logica.DTOs
 {
-    public record ReporteIngresosDto(int CantidadPagosAprobados, decimal TotalIngresos);
+    public class ReporteIngresosDto
+    {
+        public int CantidadPagosAprobados { get; set; }
+        public decimal TotalIngresos { get; set; }
+    }
 }

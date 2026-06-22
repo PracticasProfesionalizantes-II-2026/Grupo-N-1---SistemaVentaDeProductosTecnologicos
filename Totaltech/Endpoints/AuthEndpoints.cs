@@ -1,3 +1,4 @@
+using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
 
@@ -7,22 +8,23 @@ namespace Totaltech.Endpoints
     {
         public static void MapAuthEndpoints(this WebApplication app)
         {
-            // Auth mantiene un flujo simple: registra/login sin exponer contrasenas.
             var group = app.MapGroup("/auth").WithTags("Auth");
 
             group.MapPost("/login", async (LoginDto request, IUsuariosLogica logica) =>
             {
                 var usuario = await logica.LoginAsync(request);
-                return usuario is null ? Results.Unauthorized() : Results.Ok(usuario.ToResponse());
+                return usuario is null ? Results.Unauthorized() : Results.Ok(CrearRespuesta(usuario));
             });
 
-            group.MapPost("/registro", async (CrearUsuarioRequest request, IUsuariosLogica logica) =>
+            group.MapPost("/registro", async (Usuario usuario, IUsuariosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var error = await logica.RegistrarAsync(usuario);
+                if (error is not null)
                 {
-                    var resultado = await logica.RegistrarAsync(request.ToEntity());
-                    return EndpointResults.FromResult(resultado, usuario => Results.Created($"/usuarios/{usuario.IdUsuario}", usuario.ToResponse()));
-                });
+                    return error.StartsWith("Ya existe") ? Results.Conflict(error) : Results.BadRequest(error);
+                }
+
+                return Results.Created($"/usuarios/{usuario.IdUsuario}", CrearRespuesta(usuario));
             });
 
             group.MapPost("/recuperar-contrasena", async (RecuperarContrasenaDto request, IUsuariosLogica logica) =>
@@ -30,6 +32,20 @@ namespace Totaltech.Endpoints
                 await logica.RecuperarContrasenaAsync(request);
                 return Results.Ok(new { mensaje = "Si el email existe, se registrara una solicitud de recuperacion." });
             });
+        }
+
+        private static UsuarioResponse CrearRespuesta(Usuario usuario)
+        {
+            return new UsuarioResponse
+            {
+                IdUsuario = usuario.IdUsuario,
+                Nombre = usuario.Nombre,
+                Apellido = usuario.Apellido,
+                Email = usuario.Email,
+                Telefono = usuario.Telefono,
+                FechaRegistro = usuario.FechaRegistro,
+                Rol = usuario.Rol
+            };
         }
     }
 }
