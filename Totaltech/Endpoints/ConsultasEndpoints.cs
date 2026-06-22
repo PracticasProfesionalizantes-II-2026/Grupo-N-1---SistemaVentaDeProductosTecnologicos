@@ -1,5 +1,5 @@
-using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -7,59 +7,52 @@ namespace Totaltech.Endpoints
     {
         public static void MapConsultasEndpoints(this WebApplication app)
         {
+            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/consultas").WithTags("Consultas");
 
             group.MapGet("/", async (IConsultasLogica logica) =>
             {
                 var consultas = await logica.ObtenerTodosAsync();
-                return Results.Ok(consultas);
+                return Results.Ok(consultas.Select(consulta => consulta.ToResponse()));
             });
 
             group.MapGet("/{id:int}", async (int id, IConsultasLogica logica) =>
             {
                 var consulta = await logica.ObtenerPorIdAsync(id);
-                return consulta is null ? Results.NotFound() : Results.Ok(consulta);
+                return consulta is null ? Results.NotFound() : Results.Ok(consulta.ToResponse());
             });
 
             group.MapGet("/usuario/{idUsuario:int}", async (int idUsuario, IConsultasLogica logica) =>
             {
                 var consultas = await logica.ObtenerPorUsuarioAsync(idUsuario);
-                return Results.Ok(consultas);
+                return Results.Ok(consultas.Select(consulta => consulta.ToResponse()));
             });
 
-            group.MapPost("/", async (Consulta consulta, IConsultasLogica logica) =>
+            group.MapPost("/", async (CrearConsultaRequest request, IConsultasLogica logica) =>
             {
-                await logica.CrearAsync(consulta);
-                return Results.Created($"/consultas/{consulta.IdConsulta}", consulta);
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                {
+                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
+                    return EndpointResults.FromResult(resultado, consulta => Results.Created($"/consultas/{consulta.IdConsulta}", consulta.ToResponse()));
+                });
             });
 
-            group.MapPut("/{id:int}", async (int id, Consulta consulta, IConsultasLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, ActualizarConsultaRequest request, IConsultasLogica logica) =>
             {
-                if (id != consulta.IdConsulta)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.BadRequest("El id de la URL no coincide con el id del body.");
-                }
-
-                var existente = await logica.ObtenerPorIdAsync(id);
-                if (existente is null)
-                {
-                    return Results.NotFound();
-                }
-
-                await logica.ActualizarAsync(consulta);
-                return Results.NoContent();
+                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
+                    return EndpointResults.FromResult(resultado, consulta => Results.Ok(consulta.ToResponse()));
+                });
             });
 
             group.MapDelete("/{id:int}", async (int id, IConsultasLogica logica) =>
             {
-                var consulta = await logica.ObtenerPorIdAsync(id);
-                if (consulta is null)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.NotFound();
-                }
-
-                await logica.EliminarAsync(consulta);
-                return Results.NoContent();
+                    var resultado = await logica.EliminarPorIdAsync(id);
+                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
+                });
             });
         }
     }

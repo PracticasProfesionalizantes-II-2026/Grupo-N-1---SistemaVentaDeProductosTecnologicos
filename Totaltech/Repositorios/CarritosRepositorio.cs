@@ -17,6 +17,7 @@ namespace Totaltech.Repositorios
 
         public async Task<List<Carrito>> ObtenerPorUsuarioAsync(int idUsuario)
         {
+            // Consulta util para ver los carritos que pertenecen a un cliente.
             return await Context.Carritos
                 .Where(carrito => carrito.IdUsuario == idUsuario)
                 .ToListAsync();

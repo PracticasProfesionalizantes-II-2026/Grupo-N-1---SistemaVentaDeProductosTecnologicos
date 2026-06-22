@@ -20,8 +20,13 @@ namespace Totaltech.Repositorios
 
         public async Task<ReporteVentasDto> ObtenerVentasAsync()
         {
-            var cantidadPedidos = await Context.Pedidos.CountAsync();
-            var totalVentas = await Context.DetallePedidos.SumAsync(detalle => (decimal?)detalle.Subtotal) ?? 0;
+            var estadosVenta = new[] { EstadoPedido.Pagado, EstadoPedido.Enviado, EstadoPedido.Entregado };
+            var pedidosVendidos = Context.Pedidos.Where(pedido => estadosVenta.Contains(pedido.Estado));
+            var pedidosIds = await pedidosVendidos.Select(pedido => pedido.IdPedido).ToListAsync();
+            var cantidadPedidos = pedidosIds.Count;
+            var totalVentas = await Context.DetallePedidos
+                .Where(detalle => pedidosIds.Contains(detalle.IdPedido))
+                .SumAsync(detalle => (decimal?)detalle.Subtotal) ?? 0;
 
             return new ReporteVentasDto(cantidadPedidos, totalVentas);
         }
@@ -37,7 +42,15 @@ namespace Totaltech.Repositorios
 
         public async Task<List<ProductoMasVendidoDto>> ObtenerProductosMasVendidosAsync()
         {
+            var estadosVenta = new[] { EstadoPedido.Pagado, EstadoPedido.Enviado, EstadoPedido.Entregado };
+            var pedidosIds = await Context.Pedidos
+                .Where(pedido => estadosVenta.Contains(pedido.Estado))
+                .Select(pedido => pedido.IdPedido)
+                .ToListAsync();
+
+            // Solo estos estados cuentan como venta real para reportes comerciales.
             var ventas = await Context.DetallePedidos
+                .Where(detalle => pedidosIds.Contains(detalle.IdPedido))
                 .GroupBy(detalle => detalle.IdProducto)
                 .Select(grupo => new
                 {

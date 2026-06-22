@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Totaltech")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+34ceb5252ffc3f6f3449ac0f90aa2a4a12a35a50")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a12fda0751c6db3f71b6b0e864980e271dadf154")]
 [assembly: System.Reflection.AssemblyProductAttribute("Totaltech")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Totaltech")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

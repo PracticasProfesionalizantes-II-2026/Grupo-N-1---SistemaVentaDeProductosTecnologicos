@@ -1,4 +1,3 @@
-using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
 
@@ -8,42 +7,28 @@ namespace Totaltech.Endpoints
     {
         public static void MapAuthEndpoints(this WebApplication app)
         {
+            // Auth mantiene un flujo simple: registra/login sin exponer contrasenas.
             var group = app.MapGroup("/auth").WithTags("Auth");
 
             group.MapPost("/login", async (LoginDto request, IUsuariosLogica logica) =>
             {
                 var usuario = await logica.LoginAsync(request);
-
-                if (usuario is null)
-                {
-                    return Results.Unauthorized();
-                }
-
-                return Results.Ok(usuario);
+                return usuario is null ? Results.Unauthorized() : Results.Ok(usuario.ToResponse());
             });
 
-            group.MapPost("/registro", async (Usuario usuario, IUsuariosLogica logica) =>
+            group.MapPost("/registro", async (CrearUsuarioRequest request, IUsuariosLogica logica) =>
             {
-                var registrado = await logica.RegistrarAsync(usuario);
-
-                if (registrado is null)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.Conflict("Ya existe un usuario registrado con ese email.");
-                }
-
-                return Results.Created($"/usuarios/{registrado.IdUsuario}", registrado);
+                    var resultado = await logica.RegistrarAsync(request.ToEntity());
+                    return EndpointResults.FromResult(resultado, usuario => Results.Created($"/usuarios/{usuario.IdUsuario}", usuario.ToResponse()));
+                });
             });
 
             group.MapPost("/recuperar-contrasena", async (RecuperarContrasenaDto request, IUsuariosLogica logica) =>
             {
-                var existe = await logica.RecuperarContrasenaAsync(request);
-
-                if (!existe)
-                {
-                    return Results.NotFound("No existe un usuario registrado con ese email.");
-                }
-
-                return Results.Ok(new { mensaje = "Solicitud de recuperacion registrada." });
+                await logica.RecuperarContrasenaAsync(request);
+                return Results.Ok(new { mensaje = "Si el email existe, se registrara una solicitud de recuperacion." });
             });
         }
     }

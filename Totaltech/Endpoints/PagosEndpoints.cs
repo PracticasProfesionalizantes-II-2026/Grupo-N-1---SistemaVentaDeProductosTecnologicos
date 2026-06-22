@@ -1,5 +1,5 @@
-using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -7,59 +7,55 @@ namespace Totaltech.Endpoints
     {
         public static void MapPagosEndpoints(this WebApplication app)
         {
+            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/pagos").WithTags("Pagos");
 
             group.MapGet("/", async (IPagosLogica logica) =>
             {
                 var pagos = await logica.ObtenerTodosAsync();
-                return Results.Ok(pagos);
+                return Results.Ok(pagos.Select(pago => pago.ToResponse()));
             });
 
             group.MapGet("/{id:int}", async (int id, IPagosLogica logica) =>
             {
                 var pago = await logica.ObtenerPorIdAsync(id);
-                return pago is null ? Results.NotFound() : Results.Ok(pago);
+                return pago is null ? Results.NotFound() : Results.Ok(pago.ToResponse());
             });
 
-            group.MapPost("/", async (Pago pago, IPagosLogica logica) =>
+            group.MapPost("/", async (CrearPagoRequest request, IPagosLogica logica) =>
             {
-                await logica.CrearAsync(pago);
-                return Results.Created($"/pagos/{pago.IdPago}", pago);
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                {
+                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
+                    return EndpointResults.FromResult(resultado, pago => Results.Created($"/pagos/{pago.IdPago}", pago.ToResponse()));
+                });
             });
 
-            group.MapPut("/{id:int}", async (int id, Pago pago, IPagosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, ActualizarPagoRequest request, IPagosLogica logica) =>
             {
-                if (id != pago.IdPago)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.BadRequest("El id de la URL no coincide con el id del body.");
-                }
-
-                var existente = await logica.ObtenerPorIdAsync(id);
-                if (existente is null)
-                {
-                    return Results.NotFound();
-                }
-
-                await logica.ActualizarAsync(pago);
-                return Results.NoContent();
+                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
+                    return EndpointResults.FromResult(resultado, pago => Results.Ok(pago.ToResponse()));
+                });
             });
 
             group.MapDelete("/{id:int}", async (int id, IPagosLogica logica) =>
             {
-                var pago = await logica.ObtenerPorIdAsync(id);
-                if (pago is null)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.NotFound();
-                }
-
-                await logica.EliminarAsync(pago);
-                return Results.NoContent();
+                    var resultado = await logica.EliminarPorIdAsync(id);
+                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
+                });
             });
 
             group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPagoRequest request, IPagosLogica logica) =>
             {
-                var actualizado = await logica.ActualizarEstadoAsync(id, request.Estado);
-                return actualizado ? Results.NoContent() : Results.NotFound();
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                {
+                    var resultado = await logica.ActualizarEstadoAsync(id, request.Estado);
+                    return EndpointResults.FromResult(resultado, pago => Results.Ok(pago.ToResponse()));
+                });
             });
         }
     }

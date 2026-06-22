@@ -1,5 +1,5 @@
-using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -7,53 +7,46 @@ namespace Totaltech.Endpoints
     {
         public static void MapComprasEndpoints(this WebApplication app)
         {
+            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/compras").WithTags("Compras");
 
             group.MapGet("/", async (IComprasLogica logica) =>
             {
                 var compras = await logica.ObtenerTodosAsync();
-                return Results.Ok(compras);
+                return Results.Ok(compras.Select(compra => compra.ToResponse()));
             });
 
             group.MapGet("/{id:int}", async (int id, IComprasLogica logica) =>
             {
                 var compra = await logica.ObtenerPorIdAsync(id);
-                return compra is null ? Results.NotFound() : Results.Ok(compra);
+                return compra is null ? Results.NotFound() : Results.Ok(compra.ToResponse());
             });
 
-            group.MapPost("/", async (Compra compra, IComprasLogica logica) =>
+            group.MapPost("/", async (CrearCompraRequest request, IComprasLogica logica) =>
             {
-                await logica.CrearAsync(compra);
-                return Results.Created($"/compras/{compra.IdCompra}", compra);
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                {
+                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
+                    return EndpointResults.FromResult(resultado, compra => Results.Created($"/compras/{compra.IdCompra}", compra.ToResponse()));
+                });
             });
 
-            group.MapPut("/{id:int}", async (int id, Compra compra, IComprasLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, ActualizarCompraRequest request, IComprasLogica logica) =>
             {
-                if (id != compra.IdCompra)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.BadRequest("El id de la URL no coincide con el id del body.");
-                }
-
-                var existente = await logica.ObtenerPorIdAsync(id);
-                if (existente is null)
-                {
-                    return Results.NotFound();
-                }
-
-                await logica.ActualizarAsync(compra);
-                return Results.NoContent();
+                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
+                    return EndpointResults.FromResult(resultado, compra => Results.Ok(compra.ToResponse()));
+                });
             });
 
             group.MapDelete("/{id:int}", async (int id, IComprasLogica logica) =>
             {
-                var compra = await logica.ObtenerPorIdAsync(id);
-                if (compra is null)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.NotFound();
-                }
-
-                await logica.EliminarAsync(compra);
-                return Results.NoContent();
+                    var resultado = await logica.EliminarPorIdAsync(id);
+                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
+                });
             });
         }
     }

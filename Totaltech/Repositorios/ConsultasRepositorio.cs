@@ -17,6 +17,7 @@ namespace Totaltech.Repositorios
 
         public async Task<List<Consulta>> ObtenerPorUsuarioAsync(int idUsuario)
         {
+            // Filtra las consultas enviadas por un usuario registrado.
             return await Context.Consultas
                 .Where(consulta => consulta.IdUsuario == idUsuario)
                 .ToListAsync();

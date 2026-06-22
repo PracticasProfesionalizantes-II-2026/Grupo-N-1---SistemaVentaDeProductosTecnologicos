@@ -1,5 +1,5 @@
-using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -7,71 +7,64 @@ namespace Totaltech.Endpoints
     {
         public static void MapProductosEndpoints(this WebApplication app)
         {
+            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/productos").WithTags("Productos");
 
             group.MapGet("/", async (IProductosLogica logica) =>
             {
                 var productos = await logica.ObtenerTodosAsync();
-                return Results.Ok(productos);
+                return Results.Ok(productos.Select(producto => producto.ToResponse()));
             });
 
             group.MapGet("/{id:int}", async (int id, IProductosLogica logica) =>
             {
                 var producto = await logica.ObtenerPorIdAsync(id);
-                return producto is null ? Results.NotFound() : Results.Ok(producto);
+                return producto is null ? Results.NotFound() : Results.Ok(producto.ToResponse());
             });
 
-            group.MapPost("/", async (Producto producto, IProductosLogica logica) =>
+            group.MapPost("/", async (CrearProductoRequest request, IProductosLogica logica) =>
             {
-                await logica.CrearAsync(producto);
-                return Results.Created($"/productos/{producto.IdProducto}", producto);
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                {
+                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
+                    return EndpointResults.FromResult(resultado, producto => Results.Created($"/productos/{producto.IdProducto}", producto.ToResponse()));
+                });
             });
 
-            group.MapPut("/{id:int}", async (int id, Producto producto, IProductosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, ActualizarProductoRequest request, IProductosLogica logica) =>
             {
-                if (id != producto.IdProducto)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.BadRequest("El id de la URL no coincide con el id del body.");
-                }
-
-                var existente = await logica.ObtenerPorIdAsync(id);
-                if (existente is null)
-                {
-                    return Results.NotFound();
-                }
-
-                await logica.ActualizarAsync(producto);
-                return Results.NoContent();
+                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
+                    return EndpointResults.FromResult(resultado, producto => Results.Ok(producto.ToResponse()));
+                });
             });
 
             group.MapDelete("/{id:int}", async (int id, IProductosLogica logica) =>
             {
-                var producto = await logica.ObtenerPorIdAsync(id);
-                if (producto is null)
+                return await EndpointResults.HandleDbUpdateAsync(async () =>
                 {
-                    return Results.NotFound();
-                }
-
-                await logica.EliminarAsync(producto);
-                return Results.NoContent();
+                    var resultado = await logica.EliminarPorIdAsync(id);
+                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
+                });
             });
 
             group.MapGet("/buscar", async (string? texto, IProductosLogica logica) =>
             {
                 var productos = await logica.BuscarAsync(texto);
-                return Results.Ok(productos);
+                return Results.Ok(productos.Select(producto => producto.ToResponse()));
             });
 
             group.MapGet("/categoria/{idCategoria:int}", async (int idCategoria, IProductosLogica logica) =>
             {
                 var productos = await logica.ObtenerPorCategoriaAsync(idCategoria);
-                return Results.Ok(productos);
+                return Results.Ok(productos.Select(producto => producto.ToResponse()));
             });
 
             group.MapGet("/disponibles", async (IProductosLogica logica) =>
             {
                 var productos = await logica.ObtenerDisponiblesAsync();
-                return Results.Ok(productos);
+                return Results.Ok(productos.Select(producto => producto.ToResponse()));
             });
 
             group.MapPatch("/{id:int}/stock", async (int id, ActualizarStockRequest request, IProductosLogica logica) =>

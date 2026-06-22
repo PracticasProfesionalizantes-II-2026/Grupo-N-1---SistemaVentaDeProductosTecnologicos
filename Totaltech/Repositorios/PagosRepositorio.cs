@@ -17,6 +17,7 @@ namespace Totaltech.Repositorios
 
         public async Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido)
         {
+            // Permite ver todos los intentos o registros de pago asociados a un pedido.
             return await Context.Pagos
                 .Where(pago => pago.IdPedido == idPedido)
                 .ToListAsync();

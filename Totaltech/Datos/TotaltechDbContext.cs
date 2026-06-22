@@ -39,6 +39,24 @@ namespace Totaltech.Datos
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Usuario>()
+                .Property(usuario => usuario.Email)
+                .HasMaxLength(256)
+                .IsRequired();
+
+            modelBuilder.Entity<Usuario>()
+                .Property(usuario => usuario.Contrasena)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            modelBuilder.Entity<Usuario>()
+                .HasIndex(usuario => usuario.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<DetalleCarrito>()
+                .HasIndex(detalle => new { detalle.IdCarrito, detalle.IdProducto })
+                .IsUnique();
+
             modelBuilder.Entity<Carrito>()
                 .HasOne(carrito => carrito.Usuario)
                 .WithMany()
