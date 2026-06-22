@@ -18,6 +18,7 @@ namespace Totaltech.Repositorios
 
         public async Task<List<Pedido>> ObtenerPorUsuarioAsync(int idUsuario)
         {
+            // Lectura de historial de pedidos por cliente.
             return await Context.Pedidos
                 .Where(pedido => pedido.IdUsuario == idUsuario)
                 .ToListAsync();
@@ -25,6 +26,7 @@ namespace Totaltech.Repositorios
 
         public async Task<List<Pedido>> ObtenerPorEstadoAsync(EstadoPedido estado)
         {
+            // Consulta operativa para revisar pedidos segun su estado actual.
             return await Context.Pedidos
                 .Where(pedido => pedido.Estado == estado)
                 .ToListAsync();

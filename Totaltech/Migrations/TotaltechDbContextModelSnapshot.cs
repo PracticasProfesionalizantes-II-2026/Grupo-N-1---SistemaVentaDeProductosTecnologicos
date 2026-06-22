@@ -94,6 +94,42 @@ namespace Totaltech.Migrations
                     b.ToTable("Compras");
                 });
 
+            modelBuilder.Entity("Totaltech.Entidades.Consulta", b =>
+                {
+                    b.Property<int>("IdConsulta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdConsulta"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaConsulta")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("IdUsuario")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("IdConsulta");
+
+                    b.HasIndex("IdUsuario");
+
+                    b.ToTable("Consultas");
+                });
+
             modelBuilder.Entity("Totaltech.Entidades.DetalleCarrito", b =>
                 {
                     b.Property<int>("IdDetalleCarrito")
@@ -119,9 +155,10 @@ namespace Totaltech.Migrations
 
                     b.HasKey("IdDetalleCarrito");
 
-                    b.HasIndex("IdCarrito");
-
                     b.HasIndex("IdProducto");
+
+                    b.HasIndex("IdCarrito", "IdProducto")
+                        .IsUnique();
 
                     b.ToTable("DetalleCarritos");
                 });
@@ -392,11 +429,13 @@ namespace Totaltech.Migrations
 
                     b.Property<string>("Contrasena")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<DateTime>("FechaRegistro")
                         .HasColumnType("datetime2");
@@ -413,6 +452,9 @@ namespace Totaltech.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdUsuario");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Usuarios");
                 });
@@ -437,6 +479,16 @@ namespace Totaltech.Migrations
                         .IsRequired();
 
                     b.Navigation("Proveedor");
+                });
+
+            modelBuilder.Entity("Totaltech.Entidades.Consulta", b =>
+                {
+                    b.HasOne("Totaltech.Entidades.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Totaltech.Entidades.DetalleCarrito", b =>

@@ -4,6 +4,7 @@ namespace Totaltech.Repositorios
     {
         Task<List<TEntidad>> ObtenerTodosAsync();
         Task<TEntidad?> ObtenerPorIdAsync(int id);
+        Task<bool> ExisteAsync(int id);
         Task CrearAsync(TEntidad entidad);
         Task ActualizarAsync(TEntidad entidad);
         Task EliminarAsync(TEntidad entidad);

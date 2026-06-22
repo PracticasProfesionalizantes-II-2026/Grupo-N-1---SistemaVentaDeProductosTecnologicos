@@ -38,6 +38,7 @@ namespace Totaltech.Repositorios
 
         public async Task<List<Producto>> ObtenerDisponiblesAsync()
         {
+            // Un producto disponible es aquel que todavia tiene stock positivo.
             return await Context.Productos
                 .Where(producto => producto.Stock > 0)
                 .ToListAsync();

@@ -1,4 +1,5 @@
 using Totaltech.Entidades;
+using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
@@ -13,10 +14,14 @@ namespace Totaltech.Logica
     public class PedidosLogica : Logica<Pedido>, IPedidosLogica
     {
         private readonly IPedidosRepositorio _repositorio;
+        private readonly IUsuariosRepositorio _usuariosRepositorio;
+        private readonly IDireccionesRepositorio _direccionesRepositorio;
 
-        public PedidosLogica(IPedidosRepositorio repositorio) : base(repositorio)
+        public PedidosLogica(IPedidosRepositorio repositorio, IUsuariosRepositorio usuariosRepositorio, IDireccionesRepositorio direccionesRepositorio) : base(repositorio)
         {
             _repositorio = repositorio;
+            _usuariosRepositorio = usuariosRepositorio;
+            _direccionesRepositorio = direccionesRepositorio;
         }
 
         public Task<List<Pedido>> ObtenerPorUsuarioAsync(int idUsuario)
@@ -41,6 +46,55 @@ namespace Totaltech.Logica
             pedido.Estado = estado;
             await _repositorio.ActualizarAsync(pedido);
             return true;
+        }
+
+        public override async Task<ResultadoOperacion<Pedido>> CrearValidadoAsync(Pedido pedido)
+        {
+            var validacion = await ValidarPedidoAsync(pedido);
+
+            if (!validacion.Exitoso)
+            {
+                return ResultadoOperacion<Pedido>.BadRequest(validacion.Error ?? "El pedido no es valido.");
+            }
+
+            if (pedido.FechaPedido == default)
+            {
+                pedido.FechaPedido = DateTime.Now;
+            }
+
+            return await base.CrearValidadoAsync(pedido);
+        }
+
+        public override async Task<ResultadoOperacion<Pedido>> ActualizarValidadoAsync(int id, Pedido pedido)
+        {
+            var validacion = await ValidarPedidoAsync(pedido);
+
+            if (!validacion.Exitoso)
+            {
+                return ResultadoOperacion<Pedido>.BadRequest(validacion.Error ?? "El pedido no es valido.");
+            }
+
+            if (pedido.FechaPedido == default)
+            {
+                pedido.FechaPedido = DateTime.Now;
+            }
+
+            return await base.ActualizarValidadoAsync(id, pedido);
+        }
+
+        private async Task<ResultadoOperacion> ValidarPedidoAsync(Pedido pedido)
+        {
+            if (pedido.IdUsuario.HasValue && !await _usuariosRepositorio.ExisteAsync(pedido.IdUsuario.Value))
+            {
+                return ResultadoOperacion.BadRequest("El usuario indicado no existe.");
+            }
+
+            if (!await _direccionesRepositorio.ExisteAsync(pedido.IdDireccion))
+            {
+                return ResultadoOperacion.BadRequest("La direccion indicada no existe.");
+            }
+
+            return ResultadoOperacion.Ok();
         }
     }
 }
