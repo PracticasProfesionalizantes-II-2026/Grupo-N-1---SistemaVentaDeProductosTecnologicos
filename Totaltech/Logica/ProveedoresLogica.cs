@@ -1,64 +1,92 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IProveedoresLogica : ILogica<Proveedor>
+    public interface IProveedoresLogica
     {
+        Task<List<Proveedor>> ObtenerTodosAsync();
+        Task<Proveedor?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Proveedor proveedor);
+        Task<string?> ActualizarAsync(Proveedor proveedor);
+        Task<bool> EliminarAsync(int id);
     }
 
-    public class ProveedoresLogica : Logica<Proveedor>, IProveedoresLogica
+    public class ProveedoresLogica : IProveedoresLogica
     {
+        private readonly IProveedoresRepositorio _repositorio;
         private readonly IDireccionesRepositorio _direccionesRepositorio;
 
-        public ProveedoresLogica(IProveedoresRepositorio repositorio, IDireccionesRepositorio direccionesRepositorio) : base(repositorio)
+        public ProveedoresLogica(IProveedoresRepositorio repositorio, IDireccionesRepositorio direccionesRepositorio)
         {
+            _repositorio = repositorio;
             _direccionesRepositorio = direccionesRepositorio;
         }
 
-        public override async Task<ResultadoOperacion<Proveedor>> CrearValidadoAsync(Proveedor proveedor)
+        public Task<List<Proveedor>> ObtenerTodosAsync()
         {
-            var validacion = await ValidarProveedorAsync(proveedor);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Proveedor>.BadRequest(validacion.Error ?? "El proveedor no es valido.");
-            }
-
-            return await base.CrearValidadoAsync(proveedor);
+            return _repositorio.ObtenerTodosAsync();
         }
 
-        public override async Task<ResultadoOperacion<Proveedor>> ActualizarValidadoAsync(int id, Proveedor proveedor)
+        public Task<Proveedor?> ObtenerPorIdAsync(int id)
         {
-            var validacion = await ValidarProveedorAsync(proveedor);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Proveedor>.BadRequest(validacion.Error ?? "El proveedor no es valido.");
-            }
-
-            return await base.ActualizarValidadoAsync(id, proveedor);
+            return _repositorio.ObtenerPorIdAsync(id);
         }
 
-        private async Task<ResultadoOperacion> ValidarProveedorAsync(Proveedor proveedor)
+        public async Task<string?> CrearAsync(Proveedor proveedor)
+        {
+            var error = await ValidarProveedorAsync(proveedor);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.CrearAsync(proveedor);
+            return null;
+        }
+
+        public async Task<string?> ActualizarAsync(Proveedor proveedor)
+        {
+            var error = await ValidarProveedorAsync(proveedor);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.ActualizarAsync(proveedor);
+            return null;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var proveedor = await _repositorio.ObtenerPorIdAsync(id);
+            if (proveedor is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(proveedor);
+            return true;
+        }
+
+        private async Task<string?> ValidarProveedorAsync(Proveedor proveedor)
         {
             if (string.IsNullOrWhiteSpace(proveedor.RazonSocial) || string.IsNullOrWhiteSpace(proveedor.Cuit))
             {
-                return ResultadoOperacion.BadRequest("La razon social y el CUIT son obligatorios.");
+                return "La razon social y el CUIT son obligatorios.";
             }
 
             if (proveedor.PlazoPagoDias < 0 || proveedor.TiempoEntregaDias < 0)
             {
-                return ResultadoOperacion.BadRequest("Los plazos no pueden ser negativos.");
+                return "Los plazos no pueden ser negativos.";
             }
 
             if (proveedor.IdDireccion.HasValue && !await _direccionesRepositorio.ExisteAsync(proveedor.IdDireccion.Value))
             {
-                return ResultadoOperacion.BadRequest("La direccion indicada no existe.");
+                return "La direccion indicada no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

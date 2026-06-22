@@ -1,4 +1,7 @@
 namespace Totaltech.Logica.DTOs
 {
-    public record ConfirmarCarritoDto(int IdDireccion);
+    public class ConfirmarCarritoDto
+    {
+        public int IdDireccion { get; set; }
+    }
 }

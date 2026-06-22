@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
 
@@ -7,55 +9,71 @@ namespace Totaltech.Endpoints
     {
         public static void MapPagosEndpoints(this WebApplication app)
         {
-            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/pagos").WithTags("Pagos");
 
             group.MapGet("/", async (IPagosLogica logica) =>
             {
                 var pagos = await logica.ObtenerTodosAsync();
-                return Results.Ok(pagos.Select(pago => pago.ToResponse()));
+                return Results.Ok(pagos);
             });
 
             group.MapGet("/{id:int}", async (int id, IPagosLogica logica) =>
             {
                 var pago = await logica.ObtenerPorIdAsync(id);
-                return pago is null ? Results.NotFound() : Results.Ok(pago.ToResponse());
+                return pago is null ? Results.NotFound() : Results.Ok(pago);
             });
 
-            group.MapPost("/", async (CrearPagoRequest request, IPagosLogica logica) =>
+            group.MapPost("/", async (Pago pago, IPagosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var error = await logica.CrearAsync(pago);
+                if (error is not null)
                 {
-                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
-                    return EndpointResults.FromResult(resultado, pago => Results.Created($"/pagos/{pago.IdPago}", pago.ToResponse()));
-                });
+                    return Results.BadRequest(error);
+                }
+
+                return Results.Created($"/pagos/{pago.IdPago}", pago);
             });
 
-            group.MapPut("/{id:int}", async (int id, ActualizarPagoRequest request, IPagosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, Pago pago, IPagosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                if (await logica.ObtenerPorIdAsync(id) is null)
                 {
-                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
-                    return EndpointResults.FromResult(resultado, pago => Results.Ok(pago.ToResponse()));
-                });
+                    return Results.NotFound();
+                }
+
+                pago.IdPago = id;
+                var error = await logica.ActualizarAsync(pago);
+                return error is null ? Results.Ok(pago) : Results.BadRequest(error);
             });
 
             group.MapDelete("/{id:int}", async (int id, IPagosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                try
                 {
-                    var resultado = await logica.EliminarPorIdAsync(id);
-                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
-                });
+                    var eliminado = await logica.EliminarAsync(id);
+                    return eliminado ? Results.NoContent() : Results.NotFound();
+                }
+                catch (DbUpdateException)
+                {
+                    return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
+                }
             });
 
             group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPagoRequest request, IPagosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                if (await logica.ObtenerPorIdAsync(id) is null)
                 {
-                    var resultado = await logica.ActualizarEstadoAsync(id, request.Estado);
-                    return EndpointResults.FromResult(resultado, pago => Results.Ok(pago.ToResponse()));
-                });
+                    return Results.NotFound();
+                }
+
+                var error = await logica.ActualizarEstadoAsync(id, request.Estado);
+                if (error is not null)
+                {
+                    return Results.BadRequest(error);
+                }
+
+                var pago = await logica.ObtenerPorIdAsync(id);
+                return Results.Ok(pago);
             });
         }
     }

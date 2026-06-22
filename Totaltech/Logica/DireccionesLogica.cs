@@ -1,59 +1,87 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IDireccionesLogica : ILogica<Direccion>
+    public interface IDireccionesLogica
     {
+        Task<List<Direccion>> ObtenerTodosAsync();
+        Task<Direccion?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Direccion direccion);
+        Task<string?> ActualizarAsync(Direccion direccion);
+        Task<bool> EliminarAsync(int id);
     }
 
-    public class DireccionesLogica : Logica<Direccion>, IDireccionesLogica
+    public class DireccionesLogica : IDireccionesLogica
     {
+        private readonly IDireccionesRepositorio _repositorio;
         private readonly IUsuariosRepositorio _usuariosRepositorio;
 
-        public DireccionesLogica(IDireccionesRepositorio repositorio, IUsuariosRepositorio usuariosRepositorio) : base(repositorio)
+        public DireccionesLogica(IDireccionesRepositorio repositorio, IUsuariosRepositorio usuariosRepositorio)
         {
+            _repositorio = repositorio;
             _usuariosRepositorio = usuariosRepositorio;
         }
 
-        public override async Task<ResultadoOperacion<Direccion>> CrearValidadoAsync(Direccion direccion)
+        public Task<List<Direccion>> ObtenerTodosAsync()
         {
-            var validacion = await ValidarDireccionAsync(direccion);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Direccion>.BadRequest(validacion.Error ?? "La direccion no es valida.");
-            }
-
-            return await base.CrearValidadoAsync(direccion);
+            return _repositorio.ObtenerTodosAsync();
         }
 
-        public override async Task<ResultadoOperacion<Direccion>> ActualizarValidadoAsync(int id, Direccion direccion)
+        public Task<Direccion?> ObtenerPorIdAsync(int id)
         {
-            var validacion = await ValidarDireccionAsync(direccion);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Direccion>.BadRequest(validacion.Error ?? "La direccion no es valida.");
-            }
-
-            return await base.ActualizarValidadoAsync(id, direccion);
+            return _repositorio.ObtenerPorIdAsync(id);
         }
 
-        private async Task<ResultadoOperacion> ValidarDireccionAsync(Direccion direccion)
+        public async Task<string?> CrearAsync(Direccion direccion)
+        {
+            var error = await ValidarDireccionAsync(direccion);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.CrearAsync(direccion);
+            return null;
+        }
+
+        public async Task<string?> ActualizarAsync(Direccion direccion)
+        {
+            var error = await ValidarDireccionAsync(direccion);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await _repositorio.ActualizarAsync(direccion);
+            return null;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var direccion = await _repositorio.ObtenerPorIdAsync(id);
+            if (direccion is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(direccion);
+            return true;
+        }
+
+        private async Task<string?> ValidarDireccionAsync(Direccion direccion)
         {
             if (string.IsNullOrWhiteSpace(direccion.Calle) || string.IsNullOrWhiteSpace(direccion.Numero))
             {
-                return ResultadoOperacion.BadRequest("La calle y el numero son obligatorios.");
+                return "La calle y el numero son obligatorios.";
             }
 
             if (direccion.IdUsuario.HasValue && !await _usuariosRepositorio.ExisteAsync(direccion.IdUsuario.Value))
             {
-                return ResultadoOperacion.BadRequest("El usuario indicado no existe.");
+                return "El usuario indicado no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
     }
 }

@@ -5,35 +5,47 @@ using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IUsuariosLogica : ILogica<Usuario>
+    public interface IUsuariosLogica
     {
+        Task<List<Usuario>> ObtenerTodosAsync();
+        Task<Usuario?> ObtenerPorIdAsync(int id);
         Task<Usuario?> LoginAsync(LoginDto dto);
-        Task<ResultadoOperacion<Usuario>> RegistrarAsync(Usuario usuario);
+        Task<string?> CrearAsync(Usuario usuario);
+        Task<string?> RegistrarAsync(Usuario usuario);
+        Task<string?> ActualizarAsync(int id, Usuario usuario);
+        Task<bool> EliminarAsync(int id);
         Task<bool> RecuperarContrasenaAsync(RecuperarContrasenaDto dto);
     }
 
-    public class UsuariosLogica : Logica<Usuario>, IUsuariosLogica
+    public class UsuariosLogica : IUsuariosLogica
     {
         private readonly IUsuariosRepositorio _repositorio;
         private readonly PasswordHasher<Usuario> _passwordHasher = new();
 
-        public UsuariosLogica(IUsuariosRepositorio repositorio) : base(repositorio)
+        public UsuariosLogica(IUsuariosRepositorio repositorio)
         {
             _repositorio = repositorio;
+        }
+
+        public Task<List<Usuario>> ObtenerTodosAsync()
+        {
+            return _repositorio.ObtenerTodosAsync();
+        }
+
+        public Task<Usuario?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
         }
 
         public async Task<Usuario?> LoginAsync(LoginDto dto)
         {
             var usuario = await _repositorio.ObtenerPorEmailAsync(dto.Email);
-
             if (usuario is null)
             {
                 return null;
             }
 
-            // La contrasena se verifica contra hash y nunca debe devolverse en respuestas publicas.
             var resultadoHash = PasswordVerificationResult.Failed;
-
             try
             {
                 resultadoHash = _passwordHasher.VerifyHashedPassword(usuario, usuario.Contrasena, dto.Contrasena);
@@ -58,31 +70,23 @@ namespace Totaltech.Logica
             return null;
         }
 
-        public Task<ResultadoOperacion<Usuario>> RegistrarAsync(Usuario usuario)
+        public Task<string?> RegistrarAsync(Usuario usuario)
         {
-            return CrearValidadoAsync(usuario);
+            return CrearAsync(usuario);
         }
 
-        public async Task<bool> RecuperarContrasenaAsync(RecuperarContrasenaDto dto)
+        public async Task<string?> CrearAsync(Usuario usuario)
         {
-            var usuario = await _repositorio.ObtenerPorEmailAsync(dto.Email);
-            return usuario is not null;
-        }
-
-        public override async Task<ResultadoOperacion<Usuario>> CrearValidadoAsync(Usuario usuario)
-        {
-            var validacion = await ValidarUsuarioAsync(usuario, null);
-
-            if (!validacion.Exitoso)
+            var error = ValidarUsuario(usuario, necesitaContrasena: true);
+            if (error is not null)
             {
-                return ResultadoOperacion<Usuario>.BadRequest(validacion.Error ?? "El usuario no es valido.");
+                return error;
             }
 
             var existente = await _repositorio.ObtenerPorEmailAsync(usuario.Email);
-
             if (existente is not null)
             {
-                return ResultadoOperacion<Usuario>.Conflict("Ya existe un usuario registrado con ese email.");
+                return "Ya existe un usuario registrado con ese email.";
             }
 
             if (usuario.FechaRegistro == default)
@@ -92,30 +96,27 @@ namespace Totaltech.Logica
 
             usuario.Contrasena = _passwordHasher.HashPassword(usuario, usuario.Contrasena);
             await _repositorio.CrearAsync(usuario);
-            return ResultadoOperacion<Usuario>.Ok(usuario);
+            return null;
         }
 
-        public override async Task<ResultadoOperacion<Usuario>> ActualizarValidadoAsync(int id, Usuario usuario)
+        public async Task<string?> ActualizarAsync(int id, Usuario usuario)
         {
             var existente = await _repositorio.ObtenerPorIdAsync(id);
-
             if (existente is null)
             {
-                return ResultadoOperacion<Usuario>.NotFound("El usuario indicado no existe.");
+                return "El usuario indicado no existe.";
             }
 
-            var validacion = await ValidarUsuarioAsync(usuario, id);
-
-            if (!validacion.Exitoso)
+            var error = ValidarUsuario(usuario, necesitaContrasena: false);
+            if (error is not null)
             {
-                return ResultadoOperacion<Usuario>.BadRequest(validacion.Error ?? "El usuario no es valido.");
+                return error;
             }
 
             var usuarioConEmail = await _repositorio.ObtenerPorEmailAsync(usuario.Email);
-
             if (usuarioConEmail is not null && usuarioConEmail.IdUsuario != id)
             {
-                return ResultadoOperacion<Usuario>.Conflict("Ya existe otro usuario registrado con ese email.");
+                return "Ya existe otro usuario registrado con ese email.";
             }
 
             existente.Nombre = usuario.Nombre;
@@ -131,27 +132,45 @@ namespace Totaltech.Logica
             }
 
             await _repositorio.ActualizarAsync(existente);
-            return ResultadoOperacion<Usuario>.Ok(existente);
+            return null;
         }
 
-        private Task<ResultadoOperacion> ValidarUsuarioAsync(Usuario usuario, int? idActual)
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var usuario = await _repositorio.ObtenerPorIdAsync(id);
+            if (usuario is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(usuario);
+            return true;
+        }
+
+        public async Task<bool> RecuperarContrasenaAsync(RecuperarContrasenaDto dto)
+        {
+            var usuario = await _repositorio.ObtenerPorEmailAsync(dto.Email);
+            return usuario is not null;
+        }
+
+        private static string? ValidarUsuario(Usuario usuario, bool necesitaContrasena)
         {
             if (string.IsNullOrWhiteSpace(usuario.Nombre) || string.IsNullOrWhiteSpace(usuario.Apellido))
             {
-                return Task.FromResult(ResultadoOperacion.BadRequest("El nombre y el apellido son obligatorios."));
+                return "El nombre y el apellido son obligatorios.";
             }
 
             if (string.IsNullOrWhiteSpace(usuario.Email))
             {
-                return Task.FromResult(ResultadoOperacion.BadRequest("El email es obligatorio."));
+                return "El email es obligatorio.";
             }
 
-            if (!idActual.HasValue && string.IsNullOrWhiteSpace(usuario.Contrasena))
+            if (necesitaContrasena && string.IsNullOrWhiteSpace(usuario.Contrasena))
             {
-                return Task.FromResult(ResultadoOperacion.BadRequest("La contrasena es obligatoria."));
+                return "La contrasena es obligatoria.";
             }
 
-            return Task.FromResult(ResultadoOperacion.Ok());
+            return null;
         }
     }
 }

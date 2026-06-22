@@ -1,62 +1,47 @@
 using Totaltech.Entidades;
-using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
 {
-    public interface IPagosLogica : ILogica<Pago>
+    public interface IPagosLogica
     {
-        Task<ResultadoOperacion<Pago>> ActualizarEstadoAsync(int id, EstadoPago estado);
+        Task<List<Pago>> ObtenerTodosAsync();
+        Task<Pago?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Pago pago);
+        Task<string?> ActualizarAsync(Pago pago);
+        Task<bool> EliminarAsync(int id);
         Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido);
-        Task<ResultadoOperacion<Pago>> CrearParaPedidoAsync(int idPedido, Pago pago);
+        Task<string?> CrearParaPedidoAsync(int idPedido, Pago pago);
+        Task<string?> ActualizarEstadoAsync(int id, EstadoPago estado);
     }
 
-    public class PagosLogica : Logica<Pago>, IPagosLogica
+    public class PagosLogica : IPagosLogica
     {
         private readonly IPagosRepositorio _repositorio;
         private readonly IPedidosRepositorio _pedidosRepositorio;
 
-        public PagosLogica(IPagosRepositorio repositorio, IPedidosRepositorio pedidosRepositorio) : base(repositorio)
+        public PagosLogica(IPagosRepositorio repositorio, IPedidosRepositorio pedidosRepositorio)
         {
             _repositorio = repositorio;
             _pedidosRepositorio = pedidosRepositorio;
         }
 
-        public async Task<ResultadoOperacion<Pago>> ActualizarEstadoAsync(int id, EstadoPago estado)
+        public Task<List<Pago>> ObtenerTodosAsync()
         {
-            var pago = await _repositorio.ObtenerPorIdAsync(id);
+            return _repositorio.ObtenerTodosAsync();
+        }
 
-            if (pago is null)
+        public Task<Pago?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<string?> CrearAsync(Pago pago)
+        {
+            var error = await ValidarPagoAsync(pago);
+            if (error is not null)
             {
-                return ResultadoOperacion<Pago>.NotFound("El pago indicado no existe.");
-            }
-
-            pago.Estado = estado;
-            await _repositorio.ActualizarAsync(pago);
-
-            // Un pago aprobado confirma el estado comercial del pedido.
-            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
-            return ResultadoOperacion<Pago>.Ok(pago);
-        }
-
-        public Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido)
-        {
-            return _repositorio.ObtenerPorPedidoAsync(idPedido);
-        }
-
-        public async Task<ResultadoOperacion<Pago>> CrearParaPedidoAsync(int idPedido, Pago pago)
-        {
-            pago.IdPedido = idPedido;
-            return await CrearValidadoAsync(pago);
-        }
-
-        public override async Task<ResultadoOperacion<Pago>> CrearValidadoAsync(Pago pago)
-        {
-            var validacion = await ValidarPagoAsync(pago);
-
-            if (!validacion.Exitoso)
-            {
-                return ResultadoOperacion<Pago>.BadRequest(validacion.Error ?? "El pago no es valido.");
+                return error;
             }
 
             if (pago.FechaPago == default)
@@ -66,21 +51,15 @@ namespace Totaltech.Logica
 
             await _repositorio.CrearAsync(pago);
             await MarcarPedidoPagadoSiCorrespondeAsync(pago);
-            return ResultadoOperacion<Pago>.Ok(pago);
+            return null;
         }
 
-        public override async Task<ResultadoOperacion<Pago>> ActualizarValidadoAsync(int id, Pago pago)
+        public async Task<string?> ActualizarAsync(Pago pago)
         {
-            var validacion = await ValidarPagoAsync(pago);
-
-            if (!validacion.Exitoso)
+            var error = await ValidarPagoAsync(pago);
+            if (error is not null)
             {
-                return ResultadoOperacion<Pago>.BadRequest(validacion.Error ?? "El pago no es valido.");
-            }
-
-            if (!await _repositorio.ExisteAsync(id))
-            {
-                return ResultadoOperacion<Pago>.NotFound("El pago indicado no existe.");
+                return error;
             }
 
             if (pago.FechaPago == default)
@@ -90,22 +69,59 @@ namespace Totaltech.Logica
 
             await _repositorio.ActualizarAsync(pago);
             await MarcarPedidoPagadoSiCorrespondeAsync(pago);
-            return ResultadoOperacion<Pago>.Ok(pago);
+            return null;
         }
 
-        private async Task<ResultadoOperacion> ValidarPagoAsync(Pago pago)
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var pago = await _repositorio.ObtenerPorIdAsync(id);
+            if (pago is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(pago);
+            return true;
+        }
+
+        public Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido)
+        {
+            return _repositorio.ObtenerPorPedidoAsync(idPedido);
+        }
+
+        public Task<string?> CrearParaPedidoAsync(int idPedido, Pago pago)
+        {
+            pago.IdPedido = idPedido;
+            return CrearAsync(pago);
+        }
+
+        public async Task<string?> ActualizarEstadoAsync(int id, EstadoPago estado)
+        {
+            var pago = await _repositorio.ObtenerPorIdAsync(id);
+            if (pago is null)
+            {
+                return "El pago indicado no existe.";
+            }
+
+            pago.Estado = estado;
+            await _repositorio.ActualizarAsync(pago);
+            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
+            return null;
+        }
+
+        private async Task<string?> ValidarPagoAsync(Pago pago)
         {
             if (pago.Monto <= 0)
             {
-                return ResultadoOperacion.BadRequest("El monto del pago debe ser mayor a cero.");
+                return "El monto del pago debe ser mayor a cero.";
             }
 
             if (!await _pedidosRepositorio.ExisteAsync(pago.IdPedido))
             {
-                return ResultadoOperacion.BadRequest("El pedido indicado no existe.");
+                return "El pedido indicado no existe.";
             }
 
-            return ResultadoOperacion.Ok();
+            return null;
         }
 
         private async Task MarcarPedidoPagadoSiCorrespondeAsync(Pago pago)
@@ -116,7 +132,6 @@ namespace Totaltech.Logica
             }
 
             var pedido = await _pedidosRepositorio.ObtenerPorIdAsync(pago.IdPedido);
-
             if (pedido is null || pedido.Estado == EstadoPedido.Cancelado)
             {
                 return;

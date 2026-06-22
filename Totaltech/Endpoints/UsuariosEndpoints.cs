@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
 
@@ -7,47 +9,74 @@ namespace Totaltech.Endpoints
     {
         public static void MapUsuariosEndpoints(this WebApplication app)
         {
-            // Estos endpoints traducen HTTP y delegan reglas de negocio a la capa de logica.
             var group = app.MapGroup("/usuarios").WithTags("Usuarios");
 
             group.MapGet("/", async (IUsuariosLogica logica) =>
             {
                 var usuarios = await logica.ObtenerTodosAsync();
-                return Results.Ok(usuarios.Select(usuario => usuario.ToResponse()));
+                return Results.Ok(usuarios.Select(CrearRespuesta));
             });
 
             group.MapGet("/{id:int}", async (int id, IUsuariosLogica logica) =>
             {
                 var usuario = await logica.ObtenerPorIdAsync(id);
-                return usuario is null ? Results.NotFound() : Results.Ok(usuario.ToResponse());
+                return usuario is null ? Results.NotFound() : Results.Ok(CrearRespuesta(usuario));
             });
 
-            group.MapPost("/", async (CrearUsuarioRequest request, IUsuariosLogica logica) =>
+            group.MapPost("/", async (Usuario usuario, IUsuariosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                var error = await logica.CrearAsync(usuario);
+                if (error is not null)
                 {
-                    var resultado = await logica.CrearValidadoAsync(request.ToEntity());
-                    return EndpointResults.FromResult(resultado, usuario => Results.Created($"/usuarios/{usuario.IdUsuario}", usuario.ToResponse()));
-                });
+                    return error.StartsWith("Ya existe") ? Results.Conflict(error) : Results.BadRequest(error);
+                }
+
+                return Results.Created($"/usuarios/{usuario.IdUsuario}", CrearRespuesta(usuario));
             });
 
-            group.MapPut("/{id:int}", async (int id, ActualizarUsuarioRequest request, IUsuariosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, Usuario usuario, IUsuariosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                if (await logica.ObtenerPorIdAsync(id) is null)
                 {
-                    var resultado = await logica.ActualizarValidadoAsync(id, request.ToEntity(id));
-                    return EndpointResults.FromResult(resultado, usuario => Results.Ok(usuario.ToResponse()));
-                });
+                    return Results.NotFound();
+                }
+
+                var error = await logica.ActualizarAsync(id, usuario);
+                if (error is not null)
+                {
+                    return error.StartsWith("Ya existe") ? Results.Conflict(error) : Results.BadRequest(error);
+                }
+
+                var actualizado = await logica.ObtenerPorIdAsync(id);
+                return Results.Ok(CrearRespuesta(actualizado!));
             });
 
             group.MapDelete("/{id:int}", async (int id, IUsuariosLogica logica) =>
             {
-                return await EndpointResults.HandleDbUpdateAsync(async () =>
+                try
                 {
-                    var resultado = await logica.EliminarPorIdAsync(id);
-                    return EndpointResults.FromResult(resultado, () => Results.NoContent());
-                });
+                    var eliminado = await logica.EliminarAsync(id);
+                    return eliminado ? Results.NoContent() : Results.NotFound();
+                }
+                catch (DbUpdateException)
+                {
+                    return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
+                }
             });
+        }
+
+        private static UsuarioResponse CrearRespuesta(Usuario usuario)
+        {
+            return new UsuarioResponse
+            {
+                IdUsuario = usuario.IdUsuario,
+                Nombre = usuario.Nombre,
+                Apellido = usuario.Apellido,
+                Email = usuario.Email,
+                Telefono = usuario.Telefono,
+                FechaRegistro = usuario.FechaRegistro,
+                Rol = usuario.Rol
+            };
         }
     }
 }
