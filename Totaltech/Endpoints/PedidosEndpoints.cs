@@ -11,18 +11,21 @@ namespace Totaltech.Endpoints
         {
             var group = app.MapGroup("/pedidos").WithTags("Pedidos");
 
+            // obtener todos los pedidos
             group.MapGet("/", async (IPedidosLogica logica) =>
             {
                 var pedidos = await logica.ObtenerTodosAsync();
                 return Results.Ok(pedidos);
             });
 
+            // obtener un pedido por su id
             group.MapGet("/{id:int}", async (int id, IPedidosLogica logica) =>
             {
                 var pedido = await logica.ObtenerPorIdAsync(id);
                 return pedido is null ? Results.NotFound() : Results.Ok(pedido);
             });
 
+            // crear un nuevo pedido
             group.MapPost("/", async (Pedido pedido, IPedidosLogica logica) =>
             {
                 var error = await logica.CrearAsync(pedido);
@@ -34,6 +37,7 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/pedidos/{pedido.IdPedido}", pedido);
             });
 
+            // actualizar un pedido existente
             group.MapPut("/{id:int}", async (int id, Pedido pedido, IPedidosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
@@ -46,6 +50,7 @@ namespace Totaltech.Endpoints
                 return error is null ? Results.Ok(pedido) : Results.BadRequest(error);
             });
 
+            // eliminar un pedido
             group.MapDelete("/{id:int}", async (int id, IPedidosLogica logica) =>
             {
                 try
@@ -59,24 +64,28 @@ namespace Totaltech.Endpoints
                 }
             });
 
+            // obtener pedidos por usuario
             group.MapGet("/usuario/{idUsuario:int}", async (int idUsuario, IPedidosLogica logica) =>
             {
                 var pedidos = await logica.ObtenerPorUsuarioAsync(idUsuario);
                 return Results.Ok(pedidos);
             });
 
+            // obtener pedidos por estado
             group.MapGet("/estado/{estado}", async (EstadoPedido estado, IPedidosLogica logica) =>
             {
                 var pedidos = await logica.ObtenerPorEstadoAsync(estado);
                 return Results.Ok(pedidos);
             });
 
+            //actualizar el estado de un pedido
             group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPedidoRequest request, IPedidosLogica logica) =>
             {
                 var actualizado = await logica.ActualizarEstadoAsync(id, request.Estado);
                 return actualizado ? Results.NoContent() : Results.NotFound();
             });
 
+            // agregar un pago a un pedido
             group.MapPost("/{idPedido:int}/pagos", async (int idPedido, CrearPagoParaPedidoRequest request, IPagosLogica logica) =>
             {
                 var pago = new Pago
@@ -97,6 +106,7 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/pagos/{pago.IdPago}", pago);
             });
 
+            // obtener pagos de un pedido
             group.MapGet("/{idPedido:int}/pagos", async (int idPedido, IPagosLogica logica) =>
             {
                 var pagos = await logica.ObtenerPorPedidoAsync(idPedido);

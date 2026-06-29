@@ -9,19 +9,19 @@ namespace Totaltech.Endpoints
         public static void MapDireccionesEndpoints(this WebApplication app)
         {
             var group = app.MapGroup("/direcciones").WithTags("Direcciones");
-
+            // obtener todas las direcciones
             group.MapGet("/", async (IDireccionesLogica logica) =>
             {
                 var direcciones = await logica.ObtenerTodosAsync();
                 return Results.Ok(direcciones);
             });
-
+            // obtener una direccion por su id
             group.MapGet("/{id:int}", async (int id, IDireccionesLogica logica) =>
             {
                 var direccion = await logica.ObtenerPorIdAsync(id);
                 return direccion is null ? Results.NotFound() : Results.Ok(direccion);
             });
-
+            // crear una nueva direccion
             group.MapPost("/", async (Direccion direccion, IDireccionesLogica logica) =>
             {
                 var error = await logica.CrearAsync(direccion);
@@ -32,7 +32,7 @@ namespace Totaltech.Endpoints
 
                 return Results.Created($"/direcciones/{direccion.IdDireccion}", direccion);
             });
-
+            // actualizar una direccion existente
             group.MapPut("/{id:int}", async (int id, Direccion direccion, IDireccionesLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
@@ -44,7 +44,7 @@ namespace Totaltech.Endpoints
                 var error = await logica.ActualizarAsync(direccion);
                 return error is null ? Results.Ok(direccion) : Results.BadRequest(error);
             });
-
+            // eliminar una direccion
             group.MapDelete("/{id:int}", async (int id, IDireccionesLogica logica) =>
             {
                 try

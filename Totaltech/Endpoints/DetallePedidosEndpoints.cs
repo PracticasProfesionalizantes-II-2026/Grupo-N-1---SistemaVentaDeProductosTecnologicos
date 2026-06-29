@@ -8,20 +8,24 @@ namespace Totaltech.Endpoints
     {
         public static void MapDetallePedidosEndpoints(this WebApplication app)
         {
+            
             var group = app.MapGroup("/detallepedidos").WithTags("DetallePedidos");
 
+            // obtener todos los detalles de pedidos
             group.MapGet("/", async (IDetallePedidosLogica logica) =>
             {
                 var detalles = await logica.ObtenerTodosAsync();
                 return Results.Ok(detalles);
             });
 
+            // obtener un detalle de pedido por su id
             group.MapGet("/{id:int}", async (int id, IDetallePedidosLogica logica) =>
             {
                 var detalle = await logica.ObtenerPorIdAsync(id);
                 return detalle is null ? Results.NotFound() : Results.Ok(detalle);
             });
 
+            // crear un nuevo detalle de pedido
             group.MapPost("/", async (DetallePedido detalle, IDetallePedidosLogica logica) =>
             {
                 var error = await logica.CrearAsync(detalle);
@@ -33,6 +37,7 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/detallepedidos/{detalle.IdDetallePedido}", detalle);
             });
 
+            // actualizar un detalle de pedido existente
             group.MapPut("/{id:int}", async (int id, DetallePedido detalle, IDetallePedidosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
@@ -45,6 +50,7 @@ namespace Totaltech.Endpoints
                 return error is null ? Results.Ok(detalle) : Results.BadRequest(error);
             });
 
+            // eliminar un detalle de pedido
             group.MapDelete("/{id:int}", async (int id, IDetallePedidosLogica logica) =>
             {
                 try
