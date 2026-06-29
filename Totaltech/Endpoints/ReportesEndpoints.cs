@@ -10,18 +10,22 @@ namespace Totaltech.Endpoints
         {
             var group = app.MapGroup("/reportes").WithTags("Reportes");
 
+
+            // obtener todos los reportes--------------------------------
             group.MapGet("/", async (IReportesLogica logica) =>
             {
                 var reportes = await logica.ObtenerTodosAsync();
                 return Results.Ok(reportes);
             });
 
+            // obtener un reporte por su id--------------------------------
             group.MapGet("/{id:int}", async (int id, IReportesLogica logica) =>
             {
                 var reporte = await logica.ObtenerPorIdAsync(id);
                 return reporte is null ? Results.NotFound() : Results.Ok(reporte);
             });
 
+            // crear un nuevo reporte--------------------------------
             group.MapPost("/", async (Reporte reporte, IReportesLogica logica) =>
             {
                 var error = await logica.CrearAsync(reporte);
@@ -33,6 +37,7 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/reportes/{reporte.IdReporte}", reporte);
             });
 
+            // actualizar un reporte existente--------------------------------
             group.MapPut("/{id:int}", async (int id, Reporte reporte, IReportesLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
@@ -45,6 +50,7 @@ namespace Totaltech.Endpoints
                 return error is null ? Results.Ok(reporte) : Results.BadRequest(error);
             });
 
+            // eliminar un reporte--------------------------------------------------------------------
             group.MapDelete("/{id:int}", async (int id, IReportesLogica logica) =>
             {
                 try
@@ -58,6 +64,7 @@ namespace Totaltech.Endpoints
                 }
             });
 
+            // obtener ventas, ingresos y productos más vendidos--------------------------------
             group.MapGet("/ventas", async (IReportesLogica logica) =>
             {
                 var reporte = await logica.ObtenerVentasAsync();
@@ -75,6 +82,7 @@ namespace Totaltech.Endpoints
                 var reporte = await logica.ObtenerProductosMasVendidosAsync();
                 return Results.Ok(reporte);
             });
+            //--------------------------------
         }
     }
 }
