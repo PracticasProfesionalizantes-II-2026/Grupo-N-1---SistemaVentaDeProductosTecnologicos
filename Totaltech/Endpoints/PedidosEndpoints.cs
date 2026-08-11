@@ -41,13 +41,13 @@ namespace Totaltech.Endpoints
             // actualizar un pedido existente
             group.MapPut("/{id:int}", async (int id, PedidoRequest request, IPedidosLogica logica) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var pedido = await logica.ObtenerPorIdAsync(id);
+                if (pedido is null)
                 {
                     return Results.NotFound();
                 }
 
-                var pedido = request.ToEntity();
-                pedido.IdPedido = id;
+                AplicarCambios(pedido, request);
                 var error = await logica.ActualizarAsync(pedido);
                 return error is null ? Results.Ok(pedido) : Results.BadRequest(error);
             });
@@ -114,6 +114,14 @@ namespace Totaltech.Endpoints
                 var pagos = await logica.ObtenerPorPedidoAsync(idPedido);
                 return Results.Ok(pagos);
             });
+        }
+
+        private static void AplicarCambios(Pedido pedido, PedidoRequest request)
+        {
+            pedido.IdUsuario = request.IdUsuario;
+            pedido.FechaPedido = request.FechaPedido;
+            pedido.Estado = request.Estado;
+            pedido.IdDireccion = request.IdDireccion;
         }
     }
 }
