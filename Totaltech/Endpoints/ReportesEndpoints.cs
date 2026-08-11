@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -26,8 +27,9 @@ namespace Totaltech.Endpoints
             });
 
             // crear un nuevo reporte--------------------------------
-            group.MapPost("/", async (Reporte reporte, IReportesLogica logica) =>
+            group.MapPost("/", async (ReporteRequest request, IReportesLogica logica) =>
             {
+                var reporte = request.ToEntity();
                 var error = await logica.CrearAsync(reporte);
                 if (error is not null)
                 {
@@ -38,13 +40,14 @@ namespace Totaltech.Endpoints
             });
 
             // actualizar un reporte existente--------------------------------
-            group.MapPut("/{id:int}", async (int id, Reporte reporte, IReportesLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, ReporteRequest request, IReportesLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
                 {
                     return Results.NotFound();
                 }
 
+                var reporte = request.ToEntity();
                 reporte.IdReporte = id;
                 var error = await logica.ActualizarAsync(reporte);
                 return error is null ? Results.Ok(reporte) : Results.BadRequest(error);

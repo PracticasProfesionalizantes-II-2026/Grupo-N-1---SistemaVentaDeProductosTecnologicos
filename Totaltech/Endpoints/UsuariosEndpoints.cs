@@ -23,8 +23,9 @@ namespace Totaltech.Endpoints
                 return usuario is null ? Results.NotFound() : Results.Ok(CrearRespuesta(usuario));
             });
             // crear un nuevo usuario
-            group.MapPost("/", async (Usuario usuario, IUsuariosLogica logica) =>
+            group.MapPost("/", async (UsuarioRequest request, IUsuariosLogica logica) =>
             {
+                var usuario = request.ToEntity();
                 var error = await logica.CrearAsync(usuario);
                 if (error is not null)
                 {
@@ -34,13 +35,14 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/usuarios/{usuario.IdUsuario}", CrearRespuesta(usuario));
             });
             // actualizar un usuario existente
-            group.MapPut("/{id:int}", async (int id, Usuario usuario, IUsuariosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, UsuarioRequest request, IUsuariosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
                 {
                     return Results.NotFound();
                 }
 
+                var usuario = request.ToEntity();
                 var error = await logica.ActualizarAsync(id, usuario);
                 if (error is not null)
                 {
