@@ -1,0 +1,144 @@
+using Totaltech.Entidades;
+using Totaltech.Repositorios;
+
+namespace Totaltech.Logica
+{
+    public interface IPagosLogica
+    {
+        Task<List<Pago>> ObtenerTodosAsync();
+        Task<Pago?> ObtenerPorIdAsync(int id);
+        Task<string?> CrearAsync(Pago pago);
+        Task<string?> ActualizarAsync(Pago pago);
+        Task<bool> EliminarAsync(int id);
+        Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido);
+        Task<string?> CrearParaPedidoAsync(int idPedido, Pago pago);
+        Task<string?> ActualizarEstadoAsync(int id, EstadoPago estado);
+    }
+
+    public class PagosLogica : IPagosLogica
+    {
+        private readonly IPagosRepositorio _repositorio;
+        private readonly IPedidosRepositorio _pedidosRepositorio;
+
+        public PagosLogica(IPagosRepositorio repositorio, IPedidosRepositorio pedidosRepositorio)
+        {
+            _repositorio = repositorio;
+            _pedidosRepositorio = pedidosRepositorio;
+        }
+
+        public Task<List<Pago>> ObtenerTodosAsync()
+        {
+            return _repositorio.ObtenerTodosAsync();
+        }
+
+        public Task<Pago?> ObtenerPorIdAsync(int id)
+        {
+            return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<string?> CrearAsync(Pago pago)
+        {
+            var error = await ValidarPagoAsync(pago);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            if (pago.FechaPago == default)
+            {
+                pago.FechaPago = DateTime.Now;
+            }
+
+            await _repositorio.CrearAsync(pago);
+            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
+            return null;
+        }
+
+        public async Task<string?> ActualizarAsync(Pago pago)
+        {
+            var error = await ValidarPagoAsync(pago);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            if (pago.FechaPago == default)
+            {
+                pago.FechaPago = DateTime.Now;
+            }
+
+            await _repositorio.ActualizarAsync(pago);
+            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
+            return null;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var pago = await _repositorio.ObtenerPorIdAsync(id);
+            if (pago is null)
+            {
+                return false;
+            }
+
+            await _repositorio.EliminarAsync(pago);
+            return true;
+        }
+
+        public Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido)
+        {
+            return _repositorio.ObtenerPorPedidoAsync(idPedido);
+        }
+
+        public Task<string?> CrearParaPedidoAsync(int idPedido, Pago pago)
+        {
+            pago.IdPedido = idPedido;
+            return CrearAsync(pago);
+        }
+
+        public async Task<string?> ActualizarEstadoAsync(int id, EstadoPago estado)
+        {
+            var pago = await _repositorio.ObtenerPorIdAsync(id);
+            if (pago is null)
+            {
+                return "El pago indicado no existe.";
+            }
+
+            pago.Estado = estado;
+            await _repositorio.ActualizarAsync(pago);
+            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
+            return null;
+        }
+
+        private async Task<string?> ValidarPagoAsync(Pago pago)
+        {
+            if (pago.Monto <= 0)
+            {
+                return "El monto del pago debe ser mayor a cero.";
+            }
+
+            if (!await _pedidosRepositorio.ExisteAsync(pago.IdPedido))
+            {
+                return "El pedido indicado no existe.";
+            }
+
+            return null;
+        }
+
+        private async Task MarcarPedidoPagadoSiCorrespondeAsync(Pago pago)
+        {
+            if (pago.Estado != EstadoPago.Aprobado)
+            {
+                return;
+            }
+
+            var pedido = await _pedidosRepositorio.ObtenerPorIdAsync(pago.IdPedido);
+            if (pedido is null || pedido.Estado == EstadoPedido.Cancelado)
+            {
+                return;
+            }
+
+            pedido.Estado = EstadoPedido.Pagado;
+            await _pedidosRepositorio.ActualizarAsync(pedido);
+        }
+    }
+}
