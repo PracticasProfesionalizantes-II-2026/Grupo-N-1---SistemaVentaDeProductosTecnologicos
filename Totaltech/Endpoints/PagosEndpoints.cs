@@ -10,7 +10,7 @@ namespace Totaltech.Endpoints
         public static void MapPagosEndpoints(this WebApplication app)
         {
             var group = app.MapGroup("/pagos").WithTags("Pagos");
-            
+
             //obtener todos los pagos
             group.MapGet("/", async (IPagosLogica logica) =>
             {
@@ -27,8 +27,9 @@ namespace Totaltech.Endpoints
             });
 
             //crear un nuevo pago----------------------------
-            group.MapPost("/", async (Pago pago, IPagosLogica logica) =>
+            group.MapPost("/", async (PagoRequest request, IPagosLogica logica) =>
             {
+                var pago = request.ToEntity();
                 var error = await logica.CrearAsync(pago);
                 if (error is not null)
                 {
@@ -39,13 +40,14 @@ namespace Totaltech.Endpoints
             });
 
             //actualizar un pago existente-------------------------------------------------------------
-            group.MapPut("/{id:int}", async (int id, Pago pago, IPagosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, PagoRequest request, IPagosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
                 {
                     return Results.NotFound();
                 }
 
+                var pago = request.ToEntity();
                 pago.IdPago = id;
                 var error = await logica.ActualizarAsync(pago);
                 return error is null ? Results.Ok(pago) : Results.BadRequest(error);
