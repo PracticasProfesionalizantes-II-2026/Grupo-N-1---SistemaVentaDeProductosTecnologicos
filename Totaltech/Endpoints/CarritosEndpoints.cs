@@ -41,13 +41,15 @@ namespace Totaltech.Endpoints
             // actualizar un carrito existente
             group.MapPut("/{id:int}", async (int id, CarritoRequest request, ICarritosLogica logica) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var carrito = await logica.ObtenerPorIdAsync(id);
+                if (carrito is null)
                 {
                     return Results.NotFound();
                 }
 
-                var carrito = request.ToEntity();
-                carrito.IdCarrito = id;
+                carrito.IdUsuario = request.IdUsuario;
+                carrito.FechaCreacion = request.FechaCreacion;
+                carrito.Estado = request.Estado;
                 var error = await logica.ActualizarAsync(carrito);
                 return error is null ? Results.Ok(carrito) : Results.BadRequest(error);
             });

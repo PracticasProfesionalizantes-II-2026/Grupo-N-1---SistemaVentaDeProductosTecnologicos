@@ -90,6 +90,11 @@ namespace Totaltech.Logica
 
         private async Task<string?> ValidarReporteAsync(Reporte reporte)
         {
+            if (!Enum.IsDefined(reporte.TipoReporte))
+            {
+                return "El tipo de reporte no es valido.";
+            }
+
             if (!await _usuariosRepositorio.ExisteAsync(reporte.IdUsuario))
             {
                 return "El usuario indicado no existe.";

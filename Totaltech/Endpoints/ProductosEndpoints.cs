@@ -37,13 +37,13 @@ namespace Totaltech.Endpoints
             // actualizar un producto existente
             group.MapPut("/{id:int}", async (int id, ProductoRequest request, IProductosLogica logica) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var producto = await logica.ObtenerPorIdAsync(id);
+                if (producto is null)
                 {
                     return Results.NotFound();
                 }
 
-                var producto = request.ToEntity();
-                producto.IdProducto = id;
+                AplicarCambios(producto, request);
                 var error = await logica.ActualizarAsync(producto);
                 return error is null ? Results.Ok(producto) : Results.BadRequest(error);
             });
@@ -90,6 +90,16 @@ namespace Totaltech.Endpoints
                 var actualizado = await logica.ActualizarStockAsync(id, request.Stock);
                 return actualizado ? Results.NoContent() : Results.NotFound();
             });
+        }
+
+        private static void AplicarCambios(Producto producto, ProductoRequest request)
+        {
+            producto.Nombre = request.Nombre;
+            producto.Descripcion = request.Descripcion;
+            producto.Precio = request.Precio;
+            producto.Stock = request.Stock;
+            producto.IdCategoria = request.IdCategoria;
+            producto.IdProveedor = request.IdProveedor;
         }
     }
 }

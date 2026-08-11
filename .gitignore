@@ -1,3 +1,5 @@
 # Generated .NET build artifacts
 **/bin/
 **/obj/
+
+.fake

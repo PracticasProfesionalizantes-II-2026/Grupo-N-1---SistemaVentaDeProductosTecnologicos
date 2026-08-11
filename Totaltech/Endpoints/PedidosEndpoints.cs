@@ -76,6 +76,11 @@ namespace Totaltech.Endpoints
             // obtener pedidos por estado
             group.MapGet("/estado/{estado}", async (EstadoPedido estado, IPedidosLogica logica) =>
             {
+                if (!Enum.IsDefined(estado))
+                {
+                    return Results.BadRequest("El estado del pedido no es valido.");
+                }
+
                 var pedidos = await logica.ObtenerPorEstadoAsync(estado);
                 return Results.Ok(pedidos);
             });
@@ -83,6 +88,11 @@ namespace Totaltech.Endpoints
             //actualizar el estado de un pedido
             group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPedidoRequest request, IPedidosLogica logica) =>
             {
+                if (!Enum.IsDefined(request.Estado))
+                {
+                    return Results.BadRequest("El estado del pedido no es valido.");
+                }
+
                 var actualizado = await logica.ActualizarEstadoAsync(id, request.Estado);
                 return actualizado ? Results.NoContent() : Results.NotFound();
             });
