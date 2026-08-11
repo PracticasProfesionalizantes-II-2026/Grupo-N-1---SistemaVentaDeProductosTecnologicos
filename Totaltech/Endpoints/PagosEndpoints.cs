@@ -11,18 +11,22 @@ namespace Totaltech.Endpoints
         {
             var group = app.MapGroup("/pagos").WithTags("Pagos");
 
+            //obtener todos los pagos
             group.MapGet("/", async (IPagosLogica logica) =>
             {
                 var pagos = await logica.ObtenerTodosAsync();
                 return Results.Ok(pagos);
             });
 
+
+            //obtener un pago por su id-------------------------------
             group.MapGet("/{id:int}", async (int id, IPagosLogica logica) =>
             {
                 var pago = await logica.ObtenerPorIdAsync(id);
                 return pago is null ? Results.NotFound() : Results.Ok(pago);
             });
 
+            //crear un nuevo pago----------------------------
             group.MapPost("/", async (PagoRequest request, IPagosLogica logica) =>
             {
                 var pago = request.ToEntity();
@@ -35,6 +39,7 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/pagos/{pago.IdPago}", pago);
             });
 
+            //actualizar un pago existente-------------------------------------------------------------
             group.MapPut("/{id:int}", async (int id, PagoRequest request, IPagosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
@@ -48,6 +53,7 @@ namespace Totaltech.Endpoints
                 return error is null ? Results.Ok(pago) : Results.BadRequest(error);
             });
 
+            //eliminar un pago--------------------------------------------------------------------
             group.MapDelete("/{id:int}", async (int id, IPagosLogica logica) =>
             {
                 try
@@ -61,6 +67,7 @@ namespace Totaltech.Endpoints
                 }
             });
 
+            //actualizar el estado de un pago--------------------------------------------------------------
             group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPagoRequest request, IPagosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)

@@ -11,18 +11,22 @@ namespace Totaltech.Endpoints
         {
             var group = app.MapGroup("/compras").WithTags("Compras");
 
+
+            // obtener todas las compras--------------------------------
             group.MapGet("/", async (IComprasLogica logica) =>
             {
                 var compras = await logica.ObtenerTodosAsync();
                 return Results.Ok(compras);
             });
 
+            // obtener una compra por su id--------------------------------
             group.MapGet("/{id:int}", async (int id, IComprasLogica logica) =>
             {
                 var compra = await logica.ObtenerPorIdAsync(id);
                 return compra is null ? Results.NotFound() : Results.Ok(compra);
             });
 
+            // crear una nueva compra--------------------------------
             group.MapPost("/", async (CompraRequest request, IComprasLogica logica) =>
             {
                 var compra = request.ToEntity();
@@ -35,6 +39,7 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/compras/{compra.IdCompra}", compra);
             });
 
+            // actualizar una compra existente--------------------------------
             group.MapPut("/{id:int}", async (int id, CompraRequest request, IComprasLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
@@ -48,6 +53,8 @@ namespace Totaltech.Endpoints
                 return error is null ? Results.Ok(compra) : Results.BadRequest(error);
             });
 
+
+            // eliminar una compra--------------------------------------------------------------------
             group.MapDelete("/{id:int}", async (int id, IComprasLogica logica) =>
             {
                 try

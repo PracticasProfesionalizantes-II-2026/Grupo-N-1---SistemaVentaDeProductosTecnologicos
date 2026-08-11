@@ -10,12 +10,14 @@ namespace Totaltech.Endpoints
         {
             var group = app.MapGroup("/auth").WithTags("Auth");
 
+            // login--------------------------------
             group.MapPost("/login", async (LoginDto request, IUsuariosLogica logica) =>
             {
                 var usuario = await logica.LoginAsync(request);
                 return usuario is null ? Results.Unauthorized() : Results.Ok(CrearRespuesta(usuario));
             });
 
+            // registrar un nuevo usuario--------------------------------
             group.MapPost("/registro", async (UsuarioRequest request, IUsuariosLogica logica) =>
             {
                 var usuario = request.ToEntity();
@@ -28,6 +30,7 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/usuarios/{usuario.IdUsuario}", CrearRespuesta(usuario));
             });
 
+            // recuperar contraseña--------------------------------
             group.MapPost("/recuperar-contrasena", async (RecuperarContrasenaDto request, IUsuariosLogica logica) =>
             {
                 await logica.RecuperarContrasenaAsync(request);
