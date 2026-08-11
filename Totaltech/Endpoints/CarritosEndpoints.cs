@@ -23,8 +23,9 @@ namespace Totaltech.Endpoints
                 return carrito is null ? Results.NotFound() : Results.Ok(carrito);
             });
 
-            group.MapPost("/", async (Carrito carrito, ICarritosLogica logica) =>
+            group.MapPost("/", async (CarritoRequest request, ICarritosLogica logica) =>
             {
+                var carrito = request.ToEntity();
                 var error = await logica.CrearAsync(carrito);
                 if (error is not null)
                 {
@@ -34,13 +35,14 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/carritos/{carrito.IdCarrito}", carrito);
             });
 
-            group.MapPut("/{id:int}", async (int id, Carrito carrito, ICarritosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, CarritoRequest request, ICarritosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
                 {
                     return Results.NotFound();
                 }
 
+                var carrito = request.ToEntity();
                 carrito.IdCarrito = id;
                 var error = await logica.ActualizarAsync(carrito);
                 return error is null ? Results.Ok(carrito) : Results.BadRequest(error);

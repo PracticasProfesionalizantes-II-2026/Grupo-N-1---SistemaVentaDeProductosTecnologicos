@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -22,8 +23,9 @@ namespace Totaltech.Endpoints
                 return proveedor is null ? Results.NotFound() : Results.Ok(proveedor);
             });
 
-            group.MapPost("/", async (Proveedor proveedor, IProveedoresLogica logica) =>
+            group.MapPost("/", async (ProveedorRequest request, IProveedoresLogica logica) =>
             {
+                var proveedor = request.ToEntity();
                 var error = await logica.CrearAsync(proveedor);
                 if (error is not null)
                 {
@@ -33,13 +35,14 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/proveedores/{proveedor.IdProveedor}", proveedor);
             });
 
-            group.MapPut("/{id:int}", async (int id, Proveedor proveedor, IProveedoresLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, ProveedorRequest request, IProveedoresLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
                 {
                     return Results.NotFound();
                 }
 
+                var proveedor = request.ToEntity();
                 proveedor.IdProveedor = id;
                 var error = await logica.ActualizarAsync(proveedor);
                 return error is null ? Results.Ok(proveedor) : Results.BadRequest(error);

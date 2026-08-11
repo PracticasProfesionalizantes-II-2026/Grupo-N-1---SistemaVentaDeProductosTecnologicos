@@ -16,8 +16,9 @@ namespace Totaltech.Endpoints
                 return usuario is null ? Results.Unauthorized() : Results.Ok(CrearRespuesta(usuario));
             });
 
-            group.MapPost("/registro", async (Usuario usuario, IUsuariosLogica logica) =>
+            group.MapPost("/registro", async (UsuarioRequest request, IUsuariosLogica logica) =>
             {
+                var usuario = request.ToEntity();
                 var error = await logica.RegistrarAsync(usuario);
                 if (error is not null)
                 {

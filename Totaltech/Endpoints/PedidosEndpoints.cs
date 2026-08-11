@@ -23,8 +23,9 @@ namespace Totaltech.Endpoints
                 return pedido is null ? Results.NotFound() : Results.Ok(pedido);
             });
 
-            group.MapPost("/", async (Pedido pedido, IPedidosLogica logica) =>
+            group.MapPost("/", async (PedidoRequest request, IPedidosLogica logica) =>
             {
+                var pedido = request.ToEntity();
                 var error = await logica.CrearAsync(pedido);
                 if (error is not null)
                 {
@@ -34,13 +35,14 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/pedidos/{pedido.IdPedido}", pedido);
             });
 
-            group.MapPut("/{id:int}", async (int id, Pedido pedido, IPedidosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, PedidoRequest request, IPedidosLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
                 {
                     return Results.NotFound();
                 }
 
+                var pedido = request.ToEntity();
                 pedido.IdPedido = id;
                 var error = await logica.ActualizarAsync(pedido);
                 return error is null ? Results.Ok(pedido) : Results.BadRequest(error);

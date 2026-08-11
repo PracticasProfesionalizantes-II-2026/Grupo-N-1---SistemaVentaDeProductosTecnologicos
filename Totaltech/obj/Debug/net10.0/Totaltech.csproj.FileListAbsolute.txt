@@ -158,3 +158,10 @@ C:\Users\facu_\Documents\GitHub\Grupo-N-1---SistemaVentaDeProductosTecnologicos\
 C:\Users\facu_\Documents\GitHub\Grupo-N-1---SistemaVentaDeProductosTecnologicos\Grupo-N-1---SistemaVentaDeProductosTecnologicos\Totaltech\bin\Debug\net10.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
 C:\Users\facu_\Documents\GitHub\Grupo-N-1---SistemaVentaDeProductosTecnologicos\Grupo-N-1---SistemaVentaDeProductosTecnologicos\Totaltech\bin\Debug\net10.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
 C:\Users\facu_\Documents\GitHub\Grupo-N-1---SistemaVentaDeProductosTecnologicos\Grupo-N-1---SistemaVentaDeProductosTecnologicos\Totaltech\bin\Debug\net10.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\facu_\AppData\Local\Temp\totaltech-build-5fd26dc879dd4d54b704a0048b8a9c7d\appsettings.Development.json
+C:\Users\facu_\AppData\Local\Temp\totaltech-build-5fd26dc879dd4d54b704a0048b8a9c7d\appsettings.json
+C:\Users\facu_\AppData\Local\Temp\totaltech-build-5fd26dc879dd4d54b704a0048b8a9c7d\Totaltech.staticwebassets.endpoints.json
+C:\Users\facu_\AppData\Local\Temp\totaltech-build-5fd26dc879dd4d54b704a0048b8a9c7d\Totaltech.deps.json
+C:\Users\facu_\AppData\Local\Temp\totaltech-build-5fd26dc879dd4d54b704a0048b8a9c7d\Totaltech.runtimeconfig.json
+C:\Users\facu_\AppData\Local\Temp\totaltech-build-5fd26dc879dd4d54b704a0048b8a9c7d\Totaltech.dll
+C:\Users\facu_\AppData\Local\Temp\totaltech-build-5fd26dc879dd4d54b704a0048b8a9c7d\Totaltech.pdb
