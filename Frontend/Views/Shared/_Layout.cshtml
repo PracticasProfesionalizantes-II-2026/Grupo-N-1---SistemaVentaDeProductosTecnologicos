@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+@{
+    var isLoginPage = ViewData["IsLoginPage"] as bool? ?? false;
+}
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Frontend</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Frontend.styles.css" asp-append-version="true" />
+</head>
+<body class="@(isLoginPage ? "login-body" : null)">
+    <header class="site-header">
+        <div class="header-topbar">
+            <a class="header-brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="Ir al inicio de Totaltech">
+                <img src="~/images/totaltech-logo.png" alt="Totaltech" />
+            </a>
+
+            <form class="header-search" role="search">
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
+                </svg>
+                <input type="search" name="buscar" placeholder="Buscar productos" aria-label="Buscar productos" />
+                <button type="button" aria-label="Buscar por voz">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm6-3a6 6 0 0 1-12 0m6 6v3m-3 0h6" />
+                    </svg>
+                </button>
+            </form>
+
+            @if (isLoginPage)
+            {
+                <div class="header-actions">
+                    <a class="register-link" asp-area="" asp-controller="Home" asp-action="Privacy">Registrarse</a>
+                    <a class="cart-link" asp-area="" asp-controller="Home" asp-action="Privacy" aria-label="Ver carrito">
+                        <svg aria-hidden="true" viewBox="0 0 24 24">
+                            <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6m4 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm9 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+                        </svg>
+                    </a>
+                </div>
+            }
+        </div>
+
+        <nav class="main-navigation" aria-label="Navegación principal">
+            <a asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Productos</a>
+            @if (isLoginPage)
+            {
+                <a asp-area="" asp-controller="Home" asp-action="Privacy">Servicios</a>
+            }
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Contactos</a>
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Ofertas</a>
+            @if (!isLoginPage)
+            {
+                <a asp-area="" asp-controller="Home" asp-action="Login">Iniciar sesión</a>
+            }
+        </nav>
+    </header>
+
+    <main role="main" class="site-main">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer" aria-label="Pie de página"></footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
