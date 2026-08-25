@@ -87,6 +87,11 @@ namespace Totaltech.Logica
 
         private async Task<string?> ValidarConsultaAsync(Consulta consulta)
         {
+            if (!Enum.IsDefined(consulta.Estado))
+            {
+                return "El estado de la consulta no es valido.";
+            }
+
             if (string.IsNullOrWhiteSpace(consulta.Email) || string.IsNullOrWhiteSpace(consulta.Mensaje))
             {
                 return "El email y el mensaje son obligatorios.";

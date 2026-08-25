@@ -50,7 +50,7 @@ namespace Totaltech.Logica
             }
 
             await _repositorio.CrearAsync(pago);
-            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
+            await SincronizarEstadoPedidoAsync(pago.IdPedido);
             return null;
         }
 
@@ -68,7 +68,7 @@ namespace Totaltech.Logica
             }
 
             await _repositorio.ActualizarAsync(pago);
-            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
+            await SincronizarEstadoPedidoAsync(pago.IdPedido);
             return null;
         }
 
@@ -80,7 +80,9 @@ namespace Totaltech.Logica
                 return false;
             }
 
+            var idPedido = pago.IdPedido;
             await _repositorio.EliminarAsync(pago);
+            await SincronizarEstadoPedidoAsync(idPedido);
             return true;
         }
 
@@ -97,6 +99,11 @@ namespace Totaltech.Logica
 
         public async Task<string?> ActualizarEstadoAsync(int id, EstadoPago estado)
         {
+            if (!Enum.IsDefined(estado))
+            {
+                return "El estado del pago no es valido.";
+            }
+
             var pago = await _repositorio.ObtenerPorIdAsync(id);
             if (pago is null)
             {
@@ -105,7 +112,7 @@ namespace Totaltech.Logica
 
             pago.Estado = estado;
             await _repositorio.ActualizarAsync(pago);
-            await MarcarPedidoPagadoSiCorrespondeAsync(pago);
+            await SincronizarEstadoPedidoAsync(pago.IdPedido);
             return null;
         }
 
@@ -116,6 +123,11 @@ namespace Totaltech.Logica
                 return "El monto del pago debe ser mayor a cero.";
             }
 
+            if (!Enum.IsDefined(pago.MetodoPago) || !Enum.IsDefined(pago.Estado))
+            {
+                return "El metodo o el estado del pago no es valido.";
+            }
+
             if (!await _pedidosRepositorio.ExisteAsync(pago.IdPedido))
             {
                 return "El pedido indicado no existe.";
@@ -124,21 +136,27 @@ namespace Totaltech.Logica
             return null;
         }
 
-        private async Task MarcarPedidoPagadoSiCorrespondeAsync(Pago pago)
+        private async Task SincronizarEstadoPedidoAsync(int idPedido)
         {
-            if (pago.Estado != EstadoPago.Aprobado)
-            {
-                return;
-            }
-
-            var pedido = await _pedidosRepositorio.ObtenerPorIdAsync(pago.IdPedido);
+            var pedido = await _pedidosRepositorio.ObtenerPorIdAsync(idPedido);
             if (pedido is null || pedido.Estado == EstadoPedido.Cancelado)
             {
                 return;
             }
 
-            pedido.Estado = EstadoPedido.Pagado;
-            await _pedidosRepositorio.ActualizarAsync(pedido);
+            var pagos = await _repositorio.ObtenerPorPedidoAsync(idPedido);
+            var tienePagoAprobado = pagos.Any(pago => pago.Estado == EstadoPago.Aprobado);
+
+            if (tienePagoAprobado && pedido.Estado == EstadoPedido.Pendiente)
+            {
+                pedido.Estado = EstadoPedido.Pagado;
+                await _pedidosRepositorio.ActualizarAsync(pedido);
+            }
+            else if (!tienePagoAprobado && pedido.Estado == EstadoPedido.Pagado)
+            {
+                pedido.Estado = EstadoPedido.Pendiente;
+                await _pedidosRepositorio.ActualizarAsync(pedido);
+            }
         }
     }
 }
