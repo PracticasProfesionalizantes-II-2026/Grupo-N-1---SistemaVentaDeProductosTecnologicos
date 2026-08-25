@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "IUSltne04g0=",
+  "dgSpecHash": "gfAkeVGZ+AA=",
   "success": true,
-  "projectFilePath": "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
+  "projectFilePath": "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\daian\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
     "C:\\Users\\daian\\.nuget\\packages\\azure.identity\\1.14.2\\azure.identity.1.14.2.nupkg.sha512",
@@ -59,9 +59,9 @@
       "code": "NU1903",
       "level": "Warning",
       "message": "El paquete \"Microsoft.OpenApi\" 2.0.0 tiene una vulnerabilidad de gravedad alta conocida, https://github.com/advisories/GHSA-v5pm-xwqc-g5wc",
-      "projectPath": "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
+      "projectPath": "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
       "warningLevel": 1,
-      "filePath": "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
+      "filePath": "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
       "libraryId": "Microsoft.OpenApi",
       "targetGraphs": [
         "net10.0"

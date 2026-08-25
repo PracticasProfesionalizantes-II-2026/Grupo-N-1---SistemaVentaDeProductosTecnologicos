@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj": {}
+    "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj": {}
   },
   "projects": {
-    "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj": {
+    "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
+        "projectUniqueName": "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
         "projectName": "Totaltech",
-        "projectPath": "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
+        "projectPath": "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\Totaltech.csproj",
         "packagesPath": "C:\\Users\\daian\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\obj\\",
+        "outputPath": "c:\\Users\\daian\\OneDrive\\Documentos\\Repo git\\Practica II- 2026\\Grupo-N-1---SistemaVentaDeProductosTecnologicos\\Totaltech\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\daian\\AppData\\Roaming\\NuGet\\NuGet.Config"
