@@ -37,13 +37,13 @@ namespace Totaltech.Endpoints
             // actualizar una direccion existente
             group.MapPut("/{id:int}", async (int id, DireccionRequest request, IDireccionesLogica logica) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var direccion = await logica.ObtenerPorIdAsync(id);
+                if (direccion is null)
                 {
                     return Results.NotFound();
                 }
 
-                var direccion = request.ToEntity();
-                direccion.IdDireccion = id;
+                AplicarCambios(direccion, request);
                 var error = await logica.ActualizarAsync(direccion);
                 return error is null ? Results.Ok(direccion) : Results.BadRequest(error);
             });
@@ -60,6 +60,18 @@ namespace Totaltech.Endpoints
                     return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
                 }
             });
+        }
+
+        private static void AplicarCambios(Direccion direccion, DireccionRequest request)
+        {
+            direccion.IdUsuario = request.IdUsuario;
+            direccion.Calle = request.Calle;
+            direccion.Numero = request.Numero;
+            direccion.Ciudad = request.Ciudad;
+            direccion.Provincia = request.Provincia;
+            direccion.CodigoPostal = request.CodigoPostal;
+            direccion.Pais = request.Pais;
+            direccion.Tipo = request.Tipo;
         }
     }
 }

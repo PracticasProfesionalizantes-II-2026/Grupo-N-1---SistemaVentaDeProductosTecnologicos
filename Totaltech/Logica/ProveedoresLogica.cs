@@ -76,6 +76,18 @@ namespace Totaltech.Logica
                 return "La razon social y el CUIT son obligatorios.";
             }
 
+            if (proveedor.Cuit.Length > 20)
+            {
+                return "El CUIT no puede superar los 20 caracteres.";
+            }
+
+            if (string.IsNullOrWhiteSpace(proveedor.EmailComercial)
+                || string.IsNullOrWhiteSpace(proveedor.CondicionIva)
+                || string.IsNullOrWhiteSpace(proveedor.MonedaPreferida))
+            {
+                return "El email comercial, la condicion de IVA y la moneda preferida son obligatorios.";
+            }
+
             if (proveedor.PlazoPagoDias < 0 || proveedor.TiempoEntregaDias < 0)
             {
                 return "Los plazos no pueden ser negativos.";

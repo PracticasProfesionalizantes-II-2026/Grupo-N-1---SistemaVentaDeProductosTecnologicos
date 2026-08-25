@@ -71,6 +71,11 @@ namespace Totaltech.Logica
 
         private async Task<string?> ValidarDireccionAsync(Direccion direccion)
         {
+            if (!Enum.IsDefined(direccion.Tipo))
+            {
+                return "El tipo de direccion no es valido.";
+            }
+
             if (string.IsNullOrWhiteSpace(direccion.Calle) || string.IsNullOrWhiteSpace(direccion.Numero))
             {
                 return "La calle y el numero son obligatorios.";

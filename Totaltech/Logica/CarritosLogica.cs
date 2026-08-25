@@ -175,6 +175,11 @@ namespace Totaltech.Logica
                 return "El carrito indicado no existe.";
             }
 
+            if (carrito.Estado != EstadoCarrito.Activo)
+            {
+                return "Solo se pueden modificar carritos activos.";
+            }
+
             var eliminado = await _detalleCarritosRepositorio.EliminarPorCarritoYProductoAsync(idCarrito, idProducto);
             return eliminado ? null : "El producto no existe dentro del carrito.";
         }
@@ -192,9 +197,15 @@ namespace Totaltech.Logica
                 return (null, "Solo se pueden confirmar carritos activos.");
             }
 
-            if (!await _direccionesRepositorio.ExisteAsync(dto.IdDireccion))
+            var direccion = await _direccionesRepositorio.ObtenerPorIdAsync(dto.IdDireccion);
+            if (direccion is null)
             {
                 return (null, "La direccion indicada no existe.");
+            }
+
+            if (direccion.IdUsuario != carrito.IdUsuario)
+            {
+                return (null, "La direccion indicada no pertenece al usuario del carrito.");
             }
 
             var detallesCarrito = await _detalleCarritosRepositorio.ObtenerPorCarritoAsync(idCarrito);
@@ -259,6 +270,11 @@ namespace Totaltech.Logica
 
         private async Task<string?> ValidarCarritoAsync(Carrito carrito)
         {
+            if (!Enum.IsDefined(carrito.Estado))
+            {
+                return "El estado del carrito no es valido.";
+            }
+
             if (!await _usuariosRepositorio.ExisteAsync(carrito.IdUsuario))
             {
                 return "El usuario indicado no existe.";

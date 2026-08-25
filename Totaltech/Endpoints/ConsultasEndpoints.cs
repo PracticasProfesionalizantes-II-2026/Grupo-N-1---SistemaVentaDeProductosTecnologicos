@@ -43,13 +43,18 @@ namespace Totaltech.Endpoints
 
             group.MapPut("/{id:int}", async (int id, ConsultaRequest request, IConsultasLogica logica) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var consulta = await logica.ObtenerPorIdAsync(id);
+                if (consulta is null)
                 {
                     return Results.NotFound();
                 }
 
-                var consulta = request.ToEntity();
-                consulta.IdConsulta = id;
+                consulta.IdUsuario = request.IdUsuario;
+                consulta.Nombre = request.Nombre;
+                consulta.Email = request.Email;
+                consulta.Mensaje = request.Mensaje;
+                consulta.FechaConsulta = request.FechaConsulta;
+                consulta.Estado = request.Estado;
                 var error = await logica.ActualizarAsync(consulta);
                 return error is null ? Results.Ok(consulta) : Results.BadRequest(error);
             });

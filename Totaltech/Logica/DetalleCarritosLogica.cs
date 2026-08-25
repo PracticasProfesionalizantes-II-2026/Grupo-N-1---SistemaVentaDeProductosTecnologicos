@@ -10,7 +10,7 @@ namespace Totaltech.Logica
         Task<List<DetalleCarrito>> ObtenerPorCarritoAsync(int idCarrito);
         Task<string?> CrearAsync(DetalleCarrito detalle);
         Task<string?> ActualizarAsync(DetalleCarrito detalle);
-        Task<bool> EliminarAsync(int id);
+        Task<(bool Eliminado, string? Error)> EliminarAsync(int id);
     }
 
     public class DetalleCarritosLogica : IDetalleCarritosLogica
@@ -71,21 +71,38 @@ namespace Totaltech.Logica
                 return error;
             }
 
+            var existente = await _repositorio.ObtenerPorCarritoYProductoAsync(detalle.IdCarrito, detalle.IdProducto);
+            if (existente is not null && existente.IdDetalleCarrito != detalle.IdDetalleCarrito)
+            {
+                return "El producto ya existe en el carrito.";
+            }
+
             detalle.Subtotal = detalle.PrecioUnitario * detalle.Cantidad;
             await _repositorio.ActualizarAsync(detalle);
             return null;
         }
 
-        public async Task<bool> EliminarAsync(int id)
+        public async Task<(bool Eliminado, string? Error)> EliminarAsync(int id)
         {
             var detalle = await _repositorio.ObtenerPorIdAsync(id);
             if (detalle is null)
             {
-                return false;
+                return (false, null);
+            }
+
+            var carrito = await _carritosRepositorio.ObtenerPorIdAsync(detalle.IdCarrito);
+            if (carrito is null)
+            {
+                return (false, "El carrito indicado no existe.");
+            }
+
+            if (carrito.Estado != EstadoCarrito.Activo)
+            {
+                return (false, "Solo se pueden modificar carritos activos.");
             }
 
             await _repositorio.EliminarAsync(detalle);
-            return true;
+            return (true, null);
         }
 
         private async Task<string?> ValidarDetalleAsync(DetalleCarrito detalle)
@@ -95,14 +112,26 @@ namespace Totaltech.Logica
                 return "La cantidad debe ser mayor a cero y el precio no puede ser negativo.";
             }
 
-            if (!await _carritosRepositorio.ExisteAsync(detalle.IdCarrito))
+            var carrito = await _carritosRepositorio.ObtenerPorIdAsync(detalle.IdCarrito);
+            if (carrito is null)
             {
                 return "El carrito indicado no existe.";
             }
 
-            if (!await _productosRepositorio.ExisteAsync(detalle.IdProducto))
+            if (carrito.Estado != EstadoCarrito.Activo)
+            {
+                return "Solo se pueden modificar carritos activos.";
+            }
+
+            var producto = await _productosRepositorio.ObtenerPorIdAsync(detalle.IdProducto);
+            if (producto is null)
             {
                 return "El producto indicado no existe.";
+            }
+
+            if (producto.Stock < detalle.Cantidad)
+            {
+                return "No hay stock suficiente para agregar ese producto.";
             }
 
             return null;

@@ -112,14 +112,25 @@ namespace Totaltech.Logica
 
         private async Task<string?> ValidarPedidoAsync(Pedido pedido)
         {
+            if (!Enum.IsDefined(pedido.Estado))
+            {
+                return "El estado del pedido no es valido.";
+            }
+
             if (pedido.IdUsuario.HasValue && !await _usuariosRepositorio.ExisteAsync(pedido.IdUsuario.Value))
             {
                 return "El usuario indicado no existe.";
             }
 
-            if (!await _direccionesRepositorio.ExisteAsync(pedido.IdDireccion))
+            var direccion = await _direccionesRepositorio.ObtenerPorIdAsync(pedido.IdDireccion);
+            if (direccion is null)
             {
                 return "La direccion indicada no existe.";
+            }
+
+            if (pedido.IdUsuario.HasValue && direccion.IdUsuario != pedido.IdUsuario)
+            {
+                return "La direccion indicada no pertenece al usuario del pedido.";
             }
 
             return null;

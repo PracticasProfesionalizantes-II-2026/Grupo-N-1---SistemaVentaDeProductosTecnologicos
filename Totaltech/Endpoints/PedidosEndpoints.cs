@@ -41,13 +41,13 @@ namespace Totaltech.Endpoints
             // actualizar un pedido existente
             group.MapPut("/{id:int}", async (int id, PedidoRequest request, IPedidosLogica logica) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var pedido = await logica.ObtenerPorIdAsync(id);
+                if (pedido is null)
                 {
                     return Results.NotFound();
                 }
 
-                var pedido = request.ToEntity();
-                pedido.IdPedido = id;
+                AplicarCambios(pedido, request);
                 var error = await logica.ActualizarAsync(pedido);
                 return error is null ? Results.Ok(pedido) : Results.BadRequest(error);
             });
@@ -76,6 +76,11 @@ namespace Totaltech.Endpoints
             // obtener pedidos por estado
             group.MapGet("/estado/{estado}", async (EstadoPedido estado, IPedidosLogica logica) =>
             {
+                if (!Enum.IsDefined(estado))
+                {
+                    return Results.BadRequest("El estado del pedido no es valido.");
+                }
+
                 var pedidos = await logica.ObtenerPorEstadoAsync(estado);
                 return Results.Ok(pedidos);
             });
@@ -83,6 +88,11 @@ namespace Totaltech.Endpoints
             //actualizar el estado de un pedido
             group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPedidoRequest request, IPedidosLogica logica) =>
             {
+                if (!Enum.IsDefined(request.Estado))
+                {
+                    return Results.BadRequest("El estado del pedido no es valido.");
+                }
+
                 var actualizado = await logica.ActualizarEstadoAsync(id, request.Estado);
                 return actualizado ? Results.NoContent() : Results.NotFound();
             });
@@ -114,6 +124,14 @@ namespace Totaltech.Endpoints
                 var pagos = await logica.ObtenerPorPedidoAsync(idPedido);
                 return Results.Ok(pagos);
             });
+        }
+
+        private static void AplicarCambios(Pedido pedido, PedidoRequest request)
+        {
+            pedido.IdUsuario = request.IdUsuario;
+            pedido.FechaPedido = request.FechaPedido;
+            pedido.Estado = request.Estado;
+            pedido.IdDireccion = request.IdDireccion;
         }
     }
 }

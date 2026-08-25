@@ -37,13 +37,13 @@ namespace Totaltech.Endpoints
             // actualizar un proveedor existente
             group.MapPut("/{id:int}", async (int id, ProveedorRequest request, IProveedoresLogica logica) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var proveedor = await logica.ObtenerPorIdAsync(id);
+                if (proveedor is null)
                 {
                     return Results.NotFound();
                 }
 
-                var proveedor = request.ToEntity();
-                proveedor.IdProveedor = id;
+                AplicarCambios(proveedor, request);
                 var error = await logica.ActualizarAsync(proveedor);
                 return error is null ? Results.Ok(proveedor) : Results.BadRequest(error);
             });
@@ -60,6 +60,20 @@ namespace Totaltech.Endpoints
                     return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
                 }
             });
+        }
+
+        private static void AplicarCambios(Proveedor proveedor, ProveedorRequest request)
+        {
+            proveedor.RazonSocial = request.RazonSocial;
+            proveedor.Cuit = request.Cuit;
+            proveedor.EmailComercial = request.EmailComercial;
+            proveedor.TelefonoComercial = request.TelefonoComercial;
+            proveedor.CondicionIva = request.CondicionIva;
+            proveedor.IdDireccion = request.IdDireccion;
+            proveedor.PlazoPagoDias = request.PlazoPagoDias;
+            proveedor.TiempoEntregaDias = request.TiempoEntregaDias;
+            proveedor.MonedaPreferida = request.MonedaPreferida;
+            proveedor.Activo = request.Activo;
         }
     }
 }
