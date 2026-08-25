@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Endpoints
 {
@@ -22,8 +23,9 @@ namespace Totaltech.Endpoints
                 return direccion is null ? Results.NotFound() : Results.Ok(direccion);
             });
             // crear una nueva direccion
-            group.MapPost("/", async (Direccion direccion, IDireccionesLogica logica) =>
+            group.MapPost("/", async (DireccionRequest request, IDireccionesLogica logica) =>
             {
+                var direccion = request.ToEntity();
                 var error = await logica.CrearAsync(direccion);
                 if (error is not null)
                 {
@@ -33,13 +35,14 @@ namespace Totaltech.Endpoints
                 return Results.Created($"/direcciones/{direccion.IdDireccion}", direccion);
             });
             // actualizar una direccion existente
-            group.MapPut("/{id:int}", async (int id, Direccion direccion, IDireccionesLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, DireccionRequest request, IDireccionesLogica logica) =>
             {
                 if (await logica.ObtenerPorIdAsync(id) is null)
                 {
                     return Results.NotFound();
                 }
 
+                var direccion = request.ToEntity();
                 direccion.IdDireccion = id;
                 var error = await logica.ActualizarAsync(direccion);
                 return error is null ? Results.Ok(direccion) : Results.BadRequest(error);
