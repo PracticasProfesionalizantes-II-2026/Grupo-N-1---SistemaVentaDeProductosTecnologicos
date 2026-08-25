@@ -185,6 +185,389 @@ body {
   }
 }
 
+.auth-alert {
+  margin: 0 auto 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.auth-alert:empty,
+.validation-summary-valid {
+  display: none;
+}
+
+.auth-alert ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.auth-alert-error,
+.validation-summary-errors {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #b42318;
+}
+
+.auth-alert-success {
+  width: min(100%, 680px);
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #087a55;
+}
+
+.auth-alert-info {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #174ea6;
+}
+
+.field-validation-error,
+.registration-field > span,
+.terms-validation {
+  display: block;
+  margin-top: 0.4rem;
+  color: #b42318;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.login-field input.input-validation-error,
+.registration-field input.input-validation-error {
+  border-color: #dc3545;
+}
+
+.auth-switch {
+  margin: 0.8rem 0 0;
+  color: #667085;
+  font-size: 0.98rem;
+}
+
+.auth-switch a {
+  color: #1769e8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-switch a:hover,
+.auth-switch a:focus-visible {
+  text-decoration: underline;
+}
+
+.registration-page {
+  width: min(94%, 1320px);
+  min-height: 780px;
+  margin: 2.5rem auto 4rem;
+  display: grid;
+  grid-template-columns: minmax(360px, 0.88fr) minmax(520px, 1.12fr);
+  overflow: hidden;
+  border: 1px solid #dbe5f5;
+  border-radius: 30px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(25, 55, 105, 0.16);
+}
+
+.registration-benefits {
+  position: relative;
+  padding: 3.5rem;
+  overflow: hidden;
+  background: linear-gradient(145deg, #145fda 0%, #2474ee 48%, #22b8ee 130%);
+  color: #fff;
+}
+
+.registration-benefits::before,
+.registration-benefits::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.registration-benefits::before {
+  width: 390px;
+  height: 390px;
+  right: -190px;
+  top: -150px;
+}
+
+.registration-benefits::after {
+  width: 280px;
+  height: 280px;
+  left: -150px;
+  bottom: -120px;
+}
+
+.registration-brand {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  width: 128px;
+  height: 90px;
+  overflow: hidden;
+}
+
+.registration-brand img {
+  width: 150px;
+  height: 150px;
+  margin: -30px 0 0 -11px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.registration-eyebrow {
+  margin: 1.5rem 0 0.8rem;
+  color: #b9eaff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.registration-benefits h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(2.6rem, 4.3vw, 4.6rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.registration-lead {
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  margin: 1.5rem 0 2.3rem;
+  color: #e8f3ff;
+  font-size: 1.1rem;
+  line-height: 1.65;
+}
+
+.benefit-list {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+  list-style: none;
+}
+
+.benefit-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: #f6fbff;
+  font-weight: 600;
+}
+
+.benefit-list span {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.registration-card {
+  padding: 4rem clamp(2rem, 5vw, 5.5rem);
+}
+
+.registration-card-heading {
+  margin-bottom: 2rem;
+}
+
+.registration-card-heading .registration-eyebrow {
+  margin-top: 0;
+  color: #1769e8;
+}
+
+.registration-card-heading h2 {
+  margin: 0 0 0.65rem;
+  color: #17233b;
+  font-size: clamp(2.2rem, 3.5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.registration-card-heading > p:last-child {
+  margin: 0;
+  color: #667085;
+}
+
+.registration-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.15rem 1.25rem;
+}
+
+.registration-field-wide {
+  grid-column: 1 / -1;
+}
+
+.registration-field label {
+  display: block;
+  margin: 0 0 0.45rem 0.15rem;
+  color: #344054;
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+
+.registration-field input {
+  width: 100%;
+  height: 56px;
+  padding: 0 1rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 13px;
+  outline: 0;
+  background: #fbfdff;
+  color: #17233b;
+  font-size: 1rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.registration-field input:focus {
+  border-color: #2474ee;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(36, 116, 238, 0.13);
+}
+
+.registration-field input::placeholder {
+  color: #98a2b3;
+}
+
+.password-guidance {
+  margin: 0.8rem 0 1.2rem;
+  color: #667085;
+  font-size: 0.88rem;
+}
+
+.terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  color: #475467;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.terms-check input {
+  width: 18px;
+  height: 18px;
+  margin-top: 0.1rem;
+  flex: 0 0 auto;
+  accent-color: #2474ee;
+}
+
+.terms-check a {
+  color: #1769e8;
+  font-weight: 650;
+}
+
+.registration-submit {
+  width: 100%;
+  margin-top: 1.7rem;
+  padding: 0.95rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(100deg, #1769e8, #2e83f5);
+  color: #fff;
+  font-size: 1.08rem;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(36, 116, 238, 0.24);
+}
+
+.registration-submit:hover,
+.registration-submit:focus-visible {
+  background: linear-gradient(100deg, #0f59ce, #1769e8);
+  transform: translateY(-1px);
+}
+
+.registration-form > .auth-switch {
+  text-align: center;
+}
+
+@media (max-width: 1050px) {
+  .registration-page {
+    width: min(94%, 760px);
+    grid-template-columns: 1fr;
+  }
+
+  .registration-benefits {
+    padding: 2.5rem 3rem;
+  }
+
+  .registration-benefits h1 {
+    font-size: 3.2rem;
+  }
+
+  .registration-lead {
+    margin-bottom: 1.5rem;
+  }
+
+  .benefit-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .benefit-list li:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .registration-page {
+    width: calc(100% - 1.25rem);
+    margin: 1rem auto 2rem;
+    border-radius: 22px;
+  }
+
+  .registration-benefits {
+    padding: 2rem 1.5rem;
+  }
+
+  .registration-brand {
+    display: none;
+  }
+
+  .registration-eyebrow {
+    margin-top: 0;
+  }
+
+  .registration-benefits h1 {
+    font-size: 2.45rem;
+  }
+
+  .benefit-list {
+    grid-template-columns: 1fr;
+  }
+
+  .benefit-list li:last-child {
+    grid-column: auto;
+  }
+
+  .registration-card {
+    padding: 2.2rem 1.3rem 2.5rem;
+  }
+
+  .registration-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-field-wide {
+    grid-column: auto;
+  }
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

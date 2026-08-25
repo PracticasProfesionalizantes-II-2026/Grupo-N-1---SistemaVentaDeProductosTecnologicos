@@ -9,6 +9,7 @@ namespace Totaltech.Logica
     {
         Task<List<Usuario>> ObtenerTodosAsync();
         Task<Usuario?> ObtenerPorIdAsync(int id);
+        Task<bool> ExisteEmailAsync(string email);
         Task<Usuario?> LoginAsync(LoginDto dto);
         Task<string?> CrearAsync(Usuario usuario);
         Task<string?> RegistrarAsync(Usuario usuario);
@@ -35,6 +36,16 @@ namespace Totaltech.Logica
         public Task<Usuario?> ObtenerPorIdAsync(int id)
         {
             return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public async Task<bool> ExisteEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return false;
+            }
+
+            return await _repositorio.ObtenerPorEmailAsync(email.Trim()) is not null;
         }
 
         public async Task<Usuario?> LoginAsync(LoginDto dto)
