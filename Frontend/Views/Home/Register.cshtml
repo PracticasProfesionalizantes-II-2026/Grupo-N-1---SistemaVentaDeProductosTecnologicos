@@ -1,0 +1,109 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Crear cuenta";
+    ViewData["IsLoginPage"] = true;
+    ViewData["IsRegisterPage"] = true;
+    var redirectedFromLogin = ViewData["RedirectedFromLogin"] as bool? ?? false;
+}
+
+<section class="registration-page" aria-labelledby="register-title">
+    <aside class="registration-benefits">
+        <a class="registration-brand" asp-action="Index" aria-label="Volver al inicio">
+            <img src="~/images/totaltech-logo.png" alt="Totaltech" />
+        </a>
+        <p class="registration-eyebrow">Tu experiencia Totaltech empieza acá</p>
+        <h1>Una cuenta.<br />Todos tus beneficios.</h1>
+        <p class="registration-lead">Comprá más rápido, seguí tus pedidos y accedé a promociones pensadas para vos.</p>
+
+        <ul class="benefit-list">
+            <li>
+                <span aria-hidden="true">✓</span>
+                Historial y seguimiento de compras
+            </li>
+            <li>
+                <span aria-hidden="true">✓</span>
+                Ofertas exclusivas para clientes
+            </li>
+            <li>
+                <span aria-hidden="true">✓</span>
+                Datos protegidos y contraseña cifrada
+            </li>
+        </ul>
+    </aside>
+
+    <div class="registration-card">
+        <div class="registration-card-heading">
+            <p class="registration-eyebrow">Registro</p>
+            <h2 id="register-title">Creá tu cuenta</h2>
+            <p>Completá tus datos. Solo te llevará un minuto.</p>
+        </div>
+
+        @if (redirectedFromLogin)
+        {
+            <div class="auth-alert auth-alert-info" role="status">
+                No encontramos una cuenta con ese email. Completá tus datos para registrarte.
+            </div>
+        }
+
+        <form class="registration-form" asp-action="Register" method="post">
+            <div asp-validation-summary="ModelOnly" class="auth-alert auth-alert-error" role="alert"></div>
+
+            <div class="registration-grid">
+                <div class="registration-field">
+                    <label asp-for="Nombre"></label>
+                    <input asp-for="Nombre" autocomplete="given-name" placeholder="Ej.: Martina" />
+                    <span asp-validation-for="Nombre"></span>
+                </div>
+
+                <div class="registration-field">
+                    <label asp-for="Apellido"></label>
+                    <input asp-for="Apellido" autocomplete="family-name" placeholder="Ej.: Gómez" />
+                    <span asp-validation-for="Apellido"></span>
+                </div>
+
+                <div class="registration-field registration-field-wide">
+                    <label asp-for="Email"></label>
+                    <input asp-for="Email" type="email" autocomplete="email" placeholder="nombre@ejemplo.com" />
+                    <span asp-validation-for="Email"></span>
+                </div>
+
+                <div class="registration-field registration-field-wide">
+                    <label asp-for="Telefono"></label>
+                    <input asp-for="Telefono" type="tel" autocomplete="tel" placeholder="Ej.: +54 11 1234 5678" />
+                    <span asp-validation-for="Telefono"></span>
+                </div>
+
+                <div class="registration-field">
+                    <label asp-for="Contrasena"></label>
+                    <input asp-for="Contrasena" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+                    <span asp-validation-for="Contrasena"></span>
+                </div>
+
+                <div class="registration-field">
+                    <label asp-for="ConfirmarContrasena"></label>
+                    <input asp-for="ConfirmarContrasena" autocomplete="new-password" placeholder="Repetí tu contraseña" />
+                    <span asp-validation-for="ConfirmarContrasena"></span>
+                </div>
+            </div>
+
+            <p class="password-guidance">Usá al menos 8 caracteres, una mayúscula, una minúscula y un número.</p>
+
+            <label class="terms-check">
+                <input asp-for="AceptaTerminos" required />
+                <span>Acepto los <a asp-action="Privacy">términos y condiciones</a> y la política de privacidad.</span>
+            </label>
+            <span asp-validation-for="AceptaTerminos" class="terms-validation"></span>
+
+            <button class="registration-submit" type="submit">
+                Crear mi cuenta
+                <span aria-hidden="true">→</span>
+            </button>
+
+            <p class="auth-switch">¿Ya tenés una cuenta? <a asp-action="Login" asp-route-email="@Model.Email">Iniciá sesión</a></p>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
