@@ -1,1 +1,146 @@
-@* Estructura reservada. Implementación pendiente. *@
+
+@{
+    ViewData["Title"] = "Productos";
+}
+
+<section class="products-page">
+
+    <!-- Encabezado de la pantalla -->
+    <div class="products-heading">
+        <a asp-controller="Home" asp-action="Index" class="products-back" aria-label="Volver al inicio">
+            ‹
+        </a>
+
+        <h1>Destacados</h1>
+    </div>
+
+    <div class="products-divider"></div>
+
+    <!-- Contenido principal -->
+    <div class="products-layout">
+
+        <!-- =========================
+             PANEL DE CATEGORÍAS
+        ========================== -->
+        <aside class="categories-panel">
+
+            <details class="categories-menu" open>
+                <summary>Categorías</summary>
+
+                <nav class="categories-list" aria-label="Categorías de productos">
+
+                    <a href="#">Combos</a>
+                    <a href="#">PC de Escritorio</a>
+                    <a href="#">Notebooks</a>
+                    <a href="#">Procesadores</a>
+                    <a href="#">Mothers</a>
+                    <a href="#">Placas de Video</a>
+                    <a href="#">Memorias RAM</a>
+                    <a href="#">Almacenamiento</a>
+                    <a href="#">Refrigeración</a>
+                    <a href="#">Gabinetes</a>
+                    <a href="#">Fuentes</a>
+                    <a href="#">Monitores</a>
+                    <a href="#">Periféricos</a>
+                    <a href="#">Sillas Gamers</a>
+                    <a href="#">Robots</a>
+                    <a href="#">Conectividad</a>
+                    <a href="#">Estabilizadores y UPS</a>
+
+                </nav>
+            </details>
+
+        </aside>
+
+        <!-- =========================
+             PRODUCTOS DESTACADOS
+        ========================== -->
+        <main class="products-content">
+
+            <div class="products-grid">
+
+                <article class="product-card">
+
+                    <div class="product-card-image">
+                        @* TODO IMAGEN:
+                           Insertar posteriormente la imagen del producto.
+                        *@
+                    </div>
+
+                    <div class="product-card-body">
+                        <p class="product-category">Notebooks</p>
+
+                        <h2 class="product-name">
+                            Notebook
+                        </h2>
+
+                        <p class="product-price">
+                            $ 0,00
+                        </p>
+
+                        <button class="product-button" type="button">
+                            Ver producto
+                        </button>
+                    </div>
+
+                </article>
+
+                <article class="product-card">
+
+                    <div class="product-card-image">
+                        @* TODO IMAGEN:
+                           Insertar posteriormente la imagen del producto.
+                        *@
+                    </div>
+
+                    <div class="product-card-body">
+                        <p class="product-category">Componentes</p>
+
+                        <h2 class="product-name">
+                            Producto destacado
+                        </h2>
+
+                        <p class="product-price">
+                            $ 0,00
+                        </p>
+
+                        <button class="product-button" type="button">
+                            Ver producto
+                        </button>
+                    </div>
+
+                </article>
+
+                <article class="product-card">
+
+                    <div class="product-card-image">
+                        @* TODO IMAGEN:
+                           Insertar posteriormente la imagen del producto.
+                        *@
+                    </div>
+
+                    <div class="product-card-body">
+                        <p class="product-category">Periféricos</p>
+
+                        <h2 class="product-name">
+                            Producto destacado
+                        </h2>
+
+                        <p class="product-price">
+                            $ 0,00
+                        </p>
+
+                        <button class="product-button" type="button">
+                            Ver producto
+                        </button>
+                    </div>
+
+                </article>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</section>
