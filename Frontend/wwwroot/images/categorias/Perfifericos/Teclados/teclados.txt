@@ -1,0 +1,288 @@
+CARACTERISTICAS GENERALES
+Tipo de teclado
+Compacto TKL
+Tipo de mecanismo
+Mecánico
+Tipo de switch
+GL Low Profile
+Switch especifico
+Tactile
+Color
+Negro
+Material
+Plástico, Aluminio
+Idioma
+Inglés
+Touchpad
+No
+Pad numérico
+No
+RENDIMIENTO
+Anti salpicaduras
+Si
+N-key rollover
+Si
+Antighosting
+Si
+CONECTIVIDAD
+Puertos usb requeridos
+1
+Cantidad de puertos hub usb
+0
+Puertos ps/2 requeridos
+No
+Audio hub
+No
+Conexión bluetooth
+Si
+Receptor bluetooth incluido
+No
+Conexión wireless con receptor
+Si
+DIMENSIONES
+Peso
+1 kg
+Ancho
+368 mm
+Profundidad
+150 mm
+Alto
+23 mm
+Reposamuñecas
+No
+Reposamuñecas extraíble
+No
+CABLEADO
+Tipo cable
+Mallado de tela
+Cable extraíble
+Si
+Largo del cable
+1.8 metros
+COMPATIBILIDAD
+Tecnologías compatibles
+Logitech G HUB
+ENERGIA
+Alimentación
+Batería interna
+Pilas incluidas
+No
+EXTRAS
+Funda
+No
+ILUMINACIÓN
+Color led
+RGB
+---------------------------------------------------------------
+CARACTERISTICAS GENERALES
+Tipo de teclado
+Completo
+Tipo de mecanismo
+Mecánico
+Tipo de switch
+Hyperx Switch
+Switch especifico
+Linear Red
+Color
+Negro
+Material
+Aluminio, Plástico
+Idioma
+Español
+Distribución
+Latinoamerica
+Touchpad
+No
+Pad numérico
+Si
+RENDIMIENTO
+Anti salpicaduras
+Si
+Polling rate
+8000 hz
+N-key rollover
+Si
+Antighosting
+Si
+CONECTIVIDAD
+Puertos usb requeridos
+1
+Puertos ps/2 requeridos
+No
+Audio hub
+No
+Conexión bluetooth
+No
+Receptor bluetooth incluido
+No
+Conexión wireless con receptor
+No
+DIMENSIONES
+Peso
+1 kg
+Ancho
+454 mm
+Profundidad
+142 mm
+Alto
+48 mm
+Reposamuñecas
+No
+Reposamuñecas extraíble
+Si
+CABLEADO
+Tipo cable
+Mallado de tela
+Cable extraíble
+Si
+Largo del cable
+1.8 metros
+ENERGIA
+Pilas incluidas
+No
+EXTRAS
+Funda
+No
+ILUMINACIÓN
+Color led
+RGB
+--------------------------------------------------
+CARACTERISTICAS GENERALES
+Tipo de teclado
+Completo
+Tipo de mecanismo
+Membrana
+Color
+Negro
+Material
+Plástico
+Touchpad
+No
+Pad numérico
+Si
+RENDIMIENTO
+Anti salpicaduras
+Si
+N-key rollover
+Si
+Antighosting
+Si
+CONECTIVIDAD
+Puertos usb requeridos
+1
+Puertos ps/2 requeridos
+No
+Audio hub
+No
+Conexión bluetooth
+No
+Receptor bluetooth incluido
+No
+Conexión wireless con receptor
+No
+DIMENSIONES
+Peso
+1 kg
+Ancho
+458 mm
+Profundidad
+218 mm
+Alto
+33 mm
+Reposamuñecas
+Si
+Reposamuñecas extraíble
+No
+CABLEADO
+Tipo cable
+Plástico
+Cable extraíble
+No
+Largo del cable
+1.8 metros
+COMPATIBILIDAD
+Tecnologías compatibles
+Logitech G HUB
+ENERGIA
+Pilas incluidas
+No
+EXTRAS
+Funda
+No
+ILUMINACIÓN
+Color led
+RGB
+---------------------------------------------------------------
+ARACTERISTICAS GENERALES
+Tipo de teclado
+Compacto con pad numérico
+Tipo de mecanismo
+Mecánico
+Tipo de switch
+Redragon
+Switch especifico
+Red
+Color
+Gris
+Material
+Plástico, Aluminio
+Idioma
+Inglés
+Touchpad
+No
+Pad numérico
+Si
+RENDIMIENTO
+Anti salpicaduras
+Si
+N-key rollover
+Si
+Antighosting
+Si
+CONECTIVIDAD
+Puertos usb requeridos
+1
+Cantidad de puertos hub usb
+0
+Puertos ps/2 requeridos
+No
+Audio hub
+No
+Conexión bluetooth
+No
+Receptor bluetooth incluido
+No
+Conexión wireless con receptor
+No
+DIMENSIONES
+Peso
+1.3 kg
+Ancho
+356 mm
+Profundidad
+198 mm
+Alto
+39 mm
+Reposamuñecas
+Si
+Reposamuñecas extraíble
+Si
+CABLEADO
+Tipo cable
+Plástico
+Cable extraíble
+Si
+Largo del cable
+1.8 metros
+COMPATIBILIDAD
+Tecnologías compatibles
+Software propio
+ENERGIA
+Pilas incluidas
+No
+EXTRAS
+Funda
+No
+ILUMINACIÓN
+Color led
+RGB
