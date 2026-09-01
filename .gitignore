@@ -1,22 +1,83 @@
-# Build output
-**/bin/
-**/obj/
+# .NET: compilación, publicación y paquetes generados
+**/[Bb]in/
+**/[Oo]bj/
+**/artifacts/
+**/publish/
+packages/
+.nuget/
+*.nupkg
+*.snupkg
 
-# Visual Studio and VS Code user files
+# Visual Studio, VS Code, Rider y ReSharper
 .vs/
 .vscode/
-*.user
+.idea/
 *.suo
+*.user
+*.rsuser
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+*.pubxml.user
+_ReSharper*/
 
-# OS files
-.DS_Store
-Thumbs.db
-# Generated .NET build artifacts
-**/bin/
-**/obj/
+# Pruebas, cobertura y análisis local
+**/TestResults/
+**/coverage/
+coverage.*
+*.coverage
+*.coveragexml
+*.trx
+*.binlog
 
+# Configuración local y secretos
+.env
+.env.*
+!.env.example
+**/appsettings.Local.json
+**/appsettings.*.Local.json
+**/secrets.json
+*.pfx
+*.p12
+*.key
+.azure/
+
+# Bases de datos locales
+*.mdf
+*.ldf
+*.ndf
+*.jfm
+*.bacpac
+*.dacpac
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs, cachés y archivos temporales
+**/logs/
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.BASE.*
+*.LOCAL.*
+*.REMOTE.*
+*.BACKUP.*
+*.swp
+*.dmp
+*.pid
+*.pid.lock
+*~
 .fake
 
-appsettings.json
-appsettings.Development.json
-    
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Contenido generado por usuarios en tiempo de ejecución
+**/wwwroot/uploads/
