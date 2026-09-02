@@ -1,0 +1,63 @@
+@model Frontend.Models.Api.Responses.ProductoResponse
+
+@{
+    ViewData["Title"] = "Detalle del producto";
+}
+
+<div class="container py-4">
+
+    <h1 class="mb-4">Detalle del producto</h1>
+
+    <div class="card">
+
+        <div class="card-body">
+
+            <h2 class="card-title mb-3">
+                @Model.Nombre
+            </h2>
+
+            <p>
+                <strong>ID:</strong>
+                @Model.IdProducto
+            </p>
+
+            <p>
+                <strong>Descripción:</strong>
+                @Model.Descripcion
+            </p>
+
+            <p>
+                <strong>Precio:</strong>
+                $ @Model.Precio.ToString("N2")
+            </p>
+
+            <p>
+                <strong>Stock:</strong>
+                @Model.Stock
+            </p>
+
+            <p>
+                <strong>ID Categoría:</strong>
+                @Model.IdCategoria
+            </p>
+
+            <p>
+                <strong>ID Proveedor:</strong>
+                @Model.IdProveedor
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="mt-4">
+
+        <a asp-controller="Productos"
+           asp-action="Index"
+           class="btn btn-secondary">
+            Volver a productos
+        </a>
+
+    </div>
+
+</div>
