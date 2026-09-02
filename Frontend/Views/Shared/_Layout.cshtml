@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 @{
     var isLoginPage = ViewData["IsLoginPage"] as bool? ?? false;
+    var isRegisterPage = ViewData["IsRegisterPage"] as bool? ?? false;
 }
 <html lang="es">
 <head>
@@ -34,7 +35,12 @@
             @if (isLoginPage)
             {
                 <div class="header-actions">
-                    <a class="register-link" asp-area="" asp-controller="Home" asp-action="Privacy">Registrarse</a>
+                    <a class="register-link"
+                       asp-area=""
+                       asp-controller="Home"
+                       asp-action="@(isRegisterPage ? "Login" : "Register")">
+                        @(isRegisterPage ? "Iniciar sesión" : "Registrarse")
+                    </a>
                     <a class="cart-link" asp-area="" asp-controller="Home" asp-action="Privacy" aria-label="Ver carrito">
                         <svg aria-hidden="true" viewBox="0 0 24 24">
                             <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6m4 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm9 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />

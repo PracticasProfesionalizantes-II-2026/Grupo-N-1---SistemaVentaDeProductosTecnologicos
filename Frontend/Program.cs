@@ -1,7 +1,28 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient("TotaltechApi", client =>
+{
+    var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
+        ?? throw new InvalidOperationException("Falta configurar ApiBaseUrl.");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Home/Login";
+        options.AccessDeniedPath = "/Home/Login";
+        options.Cookie.Name = "Totaltech.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
 
 var app = builder.Build();
 
@@ -16,6 +37,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

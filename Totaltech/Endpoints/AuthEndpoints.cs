@@ -13,6 +13,15 @@ namespace Totaltech.Endpoints
             // login--------------------------------
             group.MapPost("/login", async (LoginDto request, IUsuariosLogica logica) =>
             {
+                if (!await logica.ExisteEmailAsync(request.Email))
+                {
+                    return Results.NotFound(new
+                    {
+                        codigo = "usuario_no_registrado",
+                        mensaje = "No existe una cuenta asociada a ese email."
+                    });
+                }
+
                 var usuario = await logica.LoginAsync(request);
                 return usuario is null ? Results.Unauthorized() : Results.Ok(CrearRespuesta(usuario));
             });
