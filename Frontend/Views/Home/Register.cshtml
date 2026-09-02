@@ -90,7 +90,7 @@
 
             <label class="terms-check">
                 <input asp-for="AceptaTerminos" required />
-                <span>Acepto los términos y condiciones.</span>
+                <span>Acepto los <a asp-action="Privacy">términos y condiciones</a> y la política de privacidad.</span>
             </label>
             <span asp-validation-for="AceptaTerminos" class="terms-validation"></span>
 

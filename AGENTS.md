@@ -4,6 +4,9 @@ Este archivo gobierna todo el repositorio. Su objetivo es que cualquier agente
 trabaje con evidencia, preserve las contribuciones del equipo y entregue cambios
 pequeños, seguros y verificables.
 
+Las reglas operativas especializadas están centralizadas en `ControlProyecto/` y
+se aplican mediante el enrutamiento definido en esta guía.
+
 ## Precedencia y fuentes de verdad
 
 Aplicar las instrucciones en este orden:
