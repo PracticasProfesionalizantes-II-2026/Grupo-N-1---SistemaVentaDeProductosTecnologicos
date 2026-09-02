@@ -41,7 +41,7 @@
                        asp-action="@(isRegisterPage ? "Login" : "Register")">
                         @(isRegisterPage ? "Iniciar sesión" : "Registrarse")
                     </a>
-                    <a class="cart-link" asp-area="" asp-controller="Home" asp-action="Privacy" aria-label="Ver carrito">
+                    <a class="cart-link" asp-area="" asp-controller="Home" asp-action="Index" aria-label="Volver al inicio">
                         <svg aria-hidden="true" viewBox="0 0 24 24">
                             <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6m4 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm9 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
                         </svg>
@@ -52,13 +52,13 @@
 
         <nav class="main-navigation" aria-label="Navegación principal">
             <a asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
-            <a asp-area="" asp-controller="Home" asp-action="Privacy">Productos</a>
+            <a asp-area="" asp-controller="Productos" asp-action="Index">Productos</a>
             @if (isLoginPage)
             {
-                <a asp-area="" asp-controller="Home" asp-action="Privacy">Servicios</a>
+                <a asp-area="" asp-controller="Home" asp-action="Index">Servicios</a>
             }
-            <a asp-area="" asp-controller="Home" asp-action="Privacy">Contactos</a>
-            <a asp-area="" asp-controller="Home" asp-action="Privacy">Ofertas</a>
+            <a asp-area="" asp-controller="Home" asp-action="Index">Contactos</a>
+            <a asp-area="" asp-controller="Home" asp-action="Index">Ofertas</a>
             @if (!isLoginPage)
             {
                 <a asp-area="" asp-controller="Home" asp-action="Login">Iniciar sesión</a>

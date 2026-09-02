@@ -90,4 +90,3 @@ Riesgo, pruebas y resultado:
 
 Detener ante cambios de seguridad, contratos, esquema, migraciones, datos, precios,
 stock, pagos o reglas ambiguas.
-

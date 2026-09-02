@@ -86,4 +86,3 @@ Riesgo y validaciones:
 
 Escalar si mockup y requisitos se contradicen, el contrato es ambiguo o se requiere
 cambiar autenticación o integridad backend.
-

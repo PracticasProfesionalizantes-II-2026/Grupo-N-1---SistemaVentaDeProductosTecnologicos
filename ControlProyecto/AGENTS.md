@@ -76,4 +76,3 @@ El especialista del dominio propone o implementa. `CleanCode.md` revisa calidad 
 - No se introdujeron regresiones conocidas ni secretos.
 - Git contiene únicamente los cambios esperados.
 - La documentación quedó coherente o la divergencia fue registrada.
-

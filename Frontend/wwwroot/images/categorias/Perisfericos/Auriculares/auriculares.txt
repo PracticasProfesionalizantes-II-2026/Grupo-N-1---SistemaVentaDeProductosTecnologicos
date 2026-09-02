@@ -1,0 +1,195 @@
+CARACTERISTICAS GENERALES
+Tipo
+Headset
+Colores
+Negro
+Con micrófono
+Si
+Audio
+2.0
+Tipo de audio
+Real
+Conexión
+Inalámbrico
+CONECTIVIDAD
+Conector jack 3.5 mm (audio)
+0
+Conector jack 3.5 mm (combinado)
+0
+Usb
+Si
+Inalámbrico con receptor
+Si
+Conector jack 3.5 mm (micrófono)
+0
+Usb de alimentación
+No
+Inalámbrico por bluetooth
+No
+DIMENSIONES
+Tamaño de los parlantes
+50 mm
+COMPATIBILIDAD
+Dispositivos compatibles
+PC
+ACCESORIOS
+Soporte auriculares
+No
+SONIDO
+Impedancia
+32 Ω
+Respuesta mínima
+10 hz
+Respuesta máxima
+28000 hz
+Sensibilidad
+97.5 db
+Surround
+No
+MICRÓFONO
+Tipo de micrófono
+Integrado
+Sensibilidad
+97.5 db (-)
+Tipo captación
+Bidireccional
+Cancelación de ruidos
+No
+ILUMINACIÓN
+Iluminación
+Sin Iluminación
+
+-------------------------
+CARACTERISTICAS GENERALES
+Tipo
+Headset
+Colores
+Blanco, Negro, Azul
+Con micrófono
+Si
+Audio
+2
+Tipo de audio
+Real
+Conexión
+Inalámbrico
+CONECTIVIDAD
+Usb
+No
+Inalámbrico con receptor
+Si
+Usb de alimentación
+No
+Inalámbrico por bluetooth
+No
+DIMENSIONES
+Tamaño de los parlantes
+40 mm
+COMPATIBILIDAD
+Dispositivos compatibles
+PC, PS4, PS5
+ACCESORIOS
+Soporte auriculares
+No
+SONIDO
+Impedancia
+16 Ω
+Respuesta mínima
+20 hz
+Respuesta máxima
+20000 hz
+Sensibilidad
+95.5 db
+Surround
+No
+MICRÓFONO
+Tipo de micrófono
+Retráctil
+Respuesta mínima
+50 hz
+Respuesta máxima
+18000 hz
+Sensibilidad
+40 db (-)
+Tipo captación
+Unidireccional
+Cancelación de ruidos
+No
+ILUMINACIÓN
+Ilumina
+Tipo de micrófono
+Retráctil
+Respuesta mínima
+50 hz
+Respuesta máxima
+18000 hz
+Sensibilidad
+40 db (-)
+Tipo captación
+Unidireccional
+Cancelación de ruidos
+No
+ILUMINACIÓN
+Iluminación
+Sin Iluminació
+--------------------------------------------
+CARACTERISTICAS GENERALES
+Tipo
+Headset
+Colores
+Negro
+Con micrófono
+Si
+Audio
+7.1
+Tipo de audio
+Virtual
+Conexión
+Cableado
+CONECTIVIDAD
+Conector jack 3.5 mm (audio)
+0
+Usb
+Si
+Inalámbrico con receptor
+No
+Usb de alimentación
+No
+Inalámbrico por bluetooth
+No
+DIMENSIONES
+Tamaño de los parlantes
+53 mm
+CABLEADO
+Largo del cable
+2 m
+COMPATIBILIDAD
+Dispositivos compatibles
+PC
+ACCESORIOS
+Soporte auriculares
+No
+SONIDO
+Impedancia
+64 Ω
+Respuesta mínima
+20 hz
+Respuesta máxima
+20000 hz
+Sensibilidad
+113 db
+Surround
+Si
+MICRÓFONO
+Tipo de micrófono
+Integrado
+Sensibilidad
+42 db (-)
+Tipo captación
+Unidireccional
+Cancelación de ruidos
+No
+ILUMINACIÓN
+Iluminación
+RGB
+------------------------------------------------------------------------

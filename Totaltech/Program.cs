@@ -9,8 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Falta configurar la cadena de conexión 'DefaultConnection'.");
+
 builder.Services.AddDbContext<TotaltechDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        connectionString,
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<IUsuariosRepositorio, UsuariosRepositorio>();
 builder.Services.AddScoped<IDireccionesRepositorio, DireccionesRepositorio>();
