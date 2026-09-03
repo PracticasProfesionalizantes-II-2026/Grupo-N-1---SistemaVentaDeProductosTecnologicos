@@ -9,11 +9,10 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Categorías</h1>
 
-        <a asp-controller="Categorias"
-           asp-action="Crear"
-           class="btn btn-primary">
-            Nueva categoría
-        </a>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-controller="Categorias" asp-action="Crear" class="btn btn-primary">Nueva categoría</a>
+        }
     </div>
 
     @if (TempData["Mensaje"] is not null)
@@ -76,28 +75,14 @@
                                 Ver
                             </a>
 
-                            <a asp-controller="Categorias"
-                               asp-action="Editar"
-                               asp-route-id="@categoria.IdCategoria"
-                               class="btn btn-sm btn-warning">
-                                Editar
-                            </a>
-
-                            <form asp-controller="Categorias"
-                                  asp-action="Eliminar"
-                                  asp-route-id="@categoria.IdCategoria"
-                                  method="post"
-                                  class="d-inline">
-
-                                @Html.AntiForgeryToken()
-
-                                <button type="submit"
-                                        class="btn btn-sm btn-danger"
-                                        onclick="return confirm('¿Seguro que deseas eliminar esta categoría?');">
-                                    Eliminar
-                                </button>
-
-                            </form>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Categorias" asp-action="Editar" asp-route-id="@categoria.IdCategoria" class="btn btn-sm btn-warning">Editar</a>
+                                <form asp-controller="Categorias" asp-action="Eliminar" asp-route-id="@categoria.IdCategoria" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar esta categoría?');">Eliminar</button>
+                                </form>
+                            }
 
                         </td>
 

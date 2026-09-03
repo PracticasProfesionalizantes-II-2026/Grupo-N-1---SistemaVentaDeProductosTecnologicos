@@ -1,0 +1,6 @@
+@* ============================================================================ *@
+@* MÓDULO: PROVEEDORES                                                         *@
+@* RESPONSABILIDAD: Compartir campos del formulario de proveedor.             *@
+@* ============================================================================ *@
+@model Frontend.Models.Api.Requests.ProveedorRequest
+<label asp-for="RazonSocial"></label><input asp-for="RazonSocial" class="form-control"/><label asp-for="Cuit"></label><input asp-for="Cuit" class="form-control"/><label asp-for="EmailComercial"></label><input asp-for="EmailComercial" class="form-control"/><label asp-for="TelefonoComercial"></label><input asp-for="TelefonoComercial" class="form-control"/><label asp-for="CondicionIva"></label><input asp-for="CondicionIva" class="form-control"/><label asp-for="IdDireccion"></label><input asp-for="IdDireccion" type="number" class="form-control"/><label asp-for="PlazoPagoDias"></label><input asp-for="PlazoPagoDias" type="number" min="0" class="form-control"/><label asp-for="TiempoEntregaDias"></label><input asp-for="TiempoEntregaDias" type="number" min="0" class="form-control"/><label asp-for="MonedaPreferida"></label><input asp-for="MonedaPreferida" class="form-control"/><div class="form-check"><input asp-for="Activo" class="form-check-input"/><label asp-for="Activo"></label></div>

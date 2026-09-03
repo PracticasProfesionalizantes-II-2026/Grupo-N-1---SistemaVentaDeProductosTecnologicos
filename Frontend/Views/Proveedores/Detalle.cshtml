@@ -1,0 +1,6 @@
+@* ============================================================================ *@
+@* MÓDULO: PROVEEDORES                                                         *@
+@* RESPONSABILIDAD: Mostrar el detalle de un proveedor.                        *@
+@* ============================================================================ *@
+@model Frontend.Models.Api.Responses.ProveedorResponse
+<div class="container py-4"><h1>@Model.RazonSocial</h1><p>ID: @Model.IdProveedor</p><p>CUIT: @Model.Cuit</p><p>Email: @Model.EmailComercial</p><p>Teléfono: @Model.TelefonoComercial</p><p>Condición IVA: @Model.CondicionIva</p><p>Moneda: @Model.MonedaPreferida</p><a asp-action="Index" class="btn btn-secondary">Volver</a>@if (User.IsInRole("Admin")){<a asp-action="Editar" asp-route-id="@Model.IdProveedor" class="btn btn-warning">Editar</a>}</div>
