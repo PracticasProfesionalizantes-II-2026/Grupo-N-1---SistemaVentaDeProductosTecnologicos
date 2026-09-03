@@ -1,1 +1,6 @@
-@* Estructura reservada. Implementación pendiente. *@
+@* ============================================================================ *@
+@* MÓDULO: PRODUCTOS                                                          *@
+@* RESPONSABILIDAD: Mostrar el detalle de un producto.                         *@
+@* ============================================================================ *@
+@model Frontend.Models.Api.Responses.ProductoResponse
+<div class="container py-4"><h1>@Model.Nombre</h1><p>@Model.Descripcion</p><p>Precio: $ @Model.Precio.ToString("N2")</p><p>Stock: @Model.Stock</p><p>Categoría: @Model.IdCategoria</p><p>Proveedor: @Model.IdProveedor</p><a asp-action="Index" class="btn btn-secondary">Volver</a>@if (User.IsInRole("Admin")){<a asp-action="Editar" asp-route-id="@Model.IdProducto" class="btn btn-warning">Editar</a>}</div>

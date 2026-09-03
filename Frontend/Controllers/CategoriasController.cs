@@ -1,6 +1,10 @@
-// Estructura reservada. Implementación pendiente.
+// ============================================================================
+// MÓDULO: CATEGORÍAS
+// RESPONSABILIDAD: Listar y gestionar categorías mediante la API del backend.
+// ============================================================================
 using Frontend.Models.Api.Requests;
 using Frontend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Frontend.Controllers;
@@ -36,12 +40,14 @@ public class CategoriasController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public IActionResult Crear()
     {
         return View(new CategoriaRequest());
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Crear(CategoriaRequest request)
     {
@@ -67,6 +73,7 @@ public class CategoriasController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Editar(int id)
     {
         var categoria = await _categoriasApiService.ObtenerPorIdAsync(id);
@@ -88,6 +95,7 @@ public class CategoriasController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar(int id, CategoriaRequest request)
     {
@@ -116,6 +124,7 @@ public class CategoriasController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Eliminar(int id)
     {
