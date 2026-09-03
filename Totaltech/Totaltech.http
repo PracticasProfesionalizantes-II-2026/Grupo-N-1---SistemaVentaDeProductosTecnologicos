@@ -1,4 +1,4 @@
-@Totaltech_HostAddress = http://localhost:5069
+@Totaltech_HostAddress = http://localhost:5070
 
 GET {{Totaltech_HostAddress}}/weatherforecast/
 Accept: application/json
