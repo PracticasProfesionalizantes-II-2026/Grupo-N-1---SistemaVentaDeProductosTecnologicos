@@ -150,6 +150,7 @@
                     Iniciar sesión
                 </a>
             }
+            @if (User.IsInRole("Admin")) { <a asp-controller="Administracion" asp-action="Index">Administración</a><span class="badge bg-success">Modo Administrador Activo</span> }
 
         </nav>
 

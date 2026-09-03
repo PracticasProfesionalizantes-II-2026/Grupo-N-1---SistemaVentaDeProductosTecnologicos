@@ -1,1 +1,4 @@
-@* Estructura reservada. Implementación pendiente. *@
+@model List<Frontend.Models.Api.Responses.ProductoResponse>
+<h1>Productos</h1>
+<form method="post" asp-action="Producto">@Html.AntiForgeryToken()<input name="nombre" required /><input name="descripcion" /><input name="precio" type="number" step="0.01" min="0" required /><input name="stock" type="number" min="0" required /><input name="idCategoria" type="number" min="1" required /><input name="idProveedor" type="number" min="1" required /><button>Crear</button></form>
+@foreach (var p in Model) { <div>@p.Nombre - @p.Precio - @p.Stock</div> }

@@ -18,6 +18,10 @@ public class ProductosApiService
         return _httpClientFactory.CreateClient("TotaltechApi");
     }
 
+    public Task<HttpResponseMessage> CrearAsync(string n,string d,decimal p,int s,int c,int pr) => CrearCliente().PostAsJsonAsync("/productos/", new { nombre=n, descripcion=d, precio=p, stock=s, idCategoria=c, idProveedor=pr });
+    public Task<HttpResponseMessage> ActualizarAsync(int id,string n,string d,decimal p,int s,int c,int pr) => CrearCliente().PutAsJsonAsync($"/productos/{id}", new { nombre=n, descripcion=d, precio=p, stock=s, idCategoria=c, idProveedor=pr });
+    public Task<HttpResponseMessage> EliminarAsync(int id) => CrearCliente().DeleteAsync($"/productos/{id}");
+
     public async Task<List<ProductoResponse>> ObtenerTodosAsync()
     {
         var cliente = CrearCliente();

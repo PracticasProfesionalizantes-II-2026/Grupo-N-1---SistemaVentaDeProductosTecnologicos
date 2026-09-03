@@ -84,7 +84,7 @@ public class HomeController : Controller
                 new(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
                 new(ClaimTypes.Name, $"{usuario.Nombre} {usuario.Apellido}".Trim()),
                 new(ClaimTypes.Email, usuario.Email),
-                new(ClaimTypes.Role, usuario.Rol == 1 ? "Administrador" : "Cliente")
+                new(ClaimTypes.Role, usuario.Rol == 1 ? "Admin" : "Cliente")
             };
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(
