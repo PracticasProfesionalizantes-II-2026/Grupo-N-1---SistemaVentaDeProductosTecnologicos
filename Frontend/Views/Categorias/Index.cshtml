@@ -1,1 +1,112 @@
-@* Estructura reservada. Implementación pendiente. *@
+@model List<Frontend.Models.Api.Responses.CategoriaResponse>
+
+@{
+    ViewData["Title"] = "Categorías";
+}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Categorías</h1>
+
+        <a asp-controller="Categorias"
+           asp-action="Crear"
+           class="btn btn-primary">
+            Nueva categoría
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] is not null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    }
+
+    @if (TempData["Error"] is not null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No hay categorías registradas.
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped table-bordered align-middle">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach (var categoria in Model)
+                {
+                    <tr>
+
+                        <td>
+                            @categoria.IdCategoria
+                        </td>
+
+                        <td>
+                            @categoria.Nombre
+                        </td>
+
+                        <td>
+                            @categoria.Descripcion
+                        </td>
+
+                        <td>
+
+                            <a asp-controller="Categorias"
+                               asp-action="Detalle"
+                               asp-route-id="@categoria.IdCategoria"
+                               class="btn btn-sm btn-info">
+                                Ver
+                            </a>
+
+                            <a asp-controller="Categorias"
+                               asp-action="Editar"
+                               asp-route-id="@categoria.IdCategoria"
+                               class="btn btn-sm btn-warning">
+                                Editar
+                            </a>
+
+                            <form asp-controller="Categorias"
+                                  asp-action="Eliminar"
+                                  asp-route-id="@categoria.IdCategoria"
+                                  method="post"
+                                  class="d-inline">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('¿Seguro que deseas eliminar esta categoría?');">
+                                    Eliminar
+                                </button>
+
+                            </form>
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+    }
+
+</div>
