@@ -845,3 +845,387 @@ body {
     height: 60px;
   }
 }
+
+/* ==========================================================
+   PRODUCTOS
+   ========================================================== */
+
+.products-page {
+  width: 100%;
+  min-height: 100%;
+  overflow-y: auto;
+  background-color: #f4f4f4;
+  color: #171717;
+}
+
+
+/* ==========================================================
+   ENCABEZADO
+   ========================================================== */
+
+.products-heading {
+  width: min(1180px, 92%);
+  min-height: 92px;
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 28px;
+}
+
+.products-heading h1 {
+  margin: 0;
+
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+
+/* Flecha volver */
+
+.products-back {
+  position: relative;
+
+  width: 28px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #ff3b16;
+
+  font-size: 3.4rem;
+  font-weight: 300;
+  line-height: 1;
+
+  text-decoration: none;
+}
+
+.products-back:hover {
+  color: #d92d0b;
+}
+
+
+/* Línea debajo del título */
+
+.products-divider {
+  width: 100%;
+  height: 1px;
+
+  background-color: #777;
+}
+
+
+/* ==========================================================
+   DISTRIBUCIÓN PRINCIPAL
+   ========================================================== */
+
+.products-layout {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 260px 1fr;
+
+  gap: 42px;
+
+  padding: 26px 0 50px;
+}
+
+
+/* ==========================================================
+   CATEGORÍAS
+   ========================================================== */
+
+.categories-panel {
+  min-width: 0;
+}
+
+.categories-menu {
+  width: 100%;
+}
+
+
+/* Quitamos el triángulo nativo */
+
+.categories-menu summary {
+  list-style: none;
+}
+
+.categories-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+
+.categories-menu summary {
+  position: relative;
+
+  padding-left: 27px;
+
+  cursor: pointer;
+
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+
+/* Flecha naranja */
+
+.categories-menu summary::before {
+  content: "";
+
+  position: absolute;
+  left: 2px;
+  top: 9px;
+
+  width: 10px;
+  height: 10px;
+
+  border-left: 2px solid #ff3b16;
+  border-top: 2px solid #ff3b16;
+
+  transform: rotate(45deg);
+
+  transition: transform 0.2s ease;
+}
+
+
+/* Flecha cuando el menú está cerrado */
+
+.categories-menu:not([open]) summary::before {
+  transform: rotate(225deg);
+}
+
+
+/* ==========================================================
+   LISTA DE CATEGORÍAS
+   ========================================================== */
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+
+  margin-top: 9px;
+  padding-left: 38px;
+}
+
+.categories-list a {
+  position: relative;
+
+  padding: 7px 0 7px 12px;
+
+  color: #171717;
+
+  font-size: 1.08rem;
+  font-weight: 500;
+
+  text-decoration: none;
+}
+
+
+/* Flechita naranja de cada categoría */
+
+.categories-list a::before {
+  content: "";
+
+  position: absolute;
+
+  left: -10px;
+  top: 12px;
+
+  width: 8px;
+  height: 8px;
+
+  border-right: 2px solid #ff3b16;
+  border-bottom: 2px solid #ff3b16;
+
+  transform: rotate(45deg);
+}
+
+
+.categories-list a:hover {
+  color: #ff3b16;
+}
+
+
+/* ==========================================================
+   ZONA DE PRODUCTOS
+   ========================================================== */
+
+.products-content {
+  min-width: 0;
+}
+
+
+/* ==========================================================
+   GRID
+   ========================================================== */
+
+.products-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 24px;
+}
+
+
+/* ==========================================================
+   TARJETA
+   ========================================================== */
+
+.product-card {
+  overflow: hidden;
+
+  background-color: #ffffff;
+
+  border: 1px solid #dedede;
+  border-radius: 12px;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.product-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ==========================================================
+   ESPACIO RESERVADO PARA IMAGEN
+   ========================================================== */
+
+.product-card-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+
+  background-color: #eeeeee;
+
+  border-bottom: 1px solid #e0e0e0;
+}
+
+
+/* ==========================================================
+   INFORMACIÓN DEL PRODUCTO
+   ========================================================== */
+
+.product-card-body {
+  padding: 18px;
+}
+
+
+.product-category {
+  margin: 0 0 6px;
+
+  color: #777;
+
+  font-size: 0.85rem;
+}
+
+
+.product-name {
+  margin: 0 0 14px;
+
+  color: #171717;
+
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+
+.product-price {
+  margin: 0 0 18px;
+
+  color: #171717;
+
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+
+/* ==========================================================
+   BOTÓN
+   ========================================================== */
+
+.product-button {
+  width: 100%;
+
+  padding: 10px 14px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background-color: #2474ee;
+
+  color: white;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+.product-button:hover {
+  background-color: #155fc9;
+}
+/* ==========================================================
+   PRODUCTOS - TABLET
+   ========================================================== */
+
+@media (max-width: 1024px) {
+
+  .products-layout {
+    grid-template-columns: 220px 1fr;
+    gap: 25px;
+  }
+
+  .products-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+
+/* ==========================================================
+   PRODUCTOS - MOBILE
+   ========================================================== */
+
+@media (max-width: 768px) {
+
+  .products-heading {
+    min-height: 78px;
+
+    gap: 20px;
+  }
+
+  .products-heading h1 {
+    font-size: 1.8rem;
+  }
+
+
+  .products-layout {
+    display: block;
+
+    padding-top: 22px;
+  }
+
+
+  .categories-panel {
+    margin-bottom: 28px;
+  }
+
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+}

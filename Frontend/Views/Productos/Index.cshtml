@@ -1,1 +1,139 @@
-@* Estructura reservada. Implementación pendiente. *@
+@model List<Frontend.Models.Api.Responses.ProductoResponse>
+
+@{
+    ViewData["Title"] = "Productos";
+    var titulo = ViewData["TituloProductos"]?.ToString() ?? "Productos";
+}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>@titulo</h1>
+
+        <a asp-controller="Productos"
+           asp-action="Index"
+           class="btn btn-secondary">
+            Ver todos
+        </a>
+    </div>
+
+    <!-- Buscar productos -->
+    <form asp-controller="Productos"
+          asp-action="Buscar"
+          method="get"
+          class="mb-3">
+
+        <div class="input-group">
+
+            <input type="text"
+                   name="texto"
+                   class="form-control"
+                   placeholder="Buscar por nombre o descripción" />
+
+            <button type="submit"
+                    class="btn btn-primary">
+                Buscar
+            </button>
+
+        </div>
+
+    </form>
+
+    <!-- Filtrar por categoría -->
+    <form asp-controller="Productos"
+          asp-action="Categoria"
+          method="get"
+          class="mb-3">
+
+        <div class="input-group">
+
+            <input type="number"
+                   name="id"
+                   min="1"
+                   class="form-control"
+                   placeholder="ID de categoría" />
+
+            <button type="submit"
+                    class="btn btn-outline-primary">
+                Filtrar por categoría
+            </button>
+
+        </div>
+
+    </form>
+
+    <!-- Productos disponibles -->
+    <div class="mb-4">
+
+        <a asp-controller="Productos"
+           asp-action="Disponibles"
+           class="btn btn-success">
+            Ver productos disponibles
+        </a>
+
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No se encontraron productos.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+
+            @foreach (var producto in Model)
+            {
+                <div class="col-md-4 mb-4">
+
+                    <div class="card h-100">
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                @producto.Nombre
+                            </h5>
+
+                            <p class="card-text">
+                                @producto.Descripcion
+                            </p>
+
+                            <p>
+                                <strong>Precio:</strong>
+                                $ @producto.Precio.ToString("N2")
+                            </p>
+
+                            <p>
+                                <strong>Stock:</strong>
+                                @producto.Stock
+                            </p>
+
+                            <p>
+                                <strong>Categoría:</strong>
+                                @producto.IdCategoria
+                            </p>
+
+                            <p>
+                                <strong>Proveedor:</strong>
+                                @producto.IdProveedor
+                            </p>
+
+                            <a asp-controller="Productos"
+                               asp-action="Detalle"
+                               asp-route-id="@producto.IdProducto"
+                               class="btn btn-primary">
+                                Ver producto
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+</div>
