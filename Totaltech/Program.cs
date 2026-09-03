@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Totaltech.Datos;
 using Totaltech.Endpoints;
+using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Repositorios;
 
@@ -51,6 +52,36 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var repositorio = scope.ServiceProvider.GetRequiredService<IUsuariosRepositorio>();
+        var logica = scope.ServiceProvider.GetRequiredService<IUsuariosLogica>();
+        var adminExistente = await repositorio.ObtenerPorEmailAsync("Admin@admin.com");
+        if (adminExistente is null)
+        {
+            await logica.CrearAsync(new Usuario
+            {
+                Nombre = "Administrador",
+                Apellido = "TotalTech",
+                Email = "Admin@admin.com",
+                Contrasena = "Admin123456789",
+                Telefono = "1122334455",
+                FechaRegistro = DateTime.UtcNow,
+                Rol = RolUsuario.Administrador
+            });
+        }
+        else if (adminExistente.Rol != RolUsuario.Administrador)
+        {
+            adminExistente.Rol = RolUsuario.Administrador;
+            await repositorio.ActualizarAsync(adminExistente);
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "No se pudo verificar o inicializar la cuenta administrativa de desarrollo.");
+    }
 }
 
 app.MapUsuariosEndpoints();
