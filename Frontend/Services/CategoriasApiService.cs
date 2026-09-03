@@ -1,1 +1,0 @@
-// Estructura reservada. Implementación pendiente.

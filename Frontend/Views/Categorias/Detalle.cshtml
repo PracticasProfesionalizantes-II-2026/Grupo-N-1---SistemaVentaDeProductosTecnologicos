@@ -1,12 +1,16 @@
-@model Frontend.Models.Api.Responses.ProductoResponse
+@* ============================================================================ *@
+@* MÓDULO: CATEGORÍAS                                                         *@
+@* RESPONSABILIDAD: Mostrar el detalle de una categoría.                       *@
+@* ============================================================================ *@
+@model Frontend.Models.Api.Responses.CategoriaResponse
 
 @{
-    ViewData["Title"] = "Detalle del producto";
+    ViewData["Title"] = "Detalle de la categoría";
 }
 
 <div class="container py-4">
 
-    <h1 class="mb-4">Detalle del producto</h1>
+    <h1 class="mb-4">Detalle de la categoría</h1>
 
     <div class="card">
 
@@ -18,7 +22,7 @@
 
             <p>
                 <strong>ID:</strong>
-                @Model.IdProducto
+                @Model.IdCategoria
             </p>
 
             <p>
@@ -28,22 +32,10 @@
 
             <p>
                 <strong>Precio:</strong>
-                $ @Model.Precio.ToString("N2")
+                @Model.Descripcion
             </p>
 
             <p>
-                <strong>Stock:</strong>
-                @Model.Stock
-            </p>
-
-            <p>
-                <strong>ID Categoría:</strong>
-                @Model.IdCategoria
-            </p>
-
-            <p>
-                <strong>ID Proveedor:</strong>
-                @Model.IdProveedor
             </p>
 
         </div>

@@ -1,0 +1,4 @@
+@model List<Frontend.Models.Api.Responses.CategoriaResponse>
+<h1>Categorías</h1>
+<form method="post" asp-action="Categoria">@Html.AntiForgeryToken()<input name="nombre" required /><input name="descripcion" /><button>Crear</button></form>
+@foreach (var c in Model) { <div>@c.Nombre <form method="post" asp-action="EliminarCategoria">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@c.IdCategoria" /><button>Eliminar</button></form></div> }

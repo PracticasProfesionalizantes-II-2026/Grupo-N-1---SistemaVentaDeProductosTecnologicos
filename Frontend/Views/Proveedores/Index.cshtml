@@ -1,0 +1,12 @@
+@* ============================================================================ *@
+@* MÓDULO: PROVEEDORES                                                         *@
+@* RESPONSABILIDAD: Mostrar proveedores y acciones disponibles para Admin.     *@
+@* ============================================================================ *@
+@model List<Frontend.Models.Api.Responses.ProveedorResponse>
+<div class="container py-4"><h1>Proveedores</h1>
+@if (TempData["Mensaje"] is not null) { <div class="alert alert-success">@TempData["Mensaje"]</div> }
+@if (TempData["Error"] is not null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+@if (User.IsInRole("Admin")) { <a asp-action="Crear" class="btn btn-primary mb-3">Nuevo proveedor</a> }
+<table class="table"><thead><tr><th>ID</th><th>Razón social</th><th>CUIT</th><th>Acciones</th></tr></thead><tbody>
+@foreach (var proveedor in Model) { <tr><td>@proveedor.IdProveedor</td><td>@proveedor.RazonSocial</td><td>@proveedor.Cuit</td><td><a asp-action="Detalle" asp-route-id="@proveedor.IdProveedor" class="btn btn-info">Ver</a>@if (User.IsInRole("Admin")){<a asp-action="Editar" asp-route-id="@proveedor.IdProveedor" class="btn btn-warning">Editar</a><form asp-action="Eliminar" asp-route-id="@proveedor.IdProveedor" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn btn-danger" onclick="return confirm('¿Eliminar proveedor?');">Eliminar</button></form>}</td></tr> }
+</tbody></table></div>
