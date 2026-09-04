@@ -1,8 +1,11 @@
-@model List<Frontend.Models.Api.Responses.ProductoResponse>
+@model Frontend.Models.ViewModels.Productos.CatalogoViewModel
 
 @{
     ViewData["Title"] = "Productos";
     var titulo = ViewData["TituloProductos"]?.ToString() ?? "Productos";
+    var nombresCategorias = Model.Categorias.ToDictionary(
+        categoria => categoria.IdCategoria,
+        categoria => categoria.Nombre);
 }
 
 <div class="container py-4">
@@ -46,11 +49,22 @@
 
         <div class="input-group">
 
-            <input type="number"
-                   name="id"
-                   min="1"
-                   class="form-control"
-                   placeholder="ID de categoría" />
+            <select name="id"
+                    class="form-select"
+                    aria-label="Categoría">
+                <option value="">Seleccioná una categoría</option>
+                @foreach (var categoria in Model.Categorias)
+                {
+                    if (categoria.IdCategoria == Model.CategoriaSeleccionadaId)
+                    {
+                        <option value="@categoria.IdCategoria" selected>@categoria.Nombre</option>
+                    }
+                    else
+                    {
+                        <option value="@categoria.IdCategoria">@categoria.Nombre</option>
+                    }
+                }
+            </select>
 
             <button type="submit"
                     class="btn btn-outline-primary">
@@ -72,7 +86,7 @@
 
     </div>
 
-    @if (Model.Count == 0)
+    @if (Model.Productos.Count == 0)
     {
         <div class="alert alert-info">
             No se encontraron productos.
@@ -82,7 +96,7 @@
     {
         <div class="row">
 
-            @foreach (var producto in Model)
+            @foreach (var producto in Model.Productos)
             {
                 <div class="col-md-4 mb-4">
 
@@ -110,7 +124,8 @@
 
                             <p>
                                 <strong>Categoría:</strong>
-                                @producto.IdCategoria
+                                @(nombresCategorias.GetValueOrDefault(producto.IdCategoria)
+                                    ?? $"ID {producto.IdCategoria}")
                             </p>
 
                             <p>

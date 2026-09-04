@@ -40,7 +40,6 @@ public class RegisterViewModel
 
     [Required(ErrorMessage = "Creá una contraseña.")]
     [StringLength(100, MinimumLength = 8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres.")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", ErrorMessage = "Usá al menos una mayúscula, una minúscula y un número.")]
     [DataType(DataType.Password)]
     [Display(Name = "Contraseña")]
     public string Contrasena { get; set; } = string.Empty;
