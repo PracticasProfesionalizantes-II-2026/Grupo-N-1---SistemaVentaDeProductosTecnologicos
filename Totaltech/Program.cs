@@ -48,6 +48,24 @@ builder.Services.AddScoped<IConsultasLogica, ConsultasLogica>();
 
 var app = builder.Build();
 
+try
+{
+    using var scope = app.Services.CreateScope();
+    var categoriasLogica = scope.ServiceProvider.GetRequiredService<ICategoriasLogica>();
+    var categoriasCreadas = await CategoriasIniciales.InicializarAsync(categoriasLogica);
+
+    if (categoriasCreadas.Count > 0)
+    {
+        app.Logger.LogInformation(
+            "Se inicializaron las categorías canónicas: {Categorias}.",
+            string.Join(", ", categoriasCreadas));
+    }
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "No se pudieron verificar o inicializar las categorías canónicas.");
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
