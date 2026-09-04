@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Seguridad;
 
 namespace Totaltech.Endpoints
 {
@@ -9,7 +10,9 @@ namespace Totaltech.Endpoints
     {
         public static void MapComprasEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/compras").WithTags("Compras");
+            var group = app.MapGroup("/compras")
+                .WithTags("Compras")
+                .RequireAuthorization(Autorizacion.PoliticaAdministrador);
 
 
             // obtener todas las compras--------------------------------

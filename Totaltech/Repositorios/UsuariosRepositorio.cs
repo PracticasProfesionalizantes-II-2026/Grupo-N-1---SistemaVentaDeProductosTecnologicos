@@ -59,8 +59,11 @@ namespace Totaltech.Repositorios
 
         public async Task<Usuario?> ObtenerPorEmailAsync(string email)
         {
+            var emailNormalizado = email.Trim().ToUpperInvariant();
+
             return await _context.Usuarios
-                .FirstOrDefaultAsync(usuario => usuario.Email == email);
+                .FirstOrDefaultAsync(usuario =>
+                    usuario.Email.Trim().ToUpper() == emailNormalizado);
         }
     }
 }

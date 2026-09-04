@@ -73,7 +73,7 @@ public class HomeController : Controller
             }
 
             var usuario = await response.Content.ReadFromJsonAsync<AuthUserResponse>(cancellationToken);
-            if (usuario is null)
+            if (usuario is null || string.IsNullOrWhiteSpace(usuario.AccessToken))
             {
                 ModelState.AddModelError(string.Empty, "No pudimos completar el inicio de sesión.");
                 return View(model);
@@ -87,10 +87,24 @@ public class HomeController : Controller
                 new(ClaimTypes.Role, usuario.Rol == 1 ? "Admin" : "Cliente")
             };
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var propiedades = new AuthenticationProperties
+            {
+                IsPersistent = false,
+                ExpiresUtc = usuario.ExpiresAtUtc
+            };
+            propiedades.StoreTokens(
+            [
+                new AuthenticationToken
+                {
+                    Name = "access_token",
+                    Value = usuario.AccessToken
+                }
+            ]);
+
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identity),
-                new AuthenticationProperties { IsPersistent = false });
+                propiedades);
 
             TempData["AuthSuccess"] = $"¡Bienvenido, {usuario.Nombre}!";
             return RedirectToAction(nameof(Index));
@@ -199,5 +213,7 @@ public class HomeController : Controller
         public string Apellido { get; init; } = string.Empty;
         public string Email { get; init; } = string.Empty;
         public int Rol { get; init; }
+        public string AccessToken { get; init; } = string.Empty;
+        public DateTimeOffset ExpiresAtUtc { get; init; }
     }
 }
