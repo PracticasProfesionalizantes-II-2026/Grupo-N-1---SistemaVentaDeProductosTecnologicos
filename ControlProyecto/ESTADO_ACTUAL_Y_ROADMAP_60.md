@@ -1,14 +1,15 @@
 # TotalTech — Estado Actual y Roadmap hacia ≥60%
 
-> Auditoría maestra de solo lectura realizada el 2026-09-04 sobre la rama `Rama--Facu`, HEAD `4da26d2`.
-> Fuente técnica primaria: código, migraciones y esquema/datos consultados en modo lectura.
+> Auditoría maestra original realizada el 2026-09-04 sobre la rama `Rama--Facu`, HEAD `4da26d2`.
+> Actualización de Etapa 1 realizada el 2026-09-04 sobre la misma rama, con baseline `8b9a9aa`, mediante tests unitarios y HTTP aislados de SQL Server.
+> Fuente técnica primaria: código, migraciones, resultados automatizados y el esquema/datos consultados en modo lectura durante la auditoría original.
 > Fuente funcional: `Documentación - Grupo 1 -TotalTech.pdf`; la documentación de API y los mockups se usaron como referencias secundarias.
 
 ## 1. Resumen ejecutivo
 
-**Avance general estimado: 40,6%** (`9,75 / 24` unidades funcionales de igual peso).
-**Solidez Backend estimada: 56,8%** (`6,25 / 11` dimensiones técnicas de igual peso).
-**Etapas necesarias hasta ≥60%: 5.**
+**Avance general estimado: 42,7%** (`10,25 / 24` unidades funcionales de igual peso).
+**Solidez Backend estimada: 68,2%** (`7,50 / 11` dimensiones técnicas de igual peso).
+**Etapas restantes hasta ≥60%: 4.**
 **Estado global: ROJO — el proyecto compila y tiene una API amplia, pero el flujo principal de compra no es seguro ni utilizable de extremo a extremo.**
 
 **Principal bloqueo:** el Backend acepta `PrecioUnitario` y `Pago.Monto` desde requests, no modela un `Pedido.Total` autoritativo y no controla concurrencia de stock. Al mismo tiempo, las pantallas MVC de carrito, checkout, cuenta y pedidos son placeholders y no existe integración real con Mercado Pago.
@@ -19,14 +20,15 @@
 - JWT, hashing, autorización por rol y ownership están implementados en código. Registro fuerza rol Cliente y las respuestas de usuario no incluyen la contraseña.
 - La base configurada respondió a consultas `SELECT`: tiene las cinco migraciones aplicadas, los índices únicos esperados, las seis categorías canónicas y un Admin canónico persistido con rol Administrador y hash de 84 caracteres.
 - Backend y Frontend compilan por separado en .NET 10 con 0 warnings y 0 errores.
+- Hay 16 tests verdes: 5 unitarios y 11 HTTP/integración sobre persistencia EF Core InMemory, sin acceso a la base SQL configurada.
 
 **Riesgos inmediatos:**
 
-- `Totaltech/appsettings.json` contiene una cadena SQL con usuario y contraseña y está versionado; `Credenciales.txt` también está versionado y no está vacío. No se reproducen valores en este reporte. Deben rotarse y retirarse del historial operativo antes de continuar.
-- No existe ningún proyecto de tests; `dotnet test` termina correctamente porque la solución no contiene ensamblados de prueba, no porque haya pruebas exitosas.
+- `Totaltech/appsettings.json` contiene una cadena SQL con usuario y contraseña y está versionado; `Credenciales.txt` también está versionado y no está vacío. No se reproducen valores en este reporte. Por restricción explícita de la Etapa 1 redefinida, no se modificaron ni rotaron: el riesgo queda diferido y abierto.
+- La cobertura automatizada sigue siendo parcial: autenticación, roles y ownership ya están protegidos, pero economía, stock concurrente, checkout, pagos y Frontend todavía no.
 - La documentación de API está desactualizada: afirma que no existe JWT, mientras que el código actual sí lo implementa.
 
-**Próxima etapa:** **Etapa 1 — Configuración segura y red mínima de pruebas**. Primero debe eliminarse la exposición de credenciales y fijarse una base automatizada para validar login, registro, roles y ownership antes de cambiar el contrato económico.
+**Próxima etapa:** **Etapa 2 — Precio, subtotal, total y estados autoritativos**. La red mínima de seguridad quedó verde; el siguiente bloqueo funcional es impedir que el cliente controle importes y estados sensibles.
 
 ## 2. Snapshot de auditoría
 
@@ -35,16 +37,16 @@
 | Fecha | 2026-09-04 (`America/Buenos_Aires`) |
 | Repositorio real | `Grupo-N-1---SistemaVentaDeProductosTecnologicos/Grupo-N-1---SistemaVentaDeProductosTecnologicos` |
 | Rama | `Rama--Facu` |
-| HEAD | `4da26d2 Backend` |
+| Baseline de esta actualización | `8b9a9aa estado actual del proyecto` |
 | Estado inicial | Limpio; `git status --short` no devolvió cambios |
 | Último merge visible | `fdb7548 Merge branch 'Develop' into Rama--Facu` |
-| Proyectos .NET | `Totaltech/Totaltech.csproj`, `Frontend/Frontend.csproj` |
-| Solución | `Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln`; incluye solo `Totaltech/Totaltech.csproj` |
-| Tests | Directorios y `.gitkeep`; 0 `.cs`, 0 `.csproj`, 0 tests ejecutables |
+| Proyectos .NET | Backend, Frontend, `Totaltech.UnitTests` y `Totaltech.IntegrationTests` |
+| Solución | Incluye los cuatro proyectos y los compila en un único flujo |
+| Tests | 2 proyectos, 5 archivos fuente de test/soporte y 16 tests ejecutables |
 | Documentos locales | 2 PDF, README, 4 guías de `ControlProyecto`, mockups PNG en `Frontend/photos` |
 | Documentos externos referenciados | Google Docs, Canva y Lucidchart desde `README.md`; **NO VERIFICADOS** en esta auditoría |
 | Base configurada | SQL Server accesible mediante consulta de solo lectura; no se ejecutaron escrituras |
-| API levantada | No. Evitado deliberadamente porque `Program.cs` ejecuta bootstrap de categorías y Admin al arrancar |
+| API levantada | Sí, solo mediante `WebApplicationFactory` y EF Core InMemory; no se levantó contra SQL Server |
 
 Se respetó el repositorio Git anidado indicado por `AGENTS.md`. El repositorio contenedor no fue modificado. Antes de crear este informe no existía `ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_60.md`.
 
@@ -98,23 +100,23 @@ Login y registro llaman a la API directamente desde `HomeController`. Productos,
 
 ### Dependencias y límites
 
-- La solución no incluye el proyecto `Frontend`; CI/build de la solución por sí solo no valida la UI.
+- La solución incluye Backend, Frontend y ambos proyectos de tests; un build de solución valida su compilación conjunta.
 - Backend y Frontend no tienen referencia de proyecto directa: se integran únicamente por HTTP y contratos JSON duplicados.
 - No hay proyecto compartido de contratos ni generación de cliente OpenAPI.
 - No se detectó infraestructura de CI para build/tests funcionales; `.github` no aporta evidencia de una pipeline ejecutada en esta auditoría.
 
 ## 4. Estado general del proyecto
 
-Los porcentajes de esta tabla son indicadores auxiliares por área; **no** se usan para calcular el 40,6% general.
+Los porcentajes de esta tabla son indicadores auxiliares por área; **no** se usan para calcular el 42,7% general.
 
 | Área | Estado | Avance estimado | Evidencia | Principal pendiente |
 |---|---|---:|---|---|
 | Backend | PARCIAL ALTO | 70% | 87 rutas, capas completas, build limpio | Economía autoritativa, checkout concurrente, recuperación real |
 | Frontend | PARCIAL | 32% | Login, registro, catálogo y ABM parcial | Carrito, checkout, cuenta, pedidos, contacto y Admin completo |
 | Base de datos | PARCIAL ALTO | 80% | 13 tablas, 5 migraciones aplicadas, FK/índices | `Pedido.Total`, imagen de producto, tokens de concurrencia/idempotencia |
-| Seguridad | PARCIAL | 55% | JWT, hash, rol, ownership | Secretos versionados, cero tests de seguridad, sin revocación/refresh |
+| Seguridad | PARCIAL ALTO | 75% | JWT, hash, rol y ownership con tests unitarios/HTTP | Secretos versionados diferidos; sin revocación/refresh |
 | Flujo de compra | INICIAL | 25% | `POST /carritos/{id}/confirmar` crea pedido/detalles y descuenta stock | Precio/total seguro, concurrencia, pago real y UI |
-| Tests | NO IMPLEMENTADO | 0% | 0 proyectos y 0 fuentes de tests | Unitarios, integración, API, seguridad y Frontend |
+| Tests | PARCIAL | 35% | 2 proyectos y 16 tests verdes sobre auth/seguridad | Economía, concurrencia, checkout, pagos y Frontend |
 | Documentación | PARCIAL | 60% | Requisitos y mockups locales utilizables | API PDF desactualizado; referencias externas no versionadas |
 
 Lectura global: la amplitud del Backend es mayor que la madurez del producto. Hay CRUDs persistentes y seguridad estructural, pero faltan las cadenas funcionales que convierten esos recursos en una compra real. El Frontend cubre el acceso y parte del catálogo, no el caso de uso central.
@@ -126,7 +128,7 @@ Lectura global: la amplitud del Backend es mayor que la madurez del producto. Ha
 - Fuente de unidades: alcance y RF del PDF `Documentación - Grupo 1 -TotalTech.pdf`, descompuestos en resultados funcionales comprobables.
 - Pesos: 24 unidades, todas con el mismo peso porque la documentación no asigna prioridades cuantitativas.
 - Escala: `COMPLETO = 1,00`; `PARCIAL ALTO = 0,75`; `PARCIAL = 0,50`; `INICIAL = 0,25`; `NO IMPLEMENTADO = 0,00`.
-- Un build correcto prueba compilabilidad, no comportamiento. En ausencia total de tests y de validación HTTP actual, ninguna unidad recibió `1,00`.
+- Un build correcto prueba compilabilidad, no comportamiento. Solo las unidades de registro y login suben a `1,00` porque ahora tienen pruebas unitarias y HTTP verdes; el resto conserva la valoración previa.
 - Los recursos auxiliares Proveedores, Compras y Reportes se auditan, pero no se agregan como unidades independientes porque el RF principal solo exige administración básica de productos, pedidos y usuarios. Esto evita inflar el porcentaje por cantidad de CRUDs.
 
 | # | Unidad funcional evaluable | Score | Clasificación | Evidencia principal |
@@ -143,8 +145,8 @@ Lectura global: la amplitud del Backend es mayor que la madurez del producto. Ha
 | 10 | Finalizar compra de extremo a extremo | 0,25 | INICIAL | Confirmación Backend parcial; no UI, pago ni total seguro |
 | 11 | Procesar pago digital/Mercado Pago | 0,00 | NO IMPLEMENTADO | Solo entidad/CRUD `Pago`; sin SDK, preferencia, webhook ni credenciales de proveedor |
 | 12 | Confirmar pago y entregar número de pedido | 0,25 | INICIAL | Se crea ID de pedido y Admin puede registrar pago; no flujo cliente/gateway |
-| 13 | Registrar usuario | 0,75 | PARCIAL ALTO | API + MVC + hash + rol forzado; sin test actual |
-| 14 | Iniciar sesión y conservar identidad | 0,75 | PARCIAL ALTO | JWT Backend + cookie Frontend + Bearer handler; sin test actual |
+| 13 | Registrar usuario | 1,00 | COMPLETO al alcance actual | API + MVC + hash + rol Cliente forzado; tests unitarios y HTTP verdes |
+| 14 | Iniciar sesión y conservar identidad | 1,00 | COMPLETO al alcance actual | JWT Backend + cookie Frontend + Bearer handler; login válido/inválido probado por unidad y HTTP |
 | 15 | Recuperar contraseña | 0,25 | INICIAL | Endpoint devuelve mensaje neutro, pero solo consulta existencia y no genera recuperación |
 | 16 | Gestionar perfil y direcciones | 0,25 | INICIAL | Backend con ownership; `CuentaController`/vista y servicio de direcciones pendientes |
 | 17 | Ver historial y estado de pedidos | 0,25 | INICIAL | Endpoints con ownership; UI de pedidos pendiente |
@@ -158,10 +160,10 @@ Lectura global: la amplitud del Backend es mayor que la madurez del producto. Ha
 
 ```text
 24 unidades evaluables
-9,75 puntos obtenidos
+10,25 puntos obtenidos
 
-9,75 / 24 × 100 = 40,625%
-Avance general estimado: 40,6%
+10,25 / 24 × 100 = 42,708%
+Avance general estimado: 42,7%
 ```
 
 La cifra es deliberadamente conservadora: reconoce código funcional sin otorgar completitud a cadenas sin tests ni interfaz utilizable.
@@ -175,24 +177,24 @@ Se aplicó la misma escala y pesos iguales a las 11 dimensiones exigidas. Esta m
 | Arquitectura | 0,75 | PARCIAL ALTO | Capas coherentes; orquestación crítica acoplada a varios repositorios/DbContext y contratos duplicados |
 | Persistencia | 1,00 | COMPLETO al alcance actual | Esquema real accesible, 5 migraciones aplicadas, FK/índices y datos persistidos |
 | Validación | 0,50 | PARCIAL | Reglas manuales útiles, pero DTOs Backend casi sin DataAnnotations y validación no uniforme |
-| Auth | 0,75 | PARCIAL ALTO | JWT, hash, bootstrap y cookie/Bearer existen; sin test HTTP actual ni recuperación real |
-| Autorización | 0,75 | PARCIAL ALTO | Fallback autenticado y política Admin extendida; sin suite que evite regresiones |
-| Ownership | 0,75 | PARCIAL ALTO | Controles sistemáticos sobre recursos personales; sin pruebas A/B automatizadas |
+| Auth | 1,00 | COMPLETO al alcance actual | JWT, hash, bootstrap y login válido/inválido están cubiertos por unidad y HTTP; recuperación queda como función separada |
+| Autorización | 1,00 | COMPLETO al alcance actual | Rol Admin/Cliente y respuestas 401/403 están verificados automáticamente |
+| Ownership | 1,00 | COMPLETO al alcance actual | Owner, Cliente A vs Cliente B y sobrescritura de `idUsuario` están verificados por HTTP |
 | Integridad económica | 0,25 | INICIAL | Precio de línea y monto de pago son confiados al request; no existe `Pedido.Total` |
 | Stock | 0,50 | PARCIAL | Valida y descuenta en servidor, pero sin token/UPDATE condicional contra overselling |
 | Transacciones | 0,50 | PARCIAL | Confirmación usa transacción explícita, pero faltan idempotencia y control concurrente |
 | Errores | 0,50 | PARCIAL | 400/404/409 razonables en varios casos; sin middleware global/ProblemDetails y contratos dispares |
-| Tests | 0,00 | NO IMPLEMENTADO | 0 proyectos de test |
+| Tests | 0,50 | PARCIAL | 5 unitarios + 11 de integración; faltan economía, concurrencia, checkout, pagos y Frontend |
 
 ```text
 11 dimensiones
-6,25 puntos obtenidos
+7,50 puntos obtenidos
 
-6,25 / 11 × 100 = 56,818%
-Solidez Backend estimada: 56,8%
+7,50 / 11 × 100 = 68,182%
+Solidez Backend estimada: 68,2%
 ```
 
-Aunque el promedio se acerca a 60%, el Backend **no debe considerarse sólido todavía**: integridad económica, stock concurrente y tests son criterios de cierre, no dimensiones compensables por tener muchos CRUDs.
+Aunque el promedio supera 60%, el Backend **no debe considerarse sólido todavía**: integridad económica, stock concurrente y la cobertura pendiente son criterios de cierre, no dimensiones compensables por tener muchos CRUDs.
 
 ## 7. Inventario de Backend
 
@@ -200,12 +202,12 @@ Leyenda de estado: `FUNCIONAL SIN TESTS` significa que existe la cadena Endpoint
 
 | Recurso | Endpoint(s) | Lógica | Repositorio | Persistencia | Validaciones | Seguridad | Tests | Estado |
 |---|---|---|---|---|---|---|---|---|
-| Auth | 3 | `UsuariosLogica`, `JwtTokenService` | `UsuariosRepositorio` | `Usuarios` | Login/registro útiles; recuperación simulada | Público por diseño; emite JWT | 0 | PARCIAL |
-| Usuarios | 5 | Sí | Sí | `Usuarios` | Campos básicos, email duplicado, hash | Admin para lista/alta; owner/Admin para unidad | 0 | FUNCIONAL SIN TESTS |
-| Direcciones | 5 | Sí | Sí | `Direcciones` | Campos, enum, usuario existente | Owner/Admin y listado filtrado | 0 | FUNCIONAL SIN TESTS |
+| Auth | 3 | `UsuariosLogica`, `JwtTokenService` | `UsuariosRepositorio` | `Usuarios` | Login/registro útiles; recuperación simulada | Público por diseño; emite JWT | Sí, unidad + HTTP | PARCIAL |
+| Usuarios | 5 | Sí | Sí | `Usuarios` | Campos básicos, email duplicado, hash | Admin para lista/alta; owner/Admin para unidad | Sí, respuestas/owner | PARCIAL ALTO |
+| Direcciones | 5 | Sí | Sí | `Direcciones` | Campos, enum, usuario existente | Owner/Admin y listado filtrado | Sí, 3 HTTP | PARCIAL ALTO |
 | Proveedores | 5 | Sí | Sí | `Proveedores` | Razón, CUIT, contacto, plazos, FK | Admin en todo el grupo | 0 | FUNCIONAL SIN TESTS |
 | Productos | 9 | Sí | Sí | `Productos` | Nombre, precio/stock no negativos, FK | Lectura pública; mutación Admin | 0 | FUNCIONAL SIN TESTS |
-| Categorías | 5 | Sí + bootstrap | Sí | `Categorias` | Nombre obligatorio | Lectura pública; mutación Admin | 0 | FUNCIONAL SIN TESTS |
+| Categorías | 5 | Sí + bootstrap | Sí | `Categorias` | Nombre obligatorio | Lectura pública; mutación Admin | Sí, Admin/401/403 | PARCIAL ALTO |
 | Pedidos | 10 | Sí | Sí | `Pedidos` | Usuario/dirección/estado | Lectura owner/Admin; mutación sensible Admin | 0 | PARCIAL |
 | DetallePedidos | 5 | Sí | Sí | `DetallePedidos` | Cantidad/precio/FK; subtotal calculado | Lectura owner/Admin; mutación Admin | 0 | PARCIAL |
 | Carritos | 9 | Sí + orquestación | Sí | `Carritos` | Usuario, estado, stock y dirección | Owner/Admin y listados filtrados | 0 | PARCIAL |
@@ -589,7 +591,7 @@ Funcionalidades explícitamente excluidas por el documento —reseñas, mayorist
 | Contraseñas seguras | `PasswordHasher<Usuario>` y hashes persistidos | PARCIAL ALTO |
 | Datos personales protegidos/privacidad | JWT/cookie HttpOnly; cadena SQL expuesta en Git, sin política de privacidad implementada | PARCIAL BAJO |
 | Mantenibilidad | Capas claras y nullable; duplicación de contratos y placeholders/nombres confusos | PARCIAL |
-| Escalabilidad | SQL/DI async y retry; sin pruebas, caché, paginación o diseño de escala | NO VERIFICADO |
+| Escalabilidad | SQL/DI async y retry; sin pruebas de carga, caché, paginación o diseño de escala | NO VERIFICADO |
 | Disponibilidad 99% | Sin hosting/monitoring/SLO evidenciado | NO VERIFICADO |
 
 No se declara cumplimiento de rendimiento, disponibilidad, seguridad integral ni escalabilidad sin evidencia objetiva.
@@ -598,35 +600,36 @@ No se declara cumplimiento de rendimiento, disponibilidad, seguridad integral ni
 
 ### Inventario de tests
 
-| Tipo | Ubicación prevista | Cantidad ejecutable | Cobertura |
+| Tipo | Ubicación | Cantidad ejecutable | Cobertura |
 |---|---|---:|---|
-| Unitarios Backend | `Tests/Totaltech.UnitTests/Logica`, `Validaciones` | 0 | Ninguna |
-| Integración Backend/API | `Tests/Totaltech.IntegrationTests/Endpoints`, `Persistencia` | 0 | Ninguna |
+| Unitarios Backend | `Tests/Totaltech.UnitTests` | 5 | Registro/rol forzado/hash, login inválido, bootstrap Admin, rol por claim y ownership |
+| Integración Backend/API | `Tests/Totaltech.IntegrationTests` | 11 | Registro/login, Admin/Cliente, 401/403, owner/ajeno, anti-tampering de owner, respuestas seguras y bootstrap |
 | Frontend | `Tests/Frontend.UnitTests/Controllers`, `Services` | 0 | Ninguna |
-| Seguridad | No hay proyecto | 0 | Ninguna |
+| Seguridad | Distribuida en ambos proyectos Backend | 16 escenarios relevantes | Auth, rol y ownership; no economía/concurrencia |
 
-Los directorios contienen únicamente `.gitkeep`. No existe `.csproj` de test ni archivo `.cs` bajo `Tests`.
+Los dos proyectos usan xUnit. Las pruebas HTTP alojan la aplicación en `Testing`, reemplazan el `TotaltechDbContext` por EF Core InMemory con nombre/raíz únicos y verifican explícitamente el proveedor antes de cada escenario. La configuración SQL productiva no se usa ni se modifica.
 
 ### Resultados ejecutados
 
-- `dotnet build Totaltech/Totaltech.csproj --nologo`: **EXIT 0**, 0 warnings, 0 errores.
-- `dotnet build Frontend/Frontend.csproj --nologo`: **EXIT 0**, 0 warnings, 0 errores.
-- `dotnet test Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln --no-build --nologo`: **EXIT 0 sin salida de tests**; la solución solo contiene el Backend y no contiene proyecto de pruebas.
-- Consulta SQL de solo lectura: **EXIT 0**; confirmó conteos, categorías, Admin, índices y migraciones.
-- No se ejecutaron requests HTTP ni pruebas destructivas.
+- `dotnet build Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln --no-restore`: **EXIT 0**, 0 warnings, 0 errores para los cuatro proyectos.
+- `dotnet test Tests/Totaltech.UnitTests/Totaltech.UnitTests.csproj`: **EXIT 0**, 5/5 superados.
+- `dotnet test Tests/Totaltech.IntegrationTests/Totaltech.IntegrationTests.csproj`: **EXIT 0**, 11/11 superados.
+- Se ejecutaron requests HTTP únicamente contra el servidor de test en memoria. No se abrió conexión ni se ejecutó escritura contra SQL Server.
+- La consulta SQL `SELECT` registrada en la auditoría original no se repitió durante esta etapa.
 
-Áreas críticas sin cobertura: tampering de precio/monto/rol/estado; Cliente A vs Cliente B; Admin vs Cliente; stock insuficiente y carreras; rollback; doble checkout; sincronización pago-pedido; login/registro; contratos MVC/API.
+Áreas críticas aún sin cobertura: tampering de precio/monto/estado; stock insuficiente y carreras; rollback; doble checkout; sincronización pago-pedido; contratos MVC/API y Frontend.
 
 ## 17. Bloqueantes actuales
 
 ### BLOQUEANTES PARA 60%
 
-1. **Secretos versionados:** la credencial SQL debe considerarse comprometida. Bloquea un ciclo de desarrollo seguro y CI reproducible.
-2. **Precio y total no autoritativos:** un cliente puede persistir un precio unitario arbitrario; no existe `Pedido.Total`.
-3. **Pago no real:** Mercado Pago/digital payment no está integrado; `Pago` es un registro manual Admin con monto confiado.
-4. **Concurrencia de stock:** la transacción aporta atomicidad, pero no evita overselling entre confirmaciones simultáneas.
-5. **Frontend del flujo principal ausente:** carrito, checkout, dirección, confirmación, cuenta e historial son placeholders.
-6. **Cero tests:** no puede sostenerse “verificable” ni prevenir regresiones de auth/ownership/economía.
+1. **Precio y total no autoritativos:** un cliente puede persistir un precio unitario arbitrario; no existe `Pedido.Total`.
+2. **Pago no real:** Mercado Pago/digital payment no está integrado; `Pago` es un registro manual Admin con monto confiado.
+3. **Concurrencia de stock:** la transacción aporta atomicidad, pero no evita overselling entre confirmaciones simultáneas.
+4. **Frontend del flujo principal ausente:** carrito, checkout, dirección, confirmación, cuenta e historial son placeholders.
+5. **Cobertura crítica incompleta:** la red de auth/ownership existe, pero economía, concurrencia, checkout y pago aún no tienen protección automatizada.
+
+La credencial SQL versionada continúa como riesgo crítico de seguridad, pero su corrección quedó **diferida explícitamente** por la restricción de no modificar configuración, conexión, credenciales ni persistencia en esta etapa. No se la contabiliza como trabajo completado.
 
 No son bloqueantes para 60% por sí solos: refresh tokens, paginación, patrones enterprise, una capa de servicios compartidos perfecta o coincidencia pixel-perfect con Canva.
 
@@ -635,7 +638,6 @@ No son bloqueantes para 60% por sí solos: refresh tokens, paginación, patrones
 - `Frontend/Services/CarritosApiService.cs` contiene realmente `CategoriasApiService`; el nombre induce errores de mantenimiento.
 - Interfaces de servicios Frontend y múltiples archivos de controller/view son placeholders de una línea.
 - `AuthApiService` está vacío mientras `HomeController` concentra llamadas HTTP, parsing y manejo de sesión.
-- La solución excluye Frontend, por lo que `dotnet build` de la solución no cubre todo.
 - DTOs Backend tienen poca validación declarativa; las reglas están dispersas en lógica.
 - No hay middleware uniforme de excepciones/ProblemDetails; se repite `catch (DbUpdateException)` en deletes.
 - `EsNoEncontrado` infiere 404 inspeccionando texto de errores.
@@ -653,60 +655,65 @@ No son bloqueantes para 60% por sí solos: refresh tokens, paginación, patrones
 
 Las contribuciones estimadas se expresan contra las 24 unidades del apartado 5. Solo se acreditan si se cumplen los criterios y tests de cada etapa; no son puntos por archivos creados.
 
-### Etapa 1 — Configuración segura y red mínima de pruebas
+### Etapa 1 — Red mínima de pruebas y validación de seguridad
 
 **Prioridad:** P0
 
+**Estado:** COMPLETADA el 2026-09-04
+
 **Objetivo:**
-Retirar secretos del repositorio, rotar las credenciales expuestas y crear una base de tests que haga verificables autenticación, rol y ownership.
+Crear una base automatizada que haga verificables autenticación, rol y ownership sin tocar la configuración ni la base SQL existente.
 
 **Estado que la motiva:**
-Hay credenciales SQL versionadas y cero tests. Cambiar economía/checkout sin proteger configuración ni congelar las reglas de acceso aumenta el riesgo de regresión y exposición.
+JWT, hash, rol y ownership existían en código, pero carecían de evidencia automatizada. Cambiar economía/checkout sin congelar esas reglas aumentaba el riesgo de regresión.
 
 **Alcance:**
-- Rotar credenciales SQL en el proveedor; invalidar las actualmente versionadas.
-- Remover valores sensibles de archivos trackeados y usar User Secrets/variables/CI secrets con ejemplos seguros.
-- Definir configuración reproducible de test que no apunte a la base compartida.
-- Crear proyectos de unit/integration tests e incluirlos junto con Backend y Frontend en la solución o pipeline.
-- Probar registro Cliente forzado, hash/login, Admin por rol, 401/403 y accesos owner vs usuario ajeno en recursos críticos.
+- Crear proyectos xUnit de tests unitarios y de integración HTTP.
+- Reemplazar el contexto únicamente dentro del host de test por EF Core InMemory aislado y verificable.
+- Incluir Backend, Frontend y ambos proyectos de tests en la solución.
+- Probar registro Cliente forzado, hash/login, Admin por rol, 401/403 y accesos owner vs usuario ajeno.
+- Probar que las respuestas de auth/usuario no exponen contraseñas ni hashes y que el Admin canónico se crea de forma idempotente.
 
 **Fuera de alcance:**
+- Modificar `appsettings*`, cadenas de conexión, `UseSqlServer`, `TotaltechDbContext`, migraciones, esquema, credenciales o `Credenciales.txt`.
+- Rotar o sanear secretos versionados; el riesgo se documenta y difiere.
 - Cambiar el algoritmo de JWT o agregar refresh tokens.
 - Implementar checkout, pagos o pantallas nuevas.
 - Reescribir el historial Git sin coordinación del equipo.
 
 **Dependencias:**
-- Acceso del equipo al servicio SQL para rotar el secreto.
-- Acordar una base efímera/aislada para integración.
+- SDK .NET 10 y restauración de paquetes de test.
+- Ninguna dependencia de SQL Server: la persistencia de integración es InMemory y única por test host.
 
-**Áreas/archivos probables:**
-- `Totaltech/appsettings*.json`, `Credenciales.txt`, `.gitignore`.
-- Configuración de secretos local/CI.
+**Áreas/archivos modificados:**
 - `Tests/Totaltech.UnitTests/**`, `Tests/Totaltech.IntegrationTests/**`.
-- `Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln` y eventual workflow CI.
+- `Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln`.
+- Este roadmap maestro.
 
 **Criterios de aceptación:**
-- [ ] Ninguna credencial válida queda en archivos versionados; las anteriores fueron rotadas.
-- [ ] Backend/Frontend levantan con configuración externa documentada y fail-fast sin secretos.
-- [ ] Tests prueban registro sin escalación, login válido/inválido, Admin/Cliente y Cliente A vs Cliente B.
-- [ ] Una base de test aislada se crea/descarta sin tocar la base compartida.
-- [ ] Build y tests de ambos proyectos corren en un único flujo reproducible.
+- [x] Tests prueban registro sin escalación, hash, login válido/inválido, Admin/Cliente y Cliente A vs Cliente B.
+- [x] El host verifica `Microsoft.EntityFrameworkCore.InMemory` y rechaza conceptualmente cualquier proveedor SQL.
+- [x] Backend, Frontend y ambos proyectos de test compilan en un único build de solución.
+- [x] 5 tests unitarios y 11 tests HTTP pasan, sin omitidos.
+- [x] El Admin `Admin@admin.com` / `Admin123456789` se conserva y solo se valida en memoria.
+- [x] Archivos de configuración, conexión, DbContext, migraciones y credenciales permanecen sin cambios.
 
 **Validación:**
-- Escaneo de secretos sobre árbol e historial relevante.
-- `dotnet build` de Backend y Frontend.
-- `dotnet test` con evidencia de cantidad y resultados.
+- `dotnet build` de la solución: 0 warnings, 0 errores.
+- `dotnet test` de ambos proyectos: 16/16 superados.
 - HTTP integration tests para 401, 403, 404 defensivo, owner 2xx y rol Admin.
+- Comparación SHA-256 de los archivos congelados antes/después de la etapa.
 
 **Riesgos:**
-- Rotar sin actualizar entornos puede cortar acceso temporalmente.
-- Limpiar historial afecta clones/ramas; requiere coordinación y no debe improvisarse.
+- EF Core InMemory no reproduce todas las restricciones, transacciones ni semánticas del proveedor SQL Server.
+- La cobertura es deliberadamente mínima y no reemplaza tests de economía, concurrencia ni Frontend.
+- El secreto versionado sigue abierto porque su remediación fue excluida expresamente.
 
 **Contribución estimada al avance:**
-+2,1 puntos porcentuales aprox., si registro y login pasan de PARCIAL ALTO a COMPLETO verificado. Su mayor aporte es de seguridad y verificabilidad.
+**+2,1 puntos porcentuales acreditados**: registro y login pasan de PARCIAL ALTO a COMPLETO verificado. La solidez Backend sube además por evidencia de auth, autorización, ownership y testing parcial.
 
 **Desbloquea:**
-Cambios de contrato económico protegidos por pruebas y desarrollo sin secretos compartidos.
+Cambios de contrato económico protegidos por una red de regresión de identidad, rol y ownership. La gestión de secretos continúa como riesgo diferido independiente.
 
 ### Etapa 2 — Precio, subtotal, total y estados autoritativos
 
@@ -940,28 +947,30 @@ Cumplimiento del flujo comercial principal y un avance general estimado de aprox
 
 | # | Etapa | Prioridad | Dependencias | Avance acumulado estimado | Estado |
 |---:|---|---|---|---:|---|
-| Base | Estado auditado | — | — | 40,6% | ACTUAL |
-| 1 | Configuración segura y red mínima de pruebas | P0 | Rotación externa/BD test | 42,7% | PLANIFICADA |
-| 2 | Precio, subtotal, total y estados autoritativos | P0 | Etapa 1 | 46,9% | PLANIFICADA |
+| Base | Estado auditado originalmente | — | — | 40,6% | HISTÓRICO |
+| 1 | Red mínima de pruebas y validación de seguridad | P0 | Host InMemory aislado | **42,7%** | COMPLETADA |
+| 2 | Precio, subtotal, total y estados autoritativos | P0 | Etapa 1 | 46,9% | PRÓXIMA |
 | 3 | Checkout atómico, concurrente e idempotente | P0 | Etapa 2 | 51,1% | PLANIFICADA |
-| 4 | Flujo cliente MVC: carrito, dirección, checkout e historial | P1 | Etapas 1–3 | 58,3% | PLANIFICADA |
+| 4 | Flujo cliente MVC: carrito, dirección, checkout e historial | P1 | Etapas 1–3 | 58,4% | PLANIFICADA |
 | 5 | Pago digital y confirmación idempotente | P1 | Etapas 1–4 + sandbox | **62,5%** | PLANIFICADA |
 
 Las cifras son proyecciones condicionadas: si una etapa no incluye sus pruebas y criterios de aceptación, no corresponde acreditar todo el incremento. Luego de 60%, el siguiente bloque útil sería recuperación de contraseña, contacto/WhatsApp, Admin de usuarios/pedidos, notificaciones y documentación API actualizada, apuntando a 70%.
 
 ## 21. Próxima etapa recomendada
 
-**Etapa 1 — Configuración segura y red mínima de pruebas**
+**Etapa 2 — Precio, subtotal, total y estados autoritativos**
 
 Motivo:
-La credencial SQL versionada es el riesgo más urgente y la ausencia de tests impide modificar contratos de auth/economía con seguridad. Esta etapa produce una base verificable sin mezclar todavía el rediseño del checkout.
+La Etapa 1 dejó verdes autenticación, autorización y ownership. El mayor defecto funcional verificable ahora es que el cliente puede influir en precios, montos y estados que deberían ser autoritativos del servidor.
 
-No comenzar otra etapa antes de cerrar:
+Objetivos inmediatos:
 
-- rotación efectiva de toda credencial expuesta, no solo borrado del archivo;
-- configuración local/CI sin secretos trackeados;
-- tests verdes de login, registro, rol Admin/Cliente y ownership Cliente A/Cliente B;
-- base de integración aislada de la base compartida.
+- eliminar `PrecioUnitario`, subtotales, totales, montos y estados sensibles de contratos controlables por el cliente;
+- recalcular importes desde productos persistidos;
+- modelar `Pedido.Total` con migración coordinada;
+- agregar tests de tampering y preservar verdes los 16 tests actuales.
+
+La rotación/externalización de credenciales debe abordarse en una tarea de seguridad separada y autorizada, porque esta etapa tuvo prohibido modificar esos archivos o la conexión existente.
 
 ## 22. Criterio para considerar Backend sólido
 
@@ -970,9 +979,9 @@ Para el alcance académico, Backend puede considerarse sólidamente listo cuando
 - [x] **Arquitectura:** endpoints, lógica, repositorios y persistencia tienen responsabilidades reconocibles.
 - [x] **Persistencia:** entidades/relaciones principales y migraciones están aplicadas.
 - [~] **Validación:** IDs, cantidades, enums, duplicados y relaciones se validan de forma coherente y probada.
-- [~] **Auth:** registro/login/bootstrap funcionan contra BD y están cubiertos por tests.
-- [~] **Autorización:** mutaciones Admin y fallback autenticado cuentan con pruebas de 401/403.
-- [~] **Ownership:** Cliente A no accede a Cliente B y existe suite automatizada por recurso sensible.
+- [x] **Auth:** registro/login/bootstrap están cubiertos por unidad y HTTP en persistencia aislada.
+- [x] **Autorización:** una mutación Admin y el fallback cuentan con pruebas de 401/403 y acceso permitido.
+- [x] **Ownership:** Cliente A no accede a la dirección de Cliente B y el owner sí; falta ampliar la matriz a cada recurso sensible.
 - [ ] **Economía:** precio, subtotal, total y monto son calculados/validados por Backend sin confiar en navegador.
 - [ ] **Stock:** actualización atómica/concurrente impide overselling.
 - [~] **Compra:** existe confirmación de carrito transaccional, pero falta pago y contrato completo.
@@ -990,7 +999,7 @@ Leyenda: `[x]` satisfecho con evidencia actual; `[~]` parcial/no verificado; `[ 
 | CRÍTICA | Credenciales SQL válidas en Git | Exposición/acceso no autorizado | Rotar, externalizar, escanear y coordinar historial |
 | ALTA | Precio unitario manipulable | Pedidos/reportes económicamente falsos | Etapa 2, contratos mínimos y tests de tampering |
 | ALTA | Overselling concurrente | Stock negativo o doble venta | Etapa 3, control condicional/token + test paralelo |
-| ALTA | Cero tests | Regresiones de seguridad y negocio invisibles | Etapa 1 y tests obligatorios en cada etapa |
+| ALTA | Cobertura parcial | Auth/ownership están protegidos, pero economía y concurrencia aún pueden regresar | Tests obligatorios y acumulativos en cada etapa |
 | ALTA | Pago manual presentado como pago | Estado Pagado sin confirmación externa | Etapa 5, webhook validado e idempotente |
 | MEDIA | Backend inicia con escrituras de bootstrap | Auditorías/smoke tests pueden mutar BD compartida | Ambientes aislados y bootstrap controlado |
 | MEDIA | Base compartida con datos simulados | Resultados/reportes contaminados | Separar ambientes/fixtures; no borrar sin autorización |
@@ -1040,26 +1049,29 @@ Leyenda: `[x]` satisfecho con evidencia actual; `[~]` parcial/no verificado; `[ 
 ### Base y tests
 
 - Consulta read-only a SQL Server: 13 tablas con datos, 5 migraciones aplicadas, dos índices únicos y categorías/Admin verificados.
-- `Tests/**`: estructura prevista sin proyectos ni código de tests.
+- `Tests/Totaltech.UnitTests`: xUnit, repositorio fake y 5 pruebas de lógica/autorización.
+- `Tests/Totaltech.IntegrationTests`: `WebApplicationFactory`, EF Core InMemory aislado y 11 escenarios HTTP.
+- `Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln`: Backend, Frontend y ambos proyectos de tests.
 
 ## 25. Comandos de validación ejecutados
 
-Todos se ejecutaron desde el repositorio Git anidado. No se ejecutó `commit`, `push`, `merge`, `rebase`, migración ni escritura SQL.
+Todos se ejecutaron desde el repositorio Git anidado. No se ejecutó `commit`, `push`, `merge`, `rebase`, migración, conexión ni escritura SQL durante la actualización de Etapa 1.
 
 | Comando/acción | Resultado |
 |---|---|
 | `git status --short` (inicio) | Sin salida: árbol limpio |
 | `git branch --show-current` | `Rama--Facu` |
 | `git rev-parse --show-toplevel` | Confirmó el repositorio anidado |
-| `git log --oneline -15` | HEAD `4da26d2`; historial inspeccionado |
-| `dotnet sln Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln list` | Solo `Totaltech/Totaltech.csproj` |
-| Descubrimiento `Tests/**/*.csproj` y `Tests/**/*.cs` | 0 proyectos, 0 fuentes |
-| `dotnet build Totaltech/Totaltech.csproj --nologo` | EXIT 0; 0 warnings; 0 errores |
-| `dotnet build Frontend/Frontend.csproj --nologo` | EXIT 0; 0 warnings; 0 errores |
-| `dotnet test Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln --no-build --nologo` | EXIT 0; ningún test descubierto/ejecutado |
-| `sqlcmd` con credenciales leídas en memoria y consultas exclusivamente `SELECT` | EXIT 0; esquema/datos resumidos en sección 12 |
-| Inspección visual de páginas relevantes de ambos PDF y mockups PNG | Completada; sin modificación |
+| `git log -1 --oneline` | Baseline `8b9a9aa estado actual del proyecto` |
+| `dotnet sln Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln list` | Backend, Frontend y 2 proyectos de tests |
+| Descubrimiento `Tests/**/*.csproj` y fuentes | 2 proyectos, 5 fuentes y 16 tests |
+| `dotnet restore Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln` | EXIT 0; cuatro proyectos restaurados/actualizados |
+| `dotnet build Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln --no-restore` | EXIT 0; 0 warnings; 0 errores |
+| `dotnet test Tests/Totaltech.UnitTests/Totaltech.UnitTests.csproj` | EXIT 0; 5/5 superados; 0 omitidos |
+| `dotnet test Tests/Totaltech.IntegrationTests/Totaltech.IntegrationTests.csproj` | EXIT 0; 11/11 superados; 0 omitidos |
+| Inspección de aislamiento del host HTTP | Proveedor confirmado `Microsoft.EntityFrameworkCore.InMemory`; sin cadena SQL en tests |
+| SHA-256 de archivos congelados | Sin cambios en `appsettings*`, `Credenciales.txt`, `TotaltechDbContext.cs` y `Program.cs` |
 | `git diff --check` | EXIT 0; sin errores |
-| `git status --short` (cierre) | Solo `?? ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_60.md` |
+| `git status --short` (cierre) | Solo solución, proyectos/fuentes de test y este roadmap |
 
-No se levantó la API ni el Frontend. Por lo tanto, este documento no afirma haber probado HTTP, navegación o responsive en runtime. El build y la consulta SQL se registran como evidencias separadas, sin convertirlos en pruebas funcionales.
+La API se levantó exclusivamente dentro de `WebApplicationFactory` con persistencia InMemory y configuración JWT de test. No se levantó el Frontend ni se afirma haber probado navegación o responsive en runtime. El build y los tests HTTP se registran como evidencias separadas.
