@@ -1,14 +1,65 @@
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Totaltech.Datos;
 using Totaltech.Endpoints;
 using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Repositorios;
+using Totaltech.Seguridad;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services
+    .AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.Seccion))
+    .ValidateDataAnnotations()
+    .Validate(options => Encoding.UTF8.GetByteCount(options.SigningKey) >= 32,
+        "Authentication:SigningKey debe tener al menos 32 bytes.")
+    .ValidateOnStart();
+
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.Seccion).Get<JwtOptions>()
+    ?? throw new InvalidOperationException("Falta configurar la sección Authentication.");
+if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
+    string.IsNullOrWhiteSpace(jwtOptions.Audience) ||
+    Encoding.UTF8.GetByteCount(jwtOptions.SigningKey) < 32)
+{
+    throw new InvalidOperationException(
+        "Authentication requiere Issuer, Audience y SigningKey de al menos 32 bytes. " +
+        "Configure la clave mediante Authentication__SigningKey o User Secrets.");
+}
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
+        };
+    });
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build())
+    .AddPolicy(Autorizacion.PoliticaAdministrador,
+        policy => policy.RequireRole(nameof(RolUsuario.Administrador)));
+builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta configurar la cadena de conexión 'DefaultConnection'.");
@@ -66,41 +117,28 @@ catch (Exception ex)
     app.Logger.LogWarning(ex, "No se pudieron verificar o inicializar las categorías canónicas.");
 }
 
+try
+{
+    using var scope = app.Services.CreateScope();
+    var usuariosLogica = scope.ServiceProvider.GetRequiredService<IUsuariosLogica>();
+    await usuariosLogica.AsegurarAdministradorAsync(
+        "Admin@admin.com",
+        "Admin123456789");
+}
+catch (Exception ex)
+{
+    app.Logger.LogCritical(ex, "No se pudo verificar o inicializar la cuenta administrativa.");
+    throw;
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
-
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var repositorio = scope.ServiceProvider.GetRequiredService<IUsuariosRepositorio>();
-        var logica = scope.ServiceProvider.GetRequiredService<IUsuariosLogica>();
-        var adminExistente = await repositorio.ObtenerPorEmailAsync("Admin@admin.com");
-        if (adminExistente is null)
-        {
-            await logica.CrearAsync(new Usuario
-            {
-                Nombre = "Administrador",
-                Apellido = "TotalTech",
-                Email = "Admin@admin.com",
-                Contrasena = "Admin123456789",
-                Telefono = "1122334455",
-                FechaRegistro = DateTime.UtcNow,
-                Rol = RolUsuario.Administrador
-            });
-        }
-        else if (adminExistente.Rol != RolUsuario.Administrador)
-        {
-            adminExistente.Rol = RolUsuario.Administrador;
-            await repositorio.ActualizarAsync(adminExistente);
-        }
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogWarning(ex, "No se pudo verificar o inicializar la cuenta administrativa de desarrollo.");
-    }
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapUsuariosEndpoints();
 app.MapAuthEndpoints();
