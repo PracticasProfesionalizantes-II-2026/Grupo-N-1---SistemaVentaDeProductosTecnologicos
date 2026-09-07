@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "TotalTech completo",
+    "Projects": [
+      {
+        "Path": "Totaltech\\Totaltech.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Frontend\\Frontend.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

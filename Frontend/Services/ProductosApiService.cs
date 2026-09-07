@@ -6,80 +6,117 @@ namespace Frontend.Services;
 
 public class ProductosApiService
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+	private readonly IHttpClientFactory _httpClientFactory;
 
-    public ProductosApiService(IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-    }
+	public ProductosApiService(IHttpClientFactory httpClientFactory)
+	{
+		_httpClientFactory = httpClientFactory;
+	}
 
-    private HttpClient CrearCliente()
-    {
-        return _httpClientFactory.CreateClient("TotaltechApi");
-    }
+	private HttpClient CrearCliente()
+	{
+		return _httpClientFactory.CreateClient("TotaltechApi");
+	}
 
-    public Task<HttpResponseMessage> CrearAsync(string n,string d,decimal p,int s,int c,int pr) => CrearCliente().PostAsJsonAsync("/productos/", new { nombre=n, descripcion=d, precio=p, stock=s, idCategoria=c, idProveedor=pr });
-    public Task<HttpResponseMessage> ActualizarAsync(int id,string n,string d,decimal p,int s,int c,int pr) => CrearCliente().PutAsJsonAsync($"/productos/{id}", new { nombre=n, descripcion=d, precio=p, stock=s, idCategoria=c, idProveedor=pr });
-    public Task<HttpResponseMessage> EliminarAsync(int id) => CrearCliente().DeleteAsync($"/productos/{id}");
+	public Task<HttpResponseMessage> CrearAsync(
+		string nombre,
+		string descripcion,
+		decimal precio,
+		int stock,
+		int idCategoria,
+		int idProveedor)
+	{
+		return CrearCliente().PostAsJsonAsync("/productos/", new
+		{
+			nombre,
+			descripcion,
+			precio,
+			stock,
+			idCategoria,
+			idProveedor
+		});
+	}
 
-    public async Task<List<ProductoResponse>> ObtenerTodosAsync()
-    {
-        var cliente = CrearCliente();
+	public Task<HttpResponseMessage> ActualizarAsync(
+		int id,
+		string nombre,
+		string descripcion,
+		decimal precio,
+		int stock,
+		int idCategoria,
+		int idProveedor)
+	{
+		return CrearCliente().PutAsJsonAsync($"/productos/{id}", new
+		{
+			nombre,
+			descripcion,
+			precio,
+			stock,
+			idCategoria,
+			idProveedor
+		});
+	}
 
-        var productos =
-            await cliente.GetFromJsonAsync<List<ProductoResponse>>("/productos/");
+	public Task<HttpResponseMessage> EliminarAsync(int id)
+	{
+		return CrearCliente().DeleteAsync($"/productos/{id}");
+	}
 
-        return productos ?? new List<ProductoResponse>();
-    }
+	public async Task<List<ProductoResponse>> ObtenerTodosAsync()
+	{
+		var cliente = CrearCliente();
 
-    public async Task<ProductoResponse?> ObtenerPorIdAsync(int id)
-    {
-        var cliente = CrearCliente();
+		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
+			"/productos/");
 
-        var respuesta = await cliente.GetAsync($"/productos/{id}");
+		return productos ?? new List<ProductoResponse>();
+	}
 
-        if (respuesta.StatusCode == HttpStatusCode.NotFound)
-        {
-            return null;
-        }
+	public async Task<ProductoResponse?> ObtenerPorIdAsync(int id)
+	{
+		var cliente = CrearCliente();
 
-        respuesta.EnsureSuccessStatusCode();
+		var respuesta = await cliente.GetAsync($"/productos/{id}");
 
-        return await respuesta.Content.ReadFromJsonAsync<ProductoResponse>();
-    }
+		if (respuesta.StatusCode == HttpStatusCode.NotFound)
+		{
+			return null;
+		}
 
-    public async Task<List<ProductoResponse>> BuscarAsync(string? texto)
-    {
-        var cliente = CrearCliente();
+		respuesta.EnsureSuccessStatusCode();
 
-        var url = string.IsNullOrWhiteSpace(texto)
-            ? "/productos/"
-            : $"/productos/buscar?texto={Uri.EscapeDataString(texto)}";
+		return await respuesta.Content.ReadFromJsonAsync<ProductoResponse>();
+	}
 
-        var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(url);
+	public async Task<List<ProductoResponse>> BuscarAsync(string? texto)
+	{
+		var cliente = CrearCliente();
+		var ruta = string.IsNullOrWhiteSpace(texto)
+			? "/productos/buscar"
+			: $"/productos/buscar?texto={Uri.EscapeDataString(texto)}";
 
-        return productos ?? new List<ProductoResponse>();
-    }
+		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(ruta);
 
-    public async Task<List<ProductoResponse>> ObtenerPorCategoriaAsync(int id)
-    {
-        var cliente = CrearCliente();
+		return productos ?? new List<ProductoResponse>();
+	}
 
-        var productos =
-            await cliente.GetFromJsonAsync<List<ProductoResponse>>(
-                $"/productos/categoria/{id}");
+	public async Task<List<ProductoResponse>> ObtenerPorCategoriaAsync(int idCategoria)
+	{
+		var cliente = CrearCliente();
 
-        return productos ?? new List<ProductoResponse>();
-    }
+		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
+			$"/productos/categoria/{idCategoria}");
 
-    public async Task<List<ProductoResponse>> ObtenerDisponiblesAsync()
-    {
-        var cliente = CrearCliente();
+		return productos ?? new List<ProductoResponse>();
+	}
 
-        var productos =
-            await cliente.GetFromJsonAsync<List<ProductoResponse>>(
-                "/productos/disponibles");
+	public async Task<List<ProductoResponse>> ObtenerDisponiblesAsync()
+	{
+		var cliente = CrearCliente();
 
-        return productos ?? new List<ProductoResponse>();
-    }
+		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
+			"/productos/disponibles");
+
+		return productos ?? new List<ProductoResponse>();
+	}
 }
