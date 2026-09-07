@@ -253,6 +253,12 @@ namespace Totaltech.Logica.DTOs
         public RolUsuario Rol { get; set; }
     }
 
+    public class LoginResponse : UsuarioResponse
+    {
+        public string AccessToken { get; set; } = string.Empty;
+        public DateTime ExpiresAtUtc { get; set; }
+    }
+
     public class CrearPagoParaPedidoRequest
     {
         public DateTime? FechaPago { get; set; }

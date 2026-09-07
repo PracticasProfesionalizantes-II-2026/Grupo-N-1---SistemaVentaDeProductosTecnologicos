@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Seguridad;
 
 namespace Totaltech.Endpoints
 {
@@ -15,13 +16,13 @@ namespace Totaltech.Endpoints
             {
                 var productos = await logica.ObtenerTodosAsync();
                 return Results.Ok(productos);
-            });
+            }).AllowAnonymous();
             // obtener un producto por su id
             group.MapGet("/{id:int}", async (int id, IProductosLogica logica) =>
             {
                 var producto = await logica.ObtenerPorIdAsync(id);
                 return producto is null ? Results.NotFound() : Results.Ok(producto);
-            });
+            }).AllowAnonymous();
             // crear un nuevo producto
             group.MapPost("/", async (ProductoRequest request, IProductosLogica logica) =>
             {
@@ -33,7 +34,7 @@ namespace Totaltech.Endpoints
                 }
 
                 return Results.Created($"/productos/{producto.IdProducto}", producto);
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
             // actualizar un producto existente
             group.MapPut("/{id:int}", async (int id, ProductoRequest request, IProductosLogica logica) =>
             {
@@ -46,7 +47,7 @@ namespace Totaltech.Endpoints
                 AplicarCambios(producto, request);
                 var error = await logica.ActualizarAsync(producto);
                 return error is null ? Results.Ok(producto) : Results.BadRequest(error);
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
             // eliminar un producto
             group.MapDelete("/{id:int}", async (int id, IProductosLogica logica) =>
             {
@@ -59,25 +60,25 @@ namespace Totaltech.Endpoints
                 {
                     return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
                 }
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
             // buscar productos por nombre o descripción
             group.MapGet("/buscar", async (string? texto, IProductosLogica logica) =>
             {
                 var productos = await logica.BuscarAsync(texto);
                 return Results.Ok(productos);
-            });
+            }).AllowAnonymous();
             // obtener productos por categoría
             group.MapGet("/categoria/{idCategoria:int}", async (int idCategoria, IProductosLogica logica) =>
             {
                 var productos = await logica.ObtenerPorCategoriaAsync(idCategoria);
                 return Results.Ok(productos);
-            });
+            }).AllowAnonymous();
             // obtener productos disponibles
             group.MapGet("/disponibles", async (IProductosLogica logica) =>
             {
                 var productos = await logica.ObtenerDisponiblesAsync();
                 return Results.Ok(productos);
-            });
+            }).AllowAnonymous();
 
             // actualizar stock de un producto
             group.MapPatch("/{id:int}/stock", async (int id, ActualizarStockRequest request, IProductosLogica logica) =>
@@ -89,7 +90,7 @@ namespace Totaltech.Endpoints
 
                 var actualizado = await logica.ActualizarStockAsync(id, request.Stock);
                 return actualizado ? Results.NoContent() : Results.NotFound();
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
         }
 
         private static void AplicarCambios(Producto producto, ProductoRequest request)

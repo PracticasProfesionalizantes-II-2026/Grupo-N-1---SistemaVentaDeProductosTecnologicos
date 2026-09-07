@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Seguridad;
 
 namespace Totaltech.Endpoints
 {
@@ -15,13 +17,15 @@ namespace Totaltech.Endpoints
             {
                 var usuarios = await logica.ObtenerTodosAsync();
                 return Results.Ok(usuarios.Select(CrearRespuesta));
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
             // obtener un usuario por su id
-            group.MapGet("/{id:int}", async (int id, IUsuariosLogica logica) =>
+            group.MapGet("/{id:int}", async (int id, IUsuariosLogica logica, ClaimsPrincipal usuarioActual) =>
             {
                 var usuario = await logica.ObtenerPorIdAsync(id);
-                return usuario is null ? Results.NotFound() : Results.Ok(CrearRespuesta(usuario));
-            });
+                return usuario is null || !usuarioActual.PuedeAcceder(usuario.IdUsuario)
+                    ? Results.NotFound()
+                    : Results.Ok(CrearRespuesta(usuario));
+            }).RequireAuthorization();
             // crear un nuevo usuario
             group.MapPost("/", async (UsuarioRequest request, IUsuariosLogica logica) =>
             {
@@ -33,16 +37,22 @@ namespace Totaltech.Endpoints
                 }
 
                 return Results.Created($"/usuarios/{usuario.IdUsuario}", CrearRespuesta(usuario));
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
             // actualizar un usuario existente
-            group.MapPut("/{id:int}", async (int id, UsuarioRequest request, IUsuariosLogica logica) =>
+            group.MapPut("/{id:int}", async (int id, UsuarioRequest request, IUsuariosLogica logica, ClaimsPrincipal usuarioActual) =>
             {
-                if (await logica.ObtenerPorIdAsync(id) is null)
+                var existente = await logica.ObtenerPorIdAsync(id);
+                if (existente is null || !usuarioActual.PuedeAcceder(existente.IdUsuario))
                 {
                     return Results.NotFound();
                 }
 
                 var usuario = request.ToEntity();
+                if (!usuarioActual.EsAdministrador())
+                {
+                    usuario.Rol = existente.Rol;
+                }
+
                 var error = await logica.ActualizarAsync(id, usuario);
                 if (error is not null)
                 {
@@ -51,11 +61,17 @@ namespace Totaltech.Endpoints
 
                 var actualizado = await logica.ObtenerPorIdAsync(id);
                 return Results.Ok(CrearRespuesta(actualizado!));
-            });
+            }).RequireAuthorization();
 
             // eliminar un usuario
-            group.MapDelete("/{id:int}", async (int id, IUsuariosLogica logica) =>
+            group.MapDelete("/{id:int}", async (int id, IUsuariosLogica logica, ClaimsPrincipal usuarioActual) =>
             {
+                var usuario = await logica.ObtenerPorIdAsync(id);
+                if (usuario is null || !usuarioActual.PuedeAcceder(usuario.IdUsuario))
+                {
+                    return Results.NotFound();
+                }
+
                 try
                 {
                     var eliminado = await logica.EliminarAsync(id);
@@ -65,7 +81,7 @@ namespace Totaltech.Endpoints
                 {
                     return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
                 }
-            });
+            }).RequireAuthorization();
         }
 
         private static UsuarioResponse CrearRespuesta(Usuario usuario)

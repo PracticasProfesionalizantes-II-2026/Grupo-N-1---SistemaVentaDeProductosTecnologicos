@@ -1,6 +1,7 @@
 using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Seguridad;
 
 namespace Totaltech.Endpoints
 {
@@ -11,7 +12,7 @@ namespace Totaltech.Endpoints
             var group = app.MapGroup("/auth").WithTags("Auth");
 
             // login--------------------------------
-            group.MapPost("/login", async (LoginDto request, IUsuariosLogica logica) =>
+            group.MapPost("/login", async (LoginDto request, IUsuariosLogica logica, IJwtTokenService tokens) =>
             {
                 if (!await logica.ExisteEmailAsync(request.Email))
                 {
@@ -23,8 +24,26 @@ namespace Totaltech.Endpoints
                 }
 
                 var usuario = await logica.LoginAsync(request);
-                return usuario is null ? Results.Unauthorized() : Results.Ok(CrearRespuesta(usuario));
-            });
+                if (usuario is null)
+                {
+                    return Results.Unauthorized();
+                }
+
+                var token = tokens.Crear(usuario);
+                var respuesta = CrearRespuesta(usuario);
+                return Results.Ok(new LoginResponse
+                {
+                    IdUsuario = respuesta.IdUsuario,
+                    Nombre = respuesta.Nombre,
+                    Apellido = respuesta.Apellido,
+                    Email = respuesta.Email,
+                    Telefono = respuesta.Telefono,
+                    FechaRegistro = respuesta.FechaRegistro,
+                    Rol = respuesta.Rol,
+                    AccessToken = token.AccessToken,
+                    ExpiresAtUtc = token.ExpiresAtUtc
+                });
+            }).AllowAnonymous();
 
             // registrar un nuevo usuario--------------------------------
             group.MapPost("/registro", async (UsuarioRequest request, IUsuariosLogica logica) =>
@@ -37,14 +56,14 @@ namespace Totaltech.Endpoints
                 }
 
                 return Results.Created($"/usuarios/{usuario.IdUsuario}", CrearRespuesta(usuario));
-            });
+            }).AllowAnonymous();
 
             // recuperar contraseña--------------------------------
             group.MapPost("/recuperar-contrasena", async (RecuperarContrasenaDto request, IUsuariosLogica logica) =>
             {
                 await logica.RecuperarContrasenaAsync(request);
                 return Results.Ok(new { mensaje = "Si el email existe, se registrara una solicitud de recuperacion." });
-            });
+            }).AllowAnonymous();
         }
 
         private static UsuarioResponse CrearRespuesta(Usuario usuario)

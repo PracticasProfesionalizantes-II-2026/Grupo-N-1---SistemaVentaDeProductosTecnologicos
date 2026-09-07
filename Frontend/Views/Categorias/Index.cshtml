@@ -75,6 +75,13 @@
                                 Ver
                             </a>
 
+                            <a asp-controller="Productos"
+                               asp-action="Categoria"
+                               asp-route-id="@categoria.IdCategoria"
+                               class="btn btn-sm btn-outline-primary">
+                                Ver productos
+                            </a>
+
                             @if (User.IsInRole("Admin"))
                             {
                                 <a asp-controller="Categorias" asp-action="Editar" asp-route-id="@categoria.IdCategoria" class="btn btn-sm btn-warning">Editar</a>

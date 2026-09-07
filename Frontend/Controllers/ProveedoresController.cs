@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Frontend.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class ProveedoresController : Controller
 {
     private readonly ProveedoresApiService _proveedoresApiService;

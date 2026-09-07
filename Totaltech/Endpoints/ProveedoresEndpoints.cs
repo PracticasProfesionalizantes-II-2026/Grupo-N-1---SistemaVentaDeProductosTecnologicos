@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Seguridad;
 
 namespace Totaltech.Endpoints
 {
@@ -9,7 +10,9 @@ namespace Totaltech.Endpoints
     {
         public static void MapProveedoresEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/proveedores").WithTags("Proveedores");
+            var group = app.MapGroup("/proveedores")
+                .WithTags("Proveedores")
+                .RequireAuthorization(Autorizacion.PoliticaAdministrador);
             // obtener todos los proveedores
             group.MapGet("/", async (IProveedoresLogica logica) =>
             {

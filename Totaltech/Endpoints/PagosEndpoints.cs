@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Seguridad;
 
 namespace Totaltech.Endpoints
 {
@@ -16,15 +18,23 @@ namespace Totaltech.Endpoints
             {
                 var pagos = await logica.ObtenerTodosAsync();
                 return Results.Ok(pagos);
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
 
 
             //obtener un pago por su id-------------------------------
-            group.MapGet("/{id:int}", async (int id, IPagosLogica logica) =>
+            group.MapGet("/{id:int}", async (int id, IPagosLogica logica, IPedidosLogica pedidosLogica, ClaimsPrincipal usuarioActual) =>
             {
                 var pago = await logica.ObtenerPorIdAsync(id);
-                return pago is null ? Results.NotFound() : Results.Ok(pago);
-            });
+                if (pago is null)
+                {
+                    return Results.NotFound();
+                }
+
+                var pedido = await pedidosLogica.ObtenerPorIdAsync(pago.IdPedido);
+                return pedido is null || !usuarioActual.PuedeAcceder(pedido.IdUsuario)
+                    ? Results.NotFound()
+                    : Results.Ok(pago);
+            }).RequireAuthorization();
 
             //crear un nuevo pago----------------------------
             group.MapPost("/", async (PagoRequest request, IPagosLogica logica) =>
@@ -37,7 +47,7 @@ namespace Totaltech.Endpoints
                 }
 
                 return Results.Created($"/pagos/{pago.IdPago}", pago);
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
 
             //actualizar un pago existente-------------------------------------------------------------
             group.MapPut("/{id:int}", async (int id, PagoRequest request, IPagosLogica logica) =>
@@ -60,7 +70,7 @@ namespace Totaltech.Endpoints
                 pago.Estado = request.Estado;
                 var error = await logica.ActualizarAsync(pago);
                 return error is null ? Results.Ok(pago) : Results.BadRequest(error);
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
 
             //eliminar un pago--------------------------------------------------------------------
             group.MapDelete("/{id:int}", async (int id, IPagosLogica logica) =>
@@ -74,7 +84,7 @@ namespace Totaltech.Endpoints
                 {
                     return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
                 }
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
 
             //actualizar el estado de un pago--------------------------------------------------------------
             group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPagoRequest request, IPagosLogica logica) =>
@@ -92,7 +102,7 @@ namespace Totaltech.Endpoints
 
                 var pago = await logica.ObtenerPorIdAsync(id);
                 return Results.Ok(pago);
-            });
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
         }
     }
 }

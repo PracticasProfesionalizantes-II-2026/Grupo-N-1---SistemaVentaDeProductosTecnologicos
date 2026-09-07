@@ -8,6 +8,7 @@ namespace Totaltech.Repositorios
     {
         Task<List<Direccion>> ObtenerTodosAsync();
         Task<Direccion?> ObtenerPorIdAsync(int id);
+        Task<List<Direccion>> ObtenerPorUsuarioAsync(int idUsuario);
         Task<bool> ExisteAsync(int id);
         Task CrearAsync(Direccion direccion);
         Task ActualizarAsync(Direccion direccion);
@@ -31,6 +32,13 @@ namespace Totaltech.Repositorios
         public async Task<Direccion?> ObtenerPorIdAsync(int id)
         {
             return await _context.Direcciones.FindAsync(id);
+        }
+
+        public Task<List<Direccion>> ObtenerPorUsuarioAsync(int idUsuario)
+        {
+            return _context.Direcciones
+                .Where(direccion => direccion.IdUsuario == idUsuario)
+                .ToListAsync();
         }
 
         public async Task<bool> ExisteAsync(int id)

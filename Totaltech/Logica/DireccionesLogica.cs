@@ -7,6 +7,7 @@ namespace Totaltech.Logica
     {
         Task<List<Direccion>> ObtenerTodosAsync();
         Task<Direccion?> ObtenerPorIdAsync(int id);
+        Task<List<Direccion>> ObtenerPorUsuarioAsync(int idUsuario);
         Task<string?> CrearAsync(Direccion direccion);
         Task<string?> ActualizarAsync(Direccion direccion);
         Task<bool> EliminarAsync(int id);
@@ -31,6 +32,11 @@ namespace Totaltech.Logica
         public Task<Direccion?> ObtenerPorIdAsync(int id)
         {
             return _repositorio.ObtenerPorIdAsync(id);
+        }
+
+        public Task<List<Direccion>> ObtenerPorUsuarioAsync(int idUsuario)
+        {
+            return _repositorio.ObtenerPorUsuarioAsync(idUsuario);
         }
 
         public async Task<string?> CrearAsync(Direccion direccion)

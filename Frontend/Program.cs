@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<ApiBearerTokenHandler>();
 
 builder.Services.AddHttpClient("TotaltechApi", client =>
 {
@@ -12,7 +14,7 @@ builder.Services.AddHttpClient("TotaltechApi", client =>
 
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler<ApiBearerTokenHandler>();
 
 builder.Services.AddScoped<CategoriasApiService>();
 builder.Services.AddScoped<ProductosApiService>();
@@ -28,7 +30,7 @@ builder.Services
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
+        options.SlidingExpiration = false;
     });
 
 var app = builder.Build();
