@@ -58,6 +58,8 @@ namespace Totaltech.Logica
                 return "El producto ya existe en el carrito.";
             }
 
+            var producto = await _productosRepositorio.ObtenerPorIdAsync(detalle.IdProducto);
+            detalle.PrecioUnitario = producto!.Precio;
             detalle.Subtotal = detalle.PrecioUnitario * detalle.Cantidad;
             await _repositorio.CrearAsync(detalle);
             return null;
@@ -77,6 +79,8 @@ namespace Totaltech.Logica
                 return "El producto ya existe en el carrito.";
             }
 
+            var producto = await _productosRepositorio.ObtenerPorIdAsync(detalle.IdProducto);
+            detalle.PrecioUnitario = producto!.Precio;
             detalle.Subtotal = detalle.PrecioUnitario * detalle.Cantidad;
             await _repositorio.ActualizarAsync(detalle);
             return null;

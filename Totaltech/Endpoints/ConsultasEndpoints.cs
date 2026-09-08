@@ -41,6 +41,8 @@ namespace Totaltech.Endpoints
                 request.IdUsuario = usuarioActual.Identity?.IsAuthenticated == true
                     ? usuarioActual.ObtenerIdUsuario()
                     : null;
+                request.FechaConsulta = DateTime.UtcNow;
+                request.Estado = EstadoConsulta.Pendiente;
 
                 var consulta = request.ToEntity();
                 var error = await logica.CrearAsync(consulta);
