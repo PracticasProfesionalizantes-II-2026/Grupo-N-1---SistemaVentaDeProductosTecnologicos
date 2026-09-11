@@ -43,6 +43,8 @@ namespace Totaltech.Endpoints
                 if (!usuarioActual.EsAdministrador())
                 {
                     request.IdUsuario = usuarioActual.ObtenerIdUsuario()!.Value;
+                    request.FechaCreacion = DateTime.UtcNow;
+                    request.Estado = EstadoCarrito.Activo;
                 }
 
                 var carrito = request.ToEntity();
@@ -67,6 +69,8 @@ namespace Totaltech.Endpoints
                 if (!usuarioActual.EsAdministrador())
                 {
                     request.IdUsuario = carrito.IdUsuario;
+                    request.FechaCreacion = carrito.FechaCreacion;
+                    request.Estado = carrito.Estado;
                 }
 
                 carrito.IdUsuario = request.IdUsuario;

@@ -655,6 +655,53 @@ No son bloqueantes para 60% por sí solos: refresh tokens, paginación, patrones
 
 Las contribuciones estimadas se expresan contra las 24 unidades del apartado 5. Solo se acreditan si se cumplen los criterios y tests de cada etapa; no son puntos por archivos creados.
 
+### Decisión de alcance académico
+
+“Por alcance académico, TotalTech mantendrá autenticación funcional simplificada durante desarrollo y demostración. El registro público permite crear Clientes fácilmente para testing. Se conservan hashing, JWT/identidad actual, roles Cliente/Administrador, Admin bootstrap fijo y separación básica de recursos. El hardening avanzado de seguridad queda diferido a una etapa final.”
+
+La prioridad funcional vigente queda redefinida así:
+
+1. Auth académica estable.
+2. Precio/subtotal/total autoritativos.
+3. Carrito/pedido/stock.
+4. Checkout.
+5. Frontend cliente completo.
+6. Pago.
+7. Hardening final.
+
+Se difieren para la etapa 7 refresh tokens, revocación avanzada, MFA, verificación de email, lockout, rate limiting, auditoría avanzada, políticas complejas, OAuth, recuperación real por correo y saneamiento integral de secretos. Los riesgos históricos del apartado 23 permanecen abiertos.
+
+### Registro de auditoría y correcciones — 2026-09-07
+
+Se realizó una revisión estática transversal de Backend, Frontend y tests, complementada con compilador, analizadores .NET, auditoría de paquetes NuGet y pruebas unitarias/HTTP aisladas. Se corrigieron los siguientes defectos confirmados en código activo:
+
+- **AUTH-001:** el bootstrap conservaba un hash de una contraseña Admin distinta y podía dejar inutilizables las credenciales canónicas. Ahora verifica y restaura de forma idempotente `Admin@admin.com` / `Admin123456789` manteniendo el valor persistido hasheado.
+- **AUTH-002:** el registro público aceptaba `FechaRegistro` controlada por el cliente y la edición de perfil permitía alterar esa fecha. El alta usa hora UTC del servidor y un Cliente conserva su fecha original al editarse.
+- **CART-001:** los dos contratos de alta/edición de líneas aceptaban `PrecioUnitario` y lo persistían. La lógica ignora ese valor, obtiene el precio del producto persistido y recalcula subtotal; al confirmar vuelve a crear el detalle de pedido con precio autoritativo.
+- **CART-002:** un Cliente podía cambiar por PUT el owner, fecha y estado del carrito, evitando el flujo de confirmación. Esos campos quedan preservados; un alta Cliente fuerza owner autenticado, fecha del servidor y estado Activo.
+- **ORDER-001:** un Cliente podía crear directamente un pedido vacío y evitar carrito, validación/descuento de stock y confirmación. El alta genérica de pedidos quedó limitada a Administrador; el flujo Cliente permitido es confirmar un carrito propio.
+- **STOCK-001:** el descuento era una secuencia lectura-modificación vulnerable a overselling. SQL Server usa ahora una actualización condicional atómica (`stock >= cantidad`) dentro de la transacción.
+- **CHECKOUT-001:** la transacción manual era incompatible con la estrategia habilitada por `EnableRetryOnFailure`. La unidad de checkout se ejecuta ahora dentro de `CreateExecutionStrategy()` y conserva rollback antes del commit.
+- **CONTACT-001:** una consulta pública podía elegir owner, fecha y estado Respondida/Cerrada. El endpoint fuerza owner autenticado o nulo, fecha UTC y estado Pendiente; la lógica valida nombre, email y mensaje.
+
+La red de regresión quedó en **23 pruebas**: 8 unitarias y 15 HTTP/integración, todas sobre persistencia aislada. Se añadieron casos para contraseña Admin canónica, timestamps autoritativos, precio/subtotal del carrito, estado/owner del carrito, confirmación y descuento de stock, consulta pública y bloqueo del alta directa de pedidos.
+
+Riesgos y límites aún abiertos después de esta corrección:
+
+- La prueba de stock usa EF Core InMemory y verifica el flujo funcional, pero no demuestra semántica concurrente de SQL Server. Falta una prueba relacional paralela aislada antes de cerrar completamente STOCK-001.
+- Un error de conectividad ambiguo durante el commit requiere una idempotency key o constraint para garantizar que un retry no duplique pedidos. Esto pertenece al bloque de checkout/idempotencia y exige decisión de contrato/esquema.
+- `Pedido` todavía no modela un total persistido y `Pago.Monto` continúa siendo un dato administrativo manual; la integridad económica completa sigue en la prioridad 2.
+- Permanecen placeholders planificados de carrito, checkout, cuenta, pedidos, contacto y administración en Frontend; se clasifican como funcionalidad pendiente, no como regresiones introducidas.
+- Los secretos versionados ya registrados continúan como riesgo histórico. Esta auditoría no modificó `appsettings*`, conexión, credenciales SQL, DbContext ni migraciones.
+
+Validación ejecutada durante la auditoría:
+
+- `dotnet build Totaltech/Totaltech.csproj --nologo`: correcto, 0 warnings y 0 errores.
+- `dotnet build Frontend/Frontend.csproj --nologo`: correcto, 0 warnings y 0 errores.
+- `dotnet test --nologo`: 23/23 pruebas superadas.
+- `dotnet format ... analyzers --verify-no-changes --severity warn`: sin hallazgos.
+- `dotnet list ... package --vulnerable --include-transitive`: ningún paquete vulnerable informado por los orígenes configurados.
+
 ### Etapa 1 — Red mínima de pruebas y validación de seguridad
 
 **Prioridad:** P0
@@ -944,6 +991,8 @@ El RF exige pago digital; hoy solo existen registros `Pago` administrados manual
 Cumplimiento del flujo comercial principal y un avance general estimado de aproximadamente 62,5%.
 
 ## 20. Resumen de etapas
+
+La secuencia de siete prioridades anterior es la guía vigente. Las etapas detalladas debajo conservan la estimación histórica hacia ≥60%; sus bloques combinados de checkout y Frontend deberán ejecutarse respetando esa nueva secuencia.
 
 | # | Etapa | Prioridad | Dependencias | Avance acumulado estimado | Estado |
 |---:|---|---|---|---:|---|

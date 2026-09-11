@@ -50,5 +50,4 @@ public class RegisterViewModel
     [Display(Name = "Confirmar contraseña")]
     public string ConfirmarContrasena { get; set; } = string.Empty;
 
-    public bool AceptaTerminos { get; set; }
 }

@@ -15,6 +15,7 @@ namespace Totaltech.Repositorios
         Task<List<Producto>> BuscarAsync(string? texto);
         Task<List<Producto>> ObtenerPorCategoriaAsync(int idCategoria);
         Task<List<Producto>> ObtenerDisponiblesAsync();
+        Task<bool> DescontarStockAsync(int idProducto, int cantidad);
     }
 
     public class ProductosRepositorio : IProductosRepositorio
@@ -83,6 +84,34 @@ namespace Totaltech.Repositorios
             return await _context.Productos
                 .Where(producto => producto.Stock > 0)
                 .ToListAsync();
+        }
+
+        public async Task<bool> DescontarStockAsync(int idProducto, int cantidad)
+        {
+            if (cantidad <= 0)
+            {
+                return false;
+            }
+
+            if (_context.Database.IsRelational())
+            {
+                var filasAfectadas = await _context.Productos
+                    .Where(producto => producto.IdProducto == idProducto && producto.Stock >= cantidad)
+                    .ExecuteUpdateAsync(actualizacion => actualizacion
+                        .SetProperty(producto => producto.Stock, producto => producto.Stock - cantidad));
+
+                return filasAfectadas == 1;
+            }
+
+            var producto = await _context.Productos.FindAsync(idProducto);
+            if (producto is null || producto.Stock < cantidad)
+            {
+                return false;
+            }
+
+            producto.Stock -= cantidad;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

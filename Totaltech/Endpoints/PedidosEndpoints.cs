@@ -38,14 +38,8 @@ namespace Totaltech.Endpoints
             }).RequireAuthorization();
 
             // crear un nuevo pedido
-            group.MapPost("/", async (PedidoRequest request, IPedidosLogica logica, ClaimsPrincipal usuarioActual) =>
+            group.MapPost("/", async (PedidoRequest request, IPedidosLogica logica) =>
             {
-                if (!usuarioActual.EsAdministrador())
-                {
-                    request.IdUsuario = usuarioActual.ObtenerIdUsuario();
-                    request.Estado = EstadoPedido.Pendiente;
-                }
-
                 var pedido = request.ToEntity();
                 var error = await logica.CrearAsync(pedido);
                 if (error is not null)
@@ -54,7 +48,7 @@ namespace Totaltech.Endpoints
                 }
 
                 return Results.Created($"/pedidos/{pedido.IdPedido}", pedido);
-            }).RequireAuthorization();
+            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
 
             // actualizar un pedido existente
             group.MapPut("/{id:int}", async (int id, PedidoRequest request, IPedidosLogica logica) =>

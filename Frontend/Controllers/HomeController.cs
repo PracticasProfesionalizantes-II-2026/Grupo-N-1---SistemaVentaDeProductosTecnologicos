@@ -139,11 +139,6 @@ public class HomeController : Controller
         model.Email = model.Email.Trim().ToLowerInvariant();
         model.Telefono = model.Telefono.Trim();
 
-        if (!model.AceptaTerminos)
-        {
-            ModelState.AddModelError(nameof(model.AceptaTerminos), "Debés aceptar los términos y condiciones.");
-        }
-
         if (!ModelState.IsValid)
         {
             return View(model);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -33,7 +34,10 @@ internal sealed class TotaltechWebApplicationFactory : WebApplicationFactory<Tot
             services.RemoveAll<IDbContextOptionsConfiguration<TotaltechDbContext>>();
 
             services.AddDbContext<TotaltechDbContext>(options =>
-                options.UseInMemoryDatabase(_nombreBase, _raizBase));
+                options
+                    .UseInMemoryDatabase(_nombreBase, _raizBase)
+                    .ConfigureWarnings(warnings =>
+                        warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
         });
     }
 

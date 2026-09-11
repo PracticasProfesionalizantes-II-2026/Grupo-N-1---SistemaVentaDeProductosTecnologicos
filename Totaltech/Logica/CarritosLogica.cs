@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Totaltech.Datos;
 using Totaltech.Entidades;
 using Totaltech.Logica.DTOs;
@@ -142,7 +143,7 @@ namespace Totaltech.Logica
                 return (null, "No hay stock suficiente para agregar ese producto.");
             }
 
-            var precio = dto.PrecioUnitario > 0 ? dto.PrecioUnitario : producto.Precio;
+            var precio = producto.Precio;
 
             if (detalleExistente is not null)
             {
@@ -231,41 +232,49 @@ namespace Totaltech.Logica
                 productos[producto.IdProducto] = producto;
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            var pedido = new Pedido
+            var estrategia = _context.Database.CreateExecutionStrategy();
+            return await estrategia.ExecuteAsync(async () =>
             {
-                IdUsuario = carrito.IdUsuario,
-                IdDireccion = dto.IdDireccion,
-                FechaPedido = DateTime.Now,
-                Estado = EstadoPedido.Pendiente
-            };
+                await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            await _pedidosRepositorio.CrearAsync(pedido);
-
-            foreach (var detalleCarrito in detallesCarrito)
-            {
-                var producto = productos[detalleCarrito.IdProducto];
-
-                var detallePedido = new DetallePedido
+                var pedido = new Pedido
                 {
-                    IdPedido = pedido.IdPedido,
-                    IdProducto = detalleCarrito.IdProducto,
-                    Cantidad = detalleCarrito.Cantidad,
-                    PrecioUnitario = detalleCarrito.PrecioUnitario,
-                    Subtotal = detalleCarrito.Subtotal
+                    IdUsuario = carrito.IdUsuario,
+                    IdDireccion = dto.IdDireccion,
+                    FechaPedido = DateTime.UtcNow,
+                    Estado = EstadoPedido.Pendiente
                 };
 
-                producto.Stock -= detalleCarrito.Cantidad;
-                await _detallePedidosRepositorio.CrearAsync(detallePedido);
-                await _productosRepositorio.ActualizarAsync(producto);
-            }
+                await _pedidosRepositorio.CrearAsync(pedido);
 
-            carrito.Estado = EstadoCarrito.Confirmado;
-            await _carritosRepositorio.ActualizarAsync(carrito);
+                foreach (var detalleCarrito in detallesCarrito)
+                {
+                    var producto = productos[detalleCarrito.IdProducto];
+                    if (!await _productosRepositorio.DescontarStockAsync(
+                            producto.IdProducto,
+                            detalleCarrito.Cantidad))
+                    {
+                        return (Pedido: (Pedido?)null, Error: $"No hay stock suficiente para el producto {producto.Nombre}.");
+                    }
 
-            await transaction.CommitAsync();
-            return (pedido, null);
+                    var detallePedido = new DetallePedido
+                    {
+                        IdPedido = pedido.IdPedido,
+                        IdProducto = detalleCarrito.IdProducto,
+                        Cantidad = detalleCarrito.Cantidad,
+                        PrecioUnitario = producto.Precio,
+                        Subtotal = producto.Precio * detalleCarrito.Cantidad
+                    };
+
+                    await _detallePedidosRepositorio.CrearAsync(detallePedido);
+                }
+
+                carrito.Estado = EstadoCarrito.Confirmado;
+                await _carritosRepositorio.ActualizarAsync(carrito);
+
+                await transaction.CommitAsync();
+                return (Pedido: (Pedido?)pedido, Error: (string?)null);
+            });
         }
 
         private async Task<string?> ValidarCarritoAsync(Carrito carrito)
