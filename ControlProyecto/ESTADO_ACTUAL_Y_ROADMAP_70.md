@@ -546,3 +546,90 @@ No fue posible renderizar el DOCX a imágenes porque el entorno Windows no tiene
 `soffice.exe` disponible. Por tanto, la apertura y la estructura están
 validadas, pero el ajuste visual final en Word permanece pendiente. Este límite
 no altera las métricas técnicas del proyecto.
+
+## 12. Ejecución de Wave 1 — consolidación local
+
+Fecha de ejecución: 2026-09-11. Rama de trabajo: `Rama--Facu`.
+
+### Baseline Git revalidada
+
+`git fetch --prune origin` completó correctamente antes de modificar archivos.
+El código funcional de la rama continúa identificado por `61ee39b`; el estado
+documental desde el cual comenzó esta ejecución es `8dcb4b1`. Las referencias
+remotas observadas fueron:
+
+| Referencia | SHA revalidado |
+|---|---|
+| `origin/Rama--Facu` | `8dcb4b1fcfb10351859c4f0c1cf75feb9c3f8a44` |
+| `origin/Develop` | `0b4eecff5b4d7476874f81480b754f74e433c01b` |
+| `origin/main` | `f0a9e1ad7fc2f865da32ebd57b3e0fb3d0b6d446` |
+
+`origin/Rama--Facu` ya era ancestro de `origin/Develop`; Develop tenía tres
+commits adicionales. La simulación de merge de la baseline de la rama hacia
+Develop no mostró marcadores de conflicto. `origin/main` y `origin/Develop`
+estaban divergidos, por lo que la promoción final requiere PR y sus gates; no se
+debe fusionar main directamente desde una referencia local desactualizada.
+
+### Decisiones aprobadas para Wave 2
+
+- La identidad idempotente será el carrito. Existirá un único pedido por carrito,
+  respaldado por `Pedido.IdCarrito` obligatorio y único.
+- La primera confirmación devolverá `201`; un reintento equivalente recuperará el
+  mismo pedido con `200`; una dirección distinta sobre un carrito confirmado
+  producirá `409`.
+- El pedido almacenará `Total decimal(18,2)` y un snapshot completo de la
+  dirección. El historial no dependerá de precios o direcciones mutables.
+- Sólo un pedido pendiente podrá cancelarse directamente. La reposición de stock
+  será transaccional e idempotente; pedidos pagados requerirán un flujo de
+  reversión posterior.
+- Un pago parcial no cambiará el pedido a Pagado. La suma aprobada debe coincidir
+  exactamente con el total y se rechazará el sobrepago.
+- No se agregará una clave de idempotencia enviada por el cliente en el alcance
+  académico inicial. Estos acuerdos son diseño de Wave 2; Wave 1 no modifica DTO,
+  endpoint, entidad ni esquema.
+
+### Casos de reproducción preparados
+
+| ID | Preparación | Acción | Resultado que debe exigir Wave 2 |
+|---|---|---|---|
+| F01 | Producto con precio servidor distinto del valor cliente | Agregar línea y confirmar | Precio y subtotal proceden únicamente del producto persistido |
+| F02 | Dos contextos SQL sincronizados sobre el mismo carrito activo | Confirmar en paralelo | Un pedido, un descuento de stock y respuesta idempotente o conflicto seguro |
+| F03 | Fallo transitorio y resultado de commit ambiguo | Reintentar la unidad completa | Estado releído por intento y recuperación del pedido sin duplicación |
+| F04 | Carrito confirmado o cancelado con una línea existente | Mover, editar o borrar la línea | Operación rechazada sin alterar origen, destino ni stock |
+| F05 | Pedido con total histórico y pago aprobado inferior o superior | Conciliar el pago | Parcial continúa pendiente; sobrepago se rechaza; sólo igualdad marca Pagado |
+| F06 | Null, texto excedido, cantidad extrema y multiplicación monetaria | Enviar requests límite | Validación segura sin truncamiento, overflow ni escritura parcial |
+| F07 | Entidades con navegaciones cargadas | Serializar respuestas de negocio | Contrato explícito sin ciclos ni datos internos no previstos |
+
+### Cambios ejecutados
+
+- El workflow WPF/.NET 8 fue sustituido por CI web .NET 10 con jobs separados
+  para regresión rápida y SQL Server relacional, ejecutados en secuencia.
+- `global.json` fija SDK 10.0.400 con avance al último patch compatible.
+- Las pruebas relacionales crean `TotaltechTests_<GUID>` exclusivamente en
+  `(localdb)\\MSSQLLocalDB`, aplican las migraciones existentes y eliminan la base
+  al terminar. La validación rechaza cualquier otro servidor o nombre, incluidos
+  Azure SQL y `TotatechDB`.
+- La cadena Azure fue retirada de `appsettings.json`. Desarrollo usa LocalDB sin
+  contraseña; otros entornos deben proporcionar la conexión mediante variables o
+  User Secrets.
+- El bootstrap Admin quedó deshabilitado por defecto y exige `Enabled`, `Email` y
+  `Password` desde configuración externa cuando se habilita.
+- `Credenciales.txt` dejó de estar versionado; se incorporó un ejemplo sin
+  valores reales y se ignora el archivo local. Cualquier secreto que haya sido
+  válido debe rotarse por el propietario antes de exponer el sistema.
+
+### Evidencia local y estado del gate
+
+| Gate | Resultado local |
+|---|---|
+| Restore de la solución | PASS; cuatro proyectos actualizados |
+| Build Release secuencial | PASS; 0 errores y 0 advertencias |
+| Regresión rápida | PASS; 8 unitarias + 15 HTTP, 23/23 |
+| SQL Server relacional | PASS; 3/3: guardia, migraciones e índice único |
+| Azure SQL | NO EJECUTADO; prohibido por la guardia de pruebas |
+| CI alojado y promoción | PENDIENTE hasta push/PR y ejecución de GitHub Actions |
+
+Wave 1 queda implementada y validada localmente. Su cierre integrado sólo puede
+acreditarse cuando los dos jobs pasen en el PR `Rama--Facu` → `Develop`, se
+registre el SHA resultante y luego se promueva `Develop` → `main` con los mismos
+gates. F02–F07 permanecen abiertos para Wave 2; no se presentan como corregidos.

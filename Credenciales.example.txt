@@ -1,0 +1,12 @@
+TotalTech no almacena credenciales reales en Git.
+
+Configuración local recomendada:
+
+dotnet user-secrets --project Totaltech set "ConnectionStrings:DefaultConnection" "<cadena-local-o-autorizada>"
+dotnet user-secrets --project Totaltech set "Authentication:SigningKey" "<clave-de-al-menos-32-bytes>"
+dotnet user-secrets --project Totaltech set "BootstrapAdmin:Enabled" "true"
+dotnet user-secrets --project Totaltech set "BootstrapAdmin:Email" "<email-administrador>"
+dotnet user-secrets --project Totaltech set "BootstrapAdmin:Password" "<contraseña-administrador>"
+
+En entornos alojados use las variables ConnectionStrings__DefaultConnection,
+Authentication__SigningKey y BootstrapAdmin__*. No copie secretos en este archivo.

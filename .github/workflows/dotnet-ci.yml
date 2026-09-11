@@ -1,0 +1,65 @@
+name: TotalTech .NET CI
+
+on:
+  push:
+    branches: [main, Develop, Rama--Facu]
+  pull_request:
+    branches: [main, Develop]
+
+permissions:
+  contents: read
+
+env:
+  SOLUTION: Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln
+  INTEGRATION_TEST_PROJECT: Tests/Totaltech.IntegrationTests/Totaltech.IntegrationTests.csproj
+
+jobs:
+  fast-tests:
+    name: Build and fast tests
+    runs-on: windows-2025
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore $env:SOLUTION
+
+      - name: Build
+        run: dotnet build $env:SOLUTION --configuration Release --no-restore
+
+      - name: Run fast tests
+        run: dotnet test $env:SOLUTION --configuration Release --no-build --no-restore --filter "Category!=SqlServer"
+
+  sqlserver-relational:
+    name: SQL Server relational tests
+    needs: fast-tests
+    runs-on: windows-2025
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Verify and start LocalDB
+        shell: pwsh
+        run: |
+          $localDb = Get-Command SqlLocalDB.exe -ErrorAction Stop
+          & $localDb.Source start MSSQLLocalDB
+          & $localDb.Source info MSSQLLocalDB
+
+      - name: Restore
+        run: dotnet restore $env:SOLUTION
+
+      - name: Build
+        run: dotnet build $env:SOLUTION --configuration Release --no-restore
+
+      - name: Run SQL Server relational tests
+        run: dotnet test $env:INTEGRATION_TEST_PROJECT --configuration Release --no-build --no-restore --filter "Category=SqlServer"

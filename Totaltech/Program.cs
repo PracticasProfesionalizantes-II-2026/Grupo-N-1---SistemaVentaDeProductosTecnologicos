@@ -117,18 +117,32 @@ catch (Exception ex)
     app.Logger.LogWarning(ex, "No se pudieron verificar o inicializar las categorías canónicas.");
 }
 
-try
+if (builder.Configuration.GetValue<bool>("BootstrapAdmin:Enabled"))
 {
-    using var scope = app.Services.CreateScope();
-    var usuariosLogica = scope.ServiceProvider.GetRequiredService<IUsuariosLogica>();
-    await usuariosLogica.AsegurarAdministradorAsync(
-        "Admin@admin.com",
-        "Admin123456789");
-}
-catch (Exception ex)
-{
-    app.Logger.LogCritical(ex, "No se pudo verificar o inicializar la cuenta administrativa.");
-    throw;
+    var emailAdministrador = builder.Configuration["BootstrapAdmin:Email"];
+    var contrasenaAdministrador = builder.Configuration["BootstrapAdmin:Password"];
+
+    if (string.IsNullOrWhiteSpace(emailAdministrador) ||
+        string.IsNullOrWhiteSpace(contrasenaAdministrador))
+    {
+        throw new InvalidOperationException(
+            "BootstrapAdmin requiere Email y Password cuando está habilitado. " +
+            "Configure estos valores mediante variables de entorno o User Secrets.");
+    }
+
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var usuariosLogica = scope.ServiceProvider.GetRequiredService<IUsuariosLogica>();
+        await usuariosLogica.AsegurarAdministradorAsync(
+            emailAdministrador,
+            contrasenaAdministrador);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(ex, "No se pudo verificar o inicializar la cuenta administrativa.");
+        throw;
+    }
 }
 
 if (app.Environment.IsDevelopment())
