@@ -632,4 +632,6 @@ debe fusionar main directamente desde una referencia local desactualizada.
 Wave 1 queda implementada y validada localmente. Su cierre integrado sólo puede
 acreditarse cuando los dos jobs pasen en el PR `Rama--Facu` → `Develop`, se
 registre el SHA resultante y luego se promueva `Develop` → `main` con los mismos
-gates. F02–F07 permanecen abiertos para Wave 2; no se presentan como corregidos.
+gates. El commit local de implementación y evidencia es `b844d20`; el SHA de
+integración permanece pendiente hasta completar la promoción remota. F02–F07
+permanecen abiertos para Wave 2; no se presentan como corregidos.
