@@ -363,7 +363,7 @@ public sealed class SeguridadEndpointsTests
     }
 
     [Fact]
-    public async Task ClienteNoPuedeCrearPedidoDirectamente()
+    public async Task NoExisteCreacionDirectaDePedidos()
     {
         await using var factory = new TotaltechWebApplicationFactory();
         using var client = factory.CreateClient();
@@ -378,7 +378,91 @@ public sealed class SeguridadEndpointsTests
             idDireccion = 1
         });
 
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ConfirmacionIdempotenteDevuelveCreatedOkYConflict()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var cliente = await CrearClienteAutenticadoAsync(client, "checkout-http@test.local");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", cliente.Token);
+
+        int idCarrito;
+        int idDireccion;
+        int otraDireccion;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+            var categoria = new Categoria { Nombre = "Checkout HTTP", Descripcion = "Prueba" };
+            var proveedor = new Proveedor
+            {
+                RazonSocial = "Proveedor Checkout HTTP",
+                Cuit = "20-00000000-1",
+                EmailComercial = "checkout-proveedor@test.local",
+                TelefonoComercial = "1111111111",
+                CondicionIva = "Prueba",
+                MonedaPreferida = "ARS"
+            };
+            var direccion = CrearDireccionEntidad(cliente.IdUsuario, "Calle HTTP");
+            var alternativa = CrearDireccionEntidad(cliente.IdUsuario, "Otra calle HTTP");
+            var carrito = new Carrito
+            {
+                IdUsuario = cliente.IdUsuario,
+                FechaCreacion = DateTime.UtcNow,
+                Estado = EstadoCarrito.Activo
+            };
+            context.AddRange(categoria, proveedor, direccion, alternativa, carrito);
+            await context.SaveChangesAsync();
+
+            var producto = new Producto
+            {
+                Nombre = "Producto Checkout HTTP",
+                Descripcion = "Prueba",
+                Precio = 25m,
+                Stock = 3,
+                IdCategoria = categoria.IdCategoria,
+                IdProveedor = proveedor.IdProveedor
+            };
+            context.Productos.Add(producto);
+            await context.SaveChangesAsync();
+            context.DetalleCarritos.Add(new DetalleCarrito
+            {
+                IdCarrito = carrito.IdCarrito,
+                IdProducto = producto.IdProducto,
+                Cantidad = 2,
+                PrecioUnitario = producto.Precio,
+                Subtotal = 50m
+            });
+            await context.SaveChangesAsync();
+
+            idCarrito = carrito.IdCarrito;
+            idDireccion = direccion.IdDireccion;
+            otraDireccion = alternativa.IdDireccion;
+        }
+
+        using var primera = await client.PostAsJsonAsync(
+            $"/carritos/{idCarrito}/confirmar",
+            new { idDireccion });
+        var pedidoCreado = await LeerJsonAsync(primera);
+        Assert.Equal(HttpStatusCode.Created, primera.StatusCode);
+        Assert.Equal(50m, pedidoCreado.GetProperty("total").GetDecimal());
+        VerificarAusenciaDeDatosSensibles(pedidoCreado);
+
+        using var repetida = await client.PostAsJsonAsync(
+            $"/carritos/{idCarrito}/confirmar",
+            new { idDireccion });
+        var mismoPedido = await LeerJsonAsync(repetida);
+        Assert.Equal(HttpStatusCode.OK, repetida.StatusCode);
+        Assert.Equal(
+            pedidoCreado.GetProperty("idPedido").GetInt32(),
+            mismoPedido.GetProperty("idPedido").GetInt32());
+
+        using var incompatible = await client.PostAsJsonAsync(
+            $"/carritos/{idCarrito}/confirmar",
+            new { idDireccion = otraDireccion });
+        Assert.Equal(HttpStatusCode.Conflict, incompatible.StatusCode);
     }
 
     private static async Task<HttpResponseMessage> RegistrarAsync(
@@ -455,6 +539,18 @@ public sealed class SeguridadEndpointsTests
             tipo = 0
         };
     }
+
+    private static Direccion CrearDireccionEntidad(int idUsuario, string calle) => new()
+    {
+        IdUsuario = idUsuario,
+        Calle = calle,
+        Numero = "123",
+        Ciudad = "Buenos Aires",
+        Provincia = "Buenos Aires",
+        CodigoPostal = "1000",
+        Pais = "Argentina",
+        Tipo = TipoDireccion.Envio
+    };
 
     private static async Task<JsonElement> LeerJsonAsync(HttpResponseMessage response)
     {

@@ -32,7 +32,7 @@ Inventario reproducido con `rg --files Totaltech Frontend Tests`, excluyendo bin
 | Migraciones y snapshot | Inventario, restricciones actuales en DbContext; lectura de la migración 20260622030413 con SQL manual y revisión parcial de otras migraciones | Designer/snapshot y DDL generado excluidos de lectura exhaustiva; no se validó aplicación/reversión de toda la cadena |
 | Configuración, launchSettings, solución y workflow | Revisión de estructura, puertos y presencia de material sensible con valores redactados | No se abrieron User Secrets ni se probaron credenciales |
 | AGENTS, Auditor, Frontend, CleanCode | Lectura de gobierno; correcciones mínimas de hechos | Auditor permanece READ_ONLY para producto; las escrituras documentales provienen del encargo explícito |
-| Backend.md y roadmap 60 | Inspección de encabezado/estructura y secciones relevantes | Backend.md sigue siendo un encargo de reescritura; no se lo ejecutó ni reescribió como nueva tarea |
+| Backend.md y antecedentes consolidados | Inspección de encabezado/estructura y secciones relevantes | Backend.md sigue siendo un encargo de reescritura; el roadmap 60 fue retirado al ejecutar Wave 2 y este archivo queda como única fuente de avance |
 | PDF funcional | Texto pp.1–10, especialmente alcance pp.7–9 | Sin revisión visual completa del PDF ni validación de versiones en Drive |
 | PDF API | Extracción e inspección parcial, incluidos Auth/consultas pp.47–54 | No se certifican todos sus contratos; el código actual prevalece |
 | Mockups locales | Inspección visual de Carrito de Compras.png y Finalizar Compra -3.png | Resto de mockups, fotos de producto y enlaces externos no revisados visualmente |
@@ -523,10 +523,10 @@ No se añadieron tests para reproducir defectos porque el encargo prohíbe modif
 
 | Archivo | Cambio autorizado | Evidencia |
 |---|---|---|
-| ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_70.md | Nuevo informe, matriz y plan | Código y comandos descritos; no sustituye auditoría 60 |
+| ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_70.md | Informe, matriz y plan consolidado | Código y comandos descritos; desde Wave 2 es la única fuente de avance técnico |
 | AGENTS.md | Corrige membresía de Frontend/tests en solución y descripción de suites | Solución contiene cuatro proyectos y build los compila |
 | ControlProyecto/CleanCode.md | Cierra el fence de ejemplo truncado al final | Archivo terminaba dentro de bloque text |
-| Backend.md, Auditor.md, Frontend.md, roadmap 60 | Sin modificación | No hay necesidad de reescritura amplia; Backend.md requiere una tarea específica |
+| Backend.md, Auditor.md y Frontend.md | Sin modificación | No hay necesidad de reescritura amplia; Backend.md requiere una tarea específica |
 | Guía personal fuera de Git | DOCX en la carpeta de artefactos autorizada | Mismos baselines, indicadores y seis waves |
 
 Las credenciales académicas, appsettings, código, tests, dependencias, DbContext, migraciones y Git permanecen sin cambios. Revisión final de diff y formato: ver nota de cierre añadida tras generar artefactos.
@@ -614,9 +614,10 @@ debe fusionar main directamente desde una referencia local desactualizada.
   User Secrets.
 - El bootstrap Admin quedó deshabilitado por defecto y exige `Enabled`, `Email` y
   `Password` desde configuración externa cuando se habilita.
-- `Credenciales.txt` dejó de estar versionado; se incorporó un ejemplo sin
-  valores reales y se ignora el archivo local. Cualquier secreto que haya sido
-  válido debe rotarse por el propietario antes de exponer el sistema.
+- `Credenciales.txt` dejó de estar versionado. `Credenciales.example.txt`
+  conserva deliberadamente valores académicos de demostración por decisión del
+  equipo; la clave activa se carga mediante User Secrets y no desde appsettings.
+  Esos valores no autorizan Azure ni un despliegue productivo.
 
 ### Evidencia local y estado del gate
 
@@ -635,3 +636,62 @@ registre el SHA resultante y luego se promueva `Develop` → `main` con los mism
 gates. El commit local de implementación y evidencia es `b844d20`; el SHA de
 integración permanece pendiente hasta completar la promoción remota. F02–F07
 permanecen abiertos para Wave 2; no se presentan como corregidos.
+
+## 13. Ejecución de Wave 2 — carrito y confirmación protegidos
+
+Fecha de ejecución: 2026-09-12. Rama de trabajo: `Rama--Facu`. El árbol comenzó
+limpio en `13243e8`; no se creó rama, commit, push ni PR durante esta ejecución.
+El SHA final de integración continúa pendiente.
+
+### Cambios ejecutados
+
+- Se eliminó `ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_60.md`; este roadmap 70
+  concentra desde ahora el estado técnico y debe actualizarse con cada cambio.
+- `Pedido` incorpora `IdCarrito` nullable para compatibilidad histórica, índice
+  único filtrado, `Total decimal(18,2)` y snapshot completo de dirección.
+- La migración `ProtegerCheckoutEtapa2` completa total y dirección de pedidos
+  anteriores, conserva `IdCarrito = null` y agrega checks de total y stock no
+  negativos. No fue aplicada contra Azure ni contra una base compartida.
+- La confirmación relee carrito, dirección, líneas, productos y pedido dentro de
+  cada intento reintentable. Usa aislamiento serializable, reclamo atómico del
+  carrito, descuento condicionado y verificación posterior a commit ambiguo.
+- La primera confirmación produce el resultado Creado; un reintento con la misma
+  dirección recupera el pedido y uno con otra dirección produce Conflicto.
+- Agregar o eliminar líneas usa la misma coordinación serializable. Las rutas
+  genéricas de mutación de detalle de carrito fueron retiradas para evitar un
+  camino alternativo que mueva líneas desde carritos cerrados.
+- Pedidos, detalles y pagos históricos se exponen mediante DTOs explícitos. Se
+  retiraron sus POST/PUT/DELETE genéricos y se agregó la consulta protegida
+  `GET /pedidos/{id}/detalles`.
+- Las transiciones permitidas son Pendiente→Cancelado, Pagado→Enviado y
+  Enviado→Entregado. Cancelar repone stock una sola vez dentro de la transacción.
+- Todo pago nace Pendiente. Sólo puede pasar una vez a Aprobado, Rechazado o
+  Cancelado; el importe aprobado parcial mantiene el pedido Pendiente, la suma
+  exacta lo marca Pagado y el sobrepago se rechaza sin escrituras parciales.
+- Se conservaron hashing, roles y reglas actuales de registro. Las credenciales
+  de demo permanecen documentadas en el archivo de ejemplo por decisión expresa;
+  User Secrets continúa siendo la fuente activa local.
+
+### Evidencia y gates locales
+
+| Gate | Resultado |
+|---|---|
+| Build Release de la solución | PASS; cuatro proyectos, 0 errores y 0 warnings |
+| Regresión rápida | PASS; 8 unitarias + 16 HTTP, 24/24; se conservaron las 23 previas y se añadió el contrato 201/200/409 |
+| SQL Server relacional | PASS; 13/13 en LocalDB aislado; 0 bases `TotaltechTests_*` residuales |
+| Concurrencia | PASS; pedido único, última unidad y modificación de líneas serializada |
+| Rollback | PASS; fallo posterior al primer descuento revierte pedido, carrito y stock |
+| Historial | PASS; snapshot estable y backfill desde la migración anterior |
+| Pagos y cancelación | PASS; parcial/exacto/sobrepago y reposición única |
+| Azure SQL | NO EJECUTADO; prohibido por la guardia `TotaltechTests_<GUID>` |
+
+F02, F04, F05 y F07 quedan corregidos y cubiertos en el árbol de trabajo. F03
+queda tratado por relectura, estrategia reintentable, verificación de commit e
+idempotencia observable; la inyección de una excepción transitoria real durante
+el commit sigue como mejora de evidencia. F06 permanece parcial fuera de los
+límites específicamente cubiertos por checkout.
+
+La proyección de esta wave se mantiene en **Backend 58% · Frontend 12%**. El
+sistema aún no alcanzó aproximadamente 70% de solidez global, por lo que este
+archivo conserva el objetivo intermedio. Al superar ese gate con evidencia se
+reescribirá como roadmap desde el estado alcanzado hasta el 100% documental.

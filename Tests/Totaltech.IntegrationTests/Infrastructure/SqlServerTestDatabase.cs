@@ -46,7 +46,9 @@ public sealed class SqlServerTestDatabase : IAsyncLifetime
         ValidateConnectionString(ConnectionString);
 
         var options = new DbContextOptionsBuilder<TotaltechDbContext>()
-            .UseSqlServer(ConnectionString)
+            .UseSqlServer(
+                ConnectionString,
+                sqlServerOptions => sqlServerOptions.EnableRetryOnFailure())
             .Options;
 
         return new TotaltechDbContext(options);
