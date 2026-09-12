@@ -1,6 +1,7 @@
 // ============================================================================
-// MÓDULO: PRODUCTOS
-// RESPONSABILIDAD: Representar los datos de creación y edición del producto.
+// MÓDULO: SOLICITUDES DE PRODUCTOS
+// RESPONSABILIDAD: Representar y validar los datos de alta o edición para la API.
+// LÍMITE: Es un contrato de entrada del frontend y no una entidad de persistencia.
 // ============================================================================
 using System.ComponentModel.DataAnnotations;
 namespace Frontend.Models.Api.Requests;

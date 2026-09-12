@@ -1,4 +1,8 @@
-// Estructura reservada. Implementación pendiente.
+// ============================================================================
+// MÓDULO ACTUAL: SERVICIO API DE CATEGORÍAS
+// RESPONSABILIDAD: Consultar y mantener categorías mediante el cliente TotaltechApi.
+// DEUDA TÉCNICA: El archivo se llama CarritosApiService, pero contiene CategoriasApiService.
+// ============================================================================
 using System.Net;
 using System.Net.Http.Json;
 using Frontend.Models.Api.Requests;

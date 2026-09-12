@@ -1,3 +1,9 @@
+// ============================================================================
+// MÓDULO: INICIO Y AUTENTICACIÓN
+// RESPONSABILIDAD: Servir las páginas generales y coordinar inicio/cierre de sesión.
+// INTEGRACIÓN: Valida credenciales en la API y crea la cookie MVC con sus claims.
+// SEGURIDAD: No autentica por sí mismo ni persiste contraseñas en el frontend.
+// ============================================================================
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;

@@ -695,3 +695,74 @@ La proyección de esta wave se mantiene en **Backend 58% · Frontend 12%**. El
 sistema aún no alcanzó aproximadamente 70% de solidez global, por lo que este
 archivo conserva el objetivo intermedio. Al superar ese gate con evidencia se
 reescribirá como roadmap desde el estado alcanzado hasta el 100% documental.
+
+## 14. Documentación explicativa de Controllers MVC
+
+Fecha: 2026-09-12.
+
+- Se normalizaron las cabeceras de los diez módulos ubicados en
+  `Frontend/Controllers`, indicando responsabilidad, integración, acceso o estado
+  de implementación según corresponde.
+- Los controladores activos documentados son Administración, Categorías, Inicio y
+  autenticación, Productos y Proveedores.
+- Carrito, Checkout, Consultas, Cuenta y Pedidos quedaron identificados como
+  estructuras reservadas, con su responsabilidad prevista explícita para evitar
+  que se interpreten como implementaciones funcionales.
+- El cambio es exclusivamente documental: no modifica rutas, acciones, modelos,
+  autorización, servicios ni contratos públicos.
+
+### Validación
+
+| Gate | Resultado |
+|---|---|
+| Build Release de `Frontend` | PASS; 0 errores y 0 advertencias |
+| `git diff --check` | PASS; sin errores de whitespace |
+| Marcadores de conflicto en Controllers y roadmap | PASS; ninguno encontrado |
+
+## 15. Documentación explicativa de Models MVC
+
+Fecha: 2026-09-12.
+
+- Se normalizaron las cabeceras de los 18 archivos ubicados en
+  `Frontend/Models`, diferenciando contratos de entrada, contratos de respuesta,
+  modelos de vista funcionales y estructuras reservadas.
+- Los modelos activos documentan su responsabilidad y límite arquitectónico:
+  validación y transporte en autenticación, representación de errores, intercambio
+  HTTP con la API y composición del catálogo.
+- Los nueve ViewModels todavía vacíos identifican el propósito previsto y su estado
+  pendiente, sin agregar clases ficticias ni anticipar contratos no definidos.
+- El cambio es exclusivamente documental: no modifica validaciones, propiedades,
+  serialización, enlaces de modelos ni contratos HTTP.
+
+### Validación
+
+| Gate | Resultado |
+|---|---|
+| Build Release de `Frontend` | PASS; 0 errores y 0 advertencias |
+| `git diff --check` | PASS; sin errores de whitespace |
+| Marcadores de conflicto en `Frontend/Models` | PASS; ninguno encontrado |
+
+## 16. Documentación explicativa de Services MVC
+
+Fecha: 2026-09-12.
+
+- Se documentaron los 23 archivos de `Frontend/Services`, incluyendo servicios
+  concretos y contratos reservados en `Services/Interfaces`.
+- Los servicios activos ahora explicitan su responsabilidad y límite: propagación
+  del token de sesión y traducción de operaciones HTTP hacia `TotaltechApi`, sin
+  trasladar reglas de negocio desde el backend.
+- Los servicios e interfaces vacíos indican su propósito previsto y estado real,
+  sin agregar implementaciones o contratos ficticios.
+- Se registró una deuda técnica preexistente: `CarritosApiService.cs` contiene la
+  clase funcional `CategoriasApiService`. En este cambio documental no se renombró
+  el archivo para evitar alterar referencias o ampliar el alcance.
+- El cambio no modifica inyección de dependencias, solicitudes HTTP, rutas,
+  autenticación, respuestas ni contratos públicos.
+
+### Validación
+
+| Gate | Resultado |
+|---|---|
+| Build Release de `Frontend` | PASS; 0 errores y 0 advertencias |
+| `git diff --check` | PASS; sin errores de whitespace |
+| Marcadores de conflicto en `Frontend/Services` | PASS; ninguno encontrado |

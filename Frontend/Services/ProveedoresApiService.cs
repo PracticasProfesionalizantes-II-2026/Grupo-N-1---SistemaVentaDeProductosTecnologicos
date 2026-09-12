@@ -1,3 +1,8 @@
+// ============================================================================
+// MÓDULO: SERVICIO API DE PROVEEDORES
+// RESPONSABILIDAD: Consultar y mantener proveedores mediante TotaltechApi.
+// LÍMITE: Gestiona intercambio HTTP y deja las reglas de negocio al backend.
+// ============================================================================
 using System.Net;
 using System.Net.Http.Json;
 using Frontend.Models.Api.Requests;

@@ -1,3 +1,8 @@
+// ============================================================================
+// MÓDULO: PROPAGACIÓN DEL TOKEN API
+// RESPONSABILIDAD: Adjuntar el access token de la sesión MVC a solicitudes HTTP.
+// LÍMITE: No crea ni renueva tokens; sólo propaga uno existente al backend.
+// ============================================================================
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authentication;
 
