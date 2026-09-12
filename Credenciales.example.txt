@@ -10,3 +10,7 @@ dotnet user-secrets --project Totaltech set "BootstrapAdmin:Password" "<contrase
 
 En entornos alojados use las variables ConnectionStrings__DefaultConnection,
 Authentication__SigningKey y BootstrapAdmin__*. No copie secretos en este archivo.
+
+Admin123456789
+Totaltech123
+dotnet user-secrets set "Authentication:SigningKey" "TotalTech-Desarrollo-JWT-2026-Clave-Segura-123456789"
