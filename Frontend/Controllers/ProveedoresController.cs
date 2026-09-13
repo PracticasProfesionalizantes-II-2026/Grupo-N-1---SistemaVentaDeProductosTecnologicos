@@ -1,6 +1,8 @@
 // ============================================================================
 // MÓDULO: PROVEEDORES
-// RESPONSABILIDAD: Listar, consultar y gestionar proveedores desde MVC.
+// RESPONSABILIDAD: Coordinar consulta y mantenimiento de proveedores.
+// INTEGRACIÓN: Delega los datos y las mutaciones en ProveedoresApiService.
+// ACCESO: El controlador completo está restringido al rol Admin.
 // ============================================================================
 using Frontend.Models.Api.Requests;
 using Frontend.Services;

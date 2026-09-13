@@ -9,6 +9,7 @@ namespace Totaltech.Repositorios
         Task<List<DetallePedido>> ObtenerTodosAsync();
         Task<DetallePedido?> ObtenerPorIdAsync(int id);
         Task<bool> ExisteAsync(int id);
+        Task<List<DetallePedido>> ObtenerPorPedidoAsync(int idPedido);
         Task CrearAsync(DetallePedido detalle);
         Task ActualizarAsync(DetallePedido detalle);
         Task EliminarAsync(DetallePedido detalle);
@@ -36,6 +37,13 @@ namespace Totaltech.Repositorios
         public async Task<bool> ExisteAsync(int id)
         {
             return await _context.DetallePedidos.AnyAsync(detalle => detalle.IdDetallePedido == id);
+        }
+
+        public Task<List<DetallePedido>> ObtenerPorPedidoAsync(int idPedido)
+        {
+            return _context.DetallePedidos
+                .Where(detalle => detalle.IdPedido == idPedido)
+                .ToListAsync();
         }
 
         public async Task CrearAsync(DetallePedido detalle)

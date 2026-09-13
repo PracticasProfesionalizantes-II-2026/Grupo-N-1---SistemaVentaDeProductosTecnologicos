@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Totaltech.Entidades
 {
@@ -9,6 +10,8 @@ namespace Totaltech.Entidades
 
         public int? IdUsuario { get; set; }
 
+        public int? IdCarrito { get; set; }
+
         [DataType(DataType.DateTime)]
         public DateTime FechaPedido { get; set; }
 
@@ -18,9 +21,32 @@ namespace Totaltech.Entidades
         [Required]
         public int IdDireccion { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Total { get; set; }
+
+        [Required]
+        public string DireccionCalle { get; set; } = string.Empty;
+
+        [Required]
+        public string DireccionNumero { get; set; } = string.Empty;
+
+        [Required]
+        public string DireccionCiudad { get; set; } = string.Empty;
+
+        [Required]
+        public string DireccionProvincia { get; set; } = string.Empty;
+
+        [Required]
+        public string DireccionCodigoPostal { get; set; } = string.Empty;
+
+        [Required]
+        public string DireccionPais { get; set; } = string.Empty;
+
         public Usuario? Usuario { get; set; }
 
         public Direccion? Direccion { get; set; }
+
+        public Carrito? Carrito { get; set; }
     }
 
     public enum EstadoPedido

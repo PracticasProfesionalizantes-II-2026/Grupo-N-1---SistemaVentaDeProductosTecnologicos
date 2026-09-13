@@ -1,3 +1,9 @@
+// ============================================================================
+// MÓDULO: INICIO Y AUTENTICACIÓN
+// RESPONSABILIDAD: Servir las páginas generales y coordinar inicio/cierre de sesión.
+// INTEGRACIÓN: Valida credenciales en la API y crea la cookie MVC con sus claims.
+// SEGURIDAD: No autentica por sí mismo ni persiste contraseñas en el frontend.
+// ============================================================================
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
@@ -138,11 +144,6 @@ public class HomeController : Controller
         model.Apellido = model.Apellido.Trim();
         model.Email = model.Email.Trim().ToLowerInvariant();
         model.Telefono = model.Telefono.Trim();
-
-        if (!model.AceptaTerminos)
-        {
-            ModelState.AddModelError(nameof(model.AceptaTerminos), "Debés aceptar los términos y condiciones.");
-        }
 
         if (!ModelState.IsValid)
         {

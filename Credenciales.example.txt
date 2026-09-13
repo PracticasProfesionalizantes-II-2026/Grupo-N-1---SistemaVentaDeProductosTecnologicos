@@ -1,0 +1,20 @@
+Credenciales academicas de demostracion, versionadas deliberadamente con
+consentimiento del equipo para la presentacion privada. No deben reutilizarse en
+produccion, publicarse en un despliegue ni usarse para acceder a Azure.
+
+Configuración local recomendada:
+
+dotnet user-secrets --project Totaltech set "ConnectionStrings:DefaultConnection" "<cadena-local-o-autorizada>"
+dotnet user-secrets --project Totaltech set "Authentication:SigningKey" "<clave-de-al-menos-32-bytes>"
+dotnet user-secrets --project Totaltech set "BootstrapAdmin:Enabled" "true"
+dotnet user-secrets --project Totaltech set "BootstrapAdmin:Email" "<email-administrador>"
+dotnet user-secrets --project Totaltech set "BootstrapAdmin:Password" "<contraseña-administrador>"
+
+En entornos alojados use valores diferentes mediante las variables
+ConnectionStrings__DefaultConnection, Authentication__SigningKey y
+BootstrapAdmin__*. La clave activa local se carga con User Secrets y no desde
+appsettings.json.
+
+Admin123456789
+Totaltech123
+dotnet user-secrets set "Authentication:SigningKey" "TotalTech-Desarrollo-JWT-2026-Clave-Segura-123456789"

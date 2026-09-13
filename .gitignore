@@ -37,6 +37,7 @@ coverage.*
 **/appsettings.Local.json
 **/appsettings.*.Local.json
 **/secrets.json
+Credenciales.txt
 *.pfx
 *.p12
 *.key

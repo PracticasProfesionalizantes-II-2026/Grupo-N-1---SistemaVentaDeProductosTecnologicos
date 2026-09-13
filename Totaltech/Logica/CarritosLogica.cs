@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.EntityFrameworkCore;
 using Totaltech.Datos;
 using Totaltech.Entidades;
 using Totaltech.Logica.DTOs;
@@ -15,38 +17,26 @@ namespace Totaltech.Logica
         Task<bool> EliminarAsync(int id);
         Task<(DetalleCarrito? Detalle, string? Error)> AgregarProductoAsync(int idCarrito, AgregarProductoCarritoDto dto);
         Task<string?> EliminarProductoAsync(int idCarrito, int idProducto);
-        Task<(Pedido? Pedido, string? Error)> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto);
+        Task<ConfirmarCarritoResultado> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto);
     }
 
     public class CarritosLogica : ICarritosLogica
     {
         private readonly TotaltechDbContext _context;
         private readonly ICarritosRepositorio _carritosRepositorio;
-        private readonly IDetalleCarritosRepositorio _detalleCarritosRepositorio;
         private readonly IProductosRepositorio _productosRepositorio;
-        private readonly IPedidosRepositorio _pedidosRepositorio;
-        private readonly IDetallePedidosRepositorio _detallePedidosRepositorio;
         private readonly IUsuariosRepositorio _usuariosRepositorio;
-        private readonly IDireccionesRepositorio _direccionesRepositorio;
 
         public CarritosLogica(
             TotaltechDbContext context,
             ICarritosRepositorio carritosRepositorio,
-            IDetalleCarritosRepositorio detalleCarritosRepositorio,
             IProductosRepositorio productosRepositorio,
-            IPedidosRepositorio pedidosRepositorio,
-            IDetallePedidosRepositorio detallePedidosRepositorio,
-            IUsuariosRepositorio usuariosRepositorio,
-            IDireccionesRepositorio direccionesRepositorio)
+            IUsuariosRepositorio usuariosRepositorio)
         {
             _context = context;
             _carritosRepositorio = carritosRepositorio;
-            _detalleCarritosRepositorio = detalleCarritosRepositorio;
             _productosRepositorio = productosRepositorio;
-            _pedidosRepositorio = pedidosRepositorio;
-            _detallePedidosRepositorio = detallePedidosRepositorio;
             _usuariosRepositorio = usuariosRepositorio;
-            _direccionesRepositorio = direccionesRepositorio;
         }
 
         public Task<List<Carrito>> ObtenerTodosAsync()
@@ -117,155 +107,365 @@ namespace Totaltech.Logica
                 return (null, "La cantidad debe ser mayor a cero.");
             }
 
-            var carrito = await _carritosRepositorio.ObtenerPorIdAsync(idCarrito);
-            if (carrito is null)
+            var cantidadEsperada = 0;
+            async Task<(DetalleCarrito? Detalle, string? Error)> EjecutarAsync(
+                CancellationToken cancellationToken)
             {
-                return (null, "El carrito indicado no existe.");
+                _context.ChangeTracker.Clear();
+                var carrito = await _context.Carritos
+                    .SingleOrDefaultAsync(candidato => candidato.IdCarrito == idCarrito, cancellationToken);
+                if (carrito is null)
+                {
+                    return (null, "El carrito indicado no existe.");
+                }
+
+                if (carrito.Estado != EstadoCarrito.Activo)
+                {
+                    return (null, "Solo se pueden modificar carritos activos.");
+                }
+
+                var producto = await _context.Productos
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(
+                        candidato => candidato.IdProducto == dto.IdProducto,
+                        cancellationToken);
+                if (producto is null)
+                {
+                    return (null, "El producto indicado no existe.");
+                }
+
+                var detalleExistente = await _context.DetalleCarritos
+                    .SingleOrDefaultAsync(
+                        detalle => detalle.IdCarrito == idCarrito && detalle.IdProducto == dto.IdProducto,
+                        cancellationToken);
+                cantidadEsperada = checked(dto.Cantidad + (detalleExistente?.Cantidad ?? 0));
+
+                if (producto.Stock < cantidadEsperada)
+                {
+                    return (null, "No hay stock suficiente para agregar ese producto.");
+                }
+
+                if (detalleExistente is not null)
+                {
+                    detalleExistente.Cantidad = cantidadEsperada;
+                    detalleExistente.PrecioUnitario = producto.Precio;
+                    detalleExistente.Subtotal = producto.Precio * cantidadEsperada;
+                    await _context.SaveChangesAsync(cancellationToken);
+                    return (detalleExistente, null);
+                }
+
+                var detalle = new DetalleCarrito
+                {
+                    IdCarrito = idCarrito,
+                    IdProducto = dto.IdProducto,
+                    Cantidad = cantidadEsperada,
+                    PrecioUnitario = producto.Precio,
+                    Subtotal = producto.Precio * cantidadEsperada
+                };
+
+                _context.DetalleCarritos.Add(detalle);
+                await _context.SaveChangesAsync(cancellationToken);
+                return (detalle, null);
             }
 
-            if (carrito.Estado != EstadoCarrito.Activo)
+            if (!_context.Database.IsRelational())
             {
-                return (null, "Solo se pueden modificar carritos activos.");
+                return await EjecutarAsync(CancellationToken.None);
             }
 
-            var producto = await _productosRepositorio.ObtenerPorIdAsync(dto.IdProducto);
-            if (producto is null)
-            {
-                return (null, "El producto indicado no existe.");
-            }
-
-            var detalleExistente = await _detalleCarritosRepositorio.ObtenerPorCarritoYProductoAsync(idCarrito, dto.IdProducto);
-            var nuevaCantidad = dto.Cantidad + (detalleExistente?.Cantidad ?? 0);
-
-            if (producto.Stock < nuevaCantidad)
-            {
-                return (null, "No hay stock suficiente para agregar ese producto.");
-            }
-
-            var precio = dto.PrecioUnitario > 0 ? dto.PrecioUnitario : producto.Precio;
-
-            if (detalleExistente is not null)
-            {
-                detalleExistente.Cantidad = nuevaCantidad;
-                detalleExistente.PrecioUnitario = precio;
-                detalleExistente.Subtotal = precio * nuevaCantidad;
-
-                await _detalleCarritosRepositorio.ActualizarAsync(detalleExistente);
-                return (detalleExistente, null);
-            }
-
-            var detalle = new DetalleCarrito
-            {
-                IdCarrito = idCarrito,
-                IdProducto = dto.IdProducto,
-                Cantidad = dto.Cantidad,
-                PrecioUnitario = precio,
-                Subtotal = precio * dto.Cantidad
-            };
-
-            await _detalleCarritosRepositorio.CrearAsync(detalle);
-            return (detalle, null);
+            var estrategia = _context.Database.CreateExecutionStrategy();
+            return await Microsoft.EntityFrameworkCore.Storage.RelationalExecutionStrategyExtensions.ExecuteInTransactionAsync(
+                estrategia,
+                EjecutarAsync,
+                async cancellationToken =>
+                {
+                    _context.ChangeTracker.Clear();
+                    return await _context.DetalleCarritos.AsNoTracking().AnyAsync(
+                        detalle =>
+                            detalle.IdCarrito == idCarrito &&
+                            detalle.IdProducto == dto.IdProducto &&
+                            detalle.Cantidad == cantidadEsperada,
+                        cancellationToken);
+                },
+                IsolationLevel.Serializable,
+                CancellationToken.None);
         }
 
         public async Task<string?> EliminarProductoAsync(int idCarrito, int idProducto)
         {
-            var carrito = await _carritosRepositorio.ObtenerPorIdAsync(idCarrito);
-            if (carrito is null)
+            async Task<string?> EjecutarAsync(CancellationToken cancellationToken)
             {
-                return "El carrito indicado no existe.";
+                _context.ChangeTracker.Clear();
+                var carrito = await _context.Carritos
+                    .SingleOrDefaultAsync(candidato => candidato.IdCarrito == idCarrito, cancellationToken);
+                if (carrito is null)
+                {
+                    return "El carrito indicado no existe.";
+                }
+
+                if (carrito.Estado != EstadoCarrito.Activo)
+                {
+                    return "Solo se pueden modificar carritos activos.";
+                }
+
+                var detalle = await _context.DetalleCarritos.SingleOrDefaultAsync(
+                    candidato => candidato.IdCarrito == idCarrito && candidato.IdProducto == idProducto,
+                    cancellationToken);
+                if (detalle is null)
+                {
+                    return "El producto no existe dentro del carrito.";
+                }
+
+                _context.DetalleCarritos.Remove(detalle);
+                await _context.SaveChangesAsync(cancellationToken);
+                return null;
             }
 
-            if (carrito.Estado != EstadoCarrito.Activo)
+            if (!_context.Database.IsRelational())
             {
-                return "Solo se pueden modificar carritos activos.";
+                return await EjecutarAsync(CancellationToken.None);
             }
 
-            var eliminado = await _detalleCarritosRepositorio.EliminarPorCarritoYProductoAsync(idCarrito, idProducto);
-            return eliminado ? null : "El producto no existe dentro del carrito.";
+            var estrategia = _context.Database.CreateExecutionStrategy();
+            return await Microsoft.EntityFrameworkCore.Storage.RelationalExecutionStrategyExtensions.ExecuteInTransactionAsync(
+                estrategia,
+                EjecutarAsync,
+                async cancellationToken =>
+                {
+                    _context.ChangeTracker.Clear();
+                    return !await _context.DetalleCarritos.AsNoTracking().AnyAsync(
+                        detalle => detalle.IdCarrito == idCarrito && detalle.IdProducto == idProducto,
+                        cancellationToken);
+                },
+                IsolationLevel.Serializable,
+                CancellationToken.None);
         }
 
-        public async Task<(Pedido? Pedido, string? Error)> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto)
+        public async Task<ConfirmarCarritoResultado> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto)
         {
-            var carrito = await _carritosRepositorio.ObtenerPorIdAsync(idCarrito);
-            if (carrito is null)
+            if (dto.IdDireccion <= 0)
             {
-                return (null, "El carrito indicado no existe.");
+                return new(EstadoConfirmacionCarrito.Invalido, Error: "La direccion indicada no es valida.");
             }
 
-            if (carrito.Estado != EstadoCarrito.Activo)
+            async Task<ConfirmarCarritoResultado> EjecutarIntentoAsync(CancellationToken cancellationToken)
             {
-                return (null, "Solo se pueden confirmar carritos activos.");
-            }
+                _context.ChangeTracker.Clear();
 
-            var direccion = await _direccionesRepositorio.ObtenerPorIdAsync(dto.IdDireccion);
-            if (direccion is null)
-            {
-                return (null, "La direccion indicada no existe.");
-            }
-
-            if (direccion.IdUsuario != carrito.IdUsuario)
-            {
-                return (null, "La direccion indicada no pertenece al usuario del carrito.");
-            }
-
-            var detallesCarrito = await _detalleCarritosRepositorio.ObtenerPorCarritoAsync(idCarrito);
-            if (detallesCarrito.Count == 0)
-            {
-                return (null, "El carrito no tiene productos.");
-            }
-
-            var productos = new Dictionary<int, Producto>();
-            foreach (var detalleCarrito in detallesCarrito)
-            {
-                var producto = await _productosRepositorio.ObtenerPorIdAsync(detalleCarrito.IdProducto);
-                if (producto is null)
+                var pedidoExistente = await _context.Pedidos
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(pedido => pedido.IdCarrito == idCarrito, cancellationToken);
+                if (pedidoExistente is not null)
                 {
-                    return (null, "Uno de los productos del carrito ya no existe.");
+                    return pedidoExistente.IdDireccion == dto.IdDireccion
+                        ? new(EstadoConfirmacionCarrito.Repetido, pedidoExistente)
+                        : new(
+                            EstadoConfirmacionCarrito.Conflicto,
+                            Error: "El carrito ya fue confirmado con una direccion diferente.");
                 }
 
-                if (producto.Stock < detalleCarrito.Cantidad)
+                var carrito = await _context.Carritos
+                    .SingleOrDefaultAsync(candidato => candidato.IdCarrito == idCarrito, cancellationToken);
+                if (carrito is null)
                 {
-                    return (null, $"No hay stock suficiente para el producto {producto.Nombre}.");
+                    return new(EstadoConfirmacionCarrito.NoEncontrado, Error: "El carrito indicado no existe.");
                 }
 
-                productos[producto.IdProducto] = producto;
-            }
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            var pedido = new Pedido
-            {
-                IdUsuario = carrito.IdUsuario,
-                IdDireccion = dto.IdDireccion,
-                FechaPedido = DateTime.Now,
-                Estado = EstadoPedido.Pendiente
-            };
-
-            await _pedidosRepositorio.CrearAsync(pedido);
-
-            foreach (var detalleCarrito in detallesCarrito)
-            {
-                var producto = productos[detalleCarrito.IdProducto];
-
-                var detallePedido = new DetallePedido
+                if (carrito.Estado != EstadoCarrito.Activo)
                 {
-                    IdPedido = pedido.IdPedido,
-                    IdProducto = detalleCarrito.IdProducto,
-                    Cantidad = detalleCarrito.Cantidad,
-                    PrecioUnitario = detalleCarrito.PrecioUnitario,
-                    Subtotal = detalleCarrito.Subtotal
+                    return new(
+                        EstadoConfirmacionCarrito.Conflicto,
+                        Error: "Solo se pueden confirmar carritos activos.");
+                }
+
+                var direccion = await _context.Direcciones
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(
+                        candidata => candidata.IdDireccion == dto.IdDireccion,
+                        cancellationToken);
+                if (direccion is null)
+                {
+                    return new(
+                        EstadoConfirmacionCarrito.NoEncontrado,
+                        Error: "La direccion indicada no existe.");
+                }
+
+                if (direccion.IdUsuario != carrito.IdUsuario)
+                {
+                    return new(
+                        EstadoConfirmacionCarrito.Conflicto,
+                        Error: "La direccion indicada no pertenece al usuario del carrito.");
+                }
+
+                var detallesCarrito = await _context.DetalleCarritos
+                    .AsNoTracking()
+                    .Where(detalle => detalle.IdCarrito == idCarrito)
+                    .ToListAsync(cancellationToken);
+                if (detallesCarrito.Count == 0)
+                {
+                    return new(EstadoConfirmacionCarrito.Invalido, Error: "El carrito no tiene productos.");
+                }
+
+                var idsProductos = detallesCarrito.Select(detalle => detalle.IdProducto).ToArray();
+                var productos = await _context.Productos
+                    .AsNoTracking()
+                    .Where(producto => idsProductos.Contains(producto.IdProducto))
+                    .ToDictionaryAsync(producto => producto.IdProducto, cancellationToken);
+
+                foreach (var detalleCarrito in detallesCarrito)
+                {
+                    if (!productos.TryGetValue(detalleCarrito.IdProducto, out var producto))
+                    {
+                        return new(
+                            EstadoConfirmacionCarrito.NoEncontrado,
+                            Error: "Uno de los productos del carrito ya no existe.");
+                    }
+
+                    if (producto.Stock < detalleCarrito.Cantidad)
+                    {
+                        return new(
+                            EstadoConfirmacionCarrito.Conflicto,
+                            Error: $"No hay stock suficiente para el producto {producto.Nombre}.");
+                    }
+                }
+
+                if (_context.Database.IsRelational())
+                {
+                    var carritoTomado = await _context.Carritos
+                        .Where(candidato =>
+                            candidato.IdCarrito == idCarrito &&
+                            candidato.Estado == EstadoCarrito.Activo)
+                        .ExecuteUpdateAsync(
+                            actualizacion => actualizacion.SetProperty(
+                                candidato => candidato.Estado,
+                                EstadoCarrito.Confirmado),
+                            cancellationToken);
+
+                    if (carritoTomado != 1)
+                    {
+                        throw new ConfirmacionCarritoException(
+                            EstadoConfirmacionCarrito.Conflicto,
+                            "El carrito fue modificado mientras se confirmaba.");
+                    }
+                }
+                else
+                {
+                    carrito.Estado = EstadoCarrito.Confirmado;
+                }
+
+                decimal total;
+                try
+                {
+                    total = detallesCarrito.Sum(detalle =>
+                        checked(productos[detalle.IdProducto].Precio * detalle.Cantidad));
+                }
+                catch (OverflowException)
+                {
+                    throw new ConfirmacionCarritoException(
+                        EstadoConfirmacionCarrito.Invalido,
+                        "El total del carrito excede el importe permitido.");
+                }
+
+                var pedido = new Pedido
+                {
+                    IdUsuario = carrito.IdUsuario,
+                    IdCarrito = carrito.IdCarrito,
+                    IdDireccion = dto.IdDireccion,
+                    FechaPedido = DateTime.UtcNow,
+                    Estado = EstadoPedido.Pendiente,
+                    Total = total,
+                    DireccionCalle = direccion.Calle,
+                    DireccionNumero = direccion.Numero,
+                    DireccionCiudad = direccion.Ciudad,
+                    DireccionProvincia = direccion.Provincia,
+                    DireccionCodigoPostal = direccion.CodigoPostal,
+                    DireccionPais = direccion.Pais
                 };
 
-                producto.Stock -= detalleCarrito.Cantidad;
-                await _detallePedidosRepositorio.CrearAsync(detallePedido);
-                await _productosRepositorio.ActualizarAsync(producto);
+                _context.Pedidos.Add(pedido);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                foreach (var detalleCarrito in detallesCarrito)
+                {
+                    var producto = productos[detalleCarrito.IdProducto];
+                    if (!await _productosRepositorio.DescontarStockAsync(
+                            producto.IdProducto,
+                            detalleCarrito.Cantidad))
+                    {
+                        throw new ConfirmacionCarritoException(
+                            EstadoConfirmacionCarrito.Conflicto,
+                            $"No hay stock suficiente para el producto {producto.Nombre}.");
+                    }
+
+                    _context.DetallePedidos.Add(new DetallePedido
+                    {
+                        IdPedido = pedido.IdPedido,
+                        IdProducto = detalleCarrito.IdProducto,
+                        Cantidad = detalleCarrito.Cantidad,
+                        PrecioUnitario = producto.Precio,
+                        Subtotal = producto.Precio * detalleCarrito.Cantidad
+                    });
+                }
+
+                await _context.SaveChangesAsync(cancellationToken);
+                return new(EstadoConfirmacionCarrito.Creado, pedido);
             }
 
-            carrito.Estado = EstadoCarrito.Confirmado;
-            await _carritosRepositorio.ActualizarAsync(carrito);
+            try
+            {
+                if (!_context.Database.IsRelational())
+                {
+                    return await EjecutarIntentoAsync(CancellationToken.None);
+                }
 
-            await transaction.CommitAsync();
-            return (pedido, null);
+                var estrategia = _context.Database.CreateExecutionStrategy();
+                return await Microsoft.EntityFrameworkCore.Storage.RelationalExecutionStrategyExtensions.ExecuteInTransactionAsync(
+                    estrategia,
+                    EjecutarIntentoAsync,
+                    async cancellationToken =>
+                    {
+                        _context.ChangeTracker.Clear();
+                        return await _context.Pedidos
+                            .AsNoTracking()
+                            .AnyAsync(pedido => pedido.IdCarrito == idCarrito, cancellationToken);
+                    },
+                    IsolationLevel.Serializable,
+                    CancellationToken.None);
+            }
+            catch (ConfirmacionCarritoException ex)
+            {
+                _context.ChangeTracker.Clear();
+                return new(ex.Estado, Error: ex.Message);
+            }
+            catch (DbUpdateException)
+            {
+                _context.ChangeTracker.Clear();
+                var pedidoExistente = await _context.Pedidos
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(pedido => pedido.IdCarrito == idCarrito);
+
+                if (pedidoExistente is not null)
+                {
+                    return pedidoExistente.IdDireccion == dto.IdDireccion
+                        ? new(EstadoConfirmacionCarrito.Repetido, pedidoExistente)
+                        : new(
+                            EstadoConfirmacionCarrito.Conflicto,
+                            Error: "El carrito ya fue confirmado con una direccion diferente.");
+                }
+
+                throw;
+            }
+        }
+
+        private sealed class ConfirmacionCarritoException : Exception
+        {
+            public ConfirmacionCarritoException(EstadoConfirmacionCarrito estado, string message)
+                : base(message)
+            {
+                Estado = estado;
+            }
+
+            public EstadoConfirmacionCarrito Estado { get; }
         }
 
         private async Task<string?> ValidarCarritoAsync(Carrito carrito)

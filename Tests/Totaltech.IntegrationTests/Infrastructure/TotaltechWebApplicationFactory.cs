@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -24,6 +25,12 @@ internal sealed class TotaltechWebApplicationFactory : WebApplicationFactory<Tot
         builder.UseSetting(
             "Authentication:SigningKey",
             "totaltech-integration-tests-signing-key-2026");
+        builder.UseSetting(
+            "ConnectionStrings:DefaultConnection",
+            "Server=(localdb)\\MSSQLLocalDB;Database=TotaltechTests_InMemoryHost;Trusted_Connection=True;TrustServerCertificate=True");
+        builder.UseSetting("BootstrapAdmin:Enabled", "true");
+        builder.UseSetting("BootstrapAdmin:Email", "Admin@admin.com");
+        builder.UseSetting("BootstrapAdmin:Password", "Admin123456789");
 
         builder.ConfigureServices(services =>
         {
@@ -33,7 +40,10 @@ internal sealed class TotaltechWebApplicationFactory : WebApplicationFactory<Tot
             services.RemoveAll<IDbContextOptionsConfiguration<TotaltechDbContext>>();
 
             services.AddDbContext<TotaltechDbContext>(options =>
-                options.UseInMemoryDatabase(_nombreBase, _raizBase));
+                options
+                    .UseInMemoryDatabase(_nombreBase, _raizBase)
+                    .ConfigureWarnings(warnings =>
+                        warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
         });
     }
 

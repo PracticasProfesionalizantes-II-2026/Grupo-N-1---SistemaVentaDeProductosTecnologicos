@@ -46,6 +46,24 @@ public sealed class UsuariosLogicaTests
         Assert.Null(resultado);
     }
 
+    [Theory]
+    [InlineData("email-invalido", "Cliente123456", "El formato del email no es valido.")]
+    [InlineData("cliente@test.local", "corta", "La contrasena debe tener al menos 8 caracteres.")]
+    public async Task RegistrarAsync_ValidaEmailYContrasenaSimple(
+        string email,
+        string contrasena,
+        string errorEsperado)
+    {
+        var repositorio = new FakeUsuariosRepositorio();
+        var logica = new UsuariosLogica(repositorio);
+        var usuario = CrearUsuario(email, contrasena, RolUsuario.Cliente);
+
+        var error = await logica.RegistrarAsync(usuario);
+
+        Assert.Equal(errorEsperado, error);
+        Assert.Empty(repositorio.Usuarios);
+    }
+
     [Fact]
     public async Task AsegurarAdministradorAsync_EsIdempotenteYAutenticable()
     {
@@ -67,6 +85,31 @@ public sealed class UsuariosLogicaTests
         Assert.NotEqual(contrasena, administrador.Contrasena);
         Assert.NotNull(login);
         Assert.Equal(RolUsuario.Administrador, login.Rol);
+    }
+
+    [Fact]
+    public async Task AsegurarAdministradorAsync_RestauraLaContrasenaCanonica()
+    {
+        var repositorio = new FakeUsuariosRepositorio();
+        var logica = new UsuariosLogica(repositorio);
+        var administrador = CrearUsuario("Admin@admin.com", "OtraClave123", RolUsuario.Administrador);
+        await logica.CrearAsync(administrador);
+
+        await logica.AsegurarAdministradorAsync("Admin@admin.com", "Admin123456789");
+
+        var loginCanonico = await logica.LoginAsync(new LoginDto
+        {
+            Email = "Admin@admin.com",
+            Contrasena = "Admin123456789"
+        });
+        var loginAnterior = await logica.LoginAsync(new LoginDto
+        {
+            Email = "Admin@admin.com",
+            Contrasena = "OtraClave123"
+        });
+
+        Assert.NotNull(loginCanonico);
+        Assert.Null(loginAnterior);
     }
 
     private static Usuario CrearUsuario(string email, string contrasena, RolUsuario rol)

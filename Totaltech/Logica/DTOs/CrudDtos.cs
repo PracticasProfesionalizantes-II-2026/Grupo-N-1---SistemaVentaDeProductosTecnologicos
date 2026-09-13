@@ -110,38 +110,6 @@ namespace Totaltech.Logica.DTOs
         };
     }
 
-    public class PedidoRequest
-    {
-        public int? IdUsuario { get; set; }
-        public DateTime FechaPedido { get; set; }
-        public EstadoPedido Estado { get; set; } = EstadoPedido.Pendiente;
-        public int IdDireccion { get; set; }
-
-        public Pedido ToEntity() => new()
-        {
-            IdUsuario = IdUsuario,
-            FechaPedido = FechaPedido,
-            Estado = Estado,
-            IdDireccion = IdDireccion
-        };
-    }
-
-    public class DetallePedidoRequest
-    {
-        public int IdPedido { get; set; }
-        public int IdProducto { get; set; }
-        public int Cantidad { get; set; }
-        public decimal PrecioUnitario { get; set; }
-
-        public DetallePedido ToEntity() => new()
-        {
-            IdPedido = IdPedido,
-            IdProducto = IdProducto,
-            Cantidad = Cantidad,
-            PrecioUnitario = PrecioUnitario
-        };
-    }
-
     public class CarritoRequest
     {
         public int IdUsuario { get; set; }
@@ -169,24 +137,6 @@ namespace Totaltech.Logica.DTOs
             IdProducto = IdProducto,
             Cantidad = Cantidad,
             PrecioUnitario = PrecioUnitario
-        };
-    }
-
-    public class PagoRequest
-    {
-        public int IdPedido { get; set; }
-        public DateTime FechaPago { get; set; }
-        public MetodoPago MetodoPago { get; set; } = MetodoPago.Tarjeta;
-        public decimal Monto { get; set; }
-        public EstadoPago Estado { get; set; } = EstadoPago.Pendiente;
-
-        public Pago ToEntity() => new()
-        {
-            IdPedido = IdPedido,
-            FechaPago = FechaPago,
-            MetodoPago = MetodoPago,
-            Monto = Monto,
-            Estado = Estado
         };
     }
 
@@ -264,7 +214,6 @@ namespace Totaltech.Logica.DTOs
         public DateTime? FechaPago { get; set; }
         public MetodoPago MetodoPago { get; set; }
         public decimal Monto { get; set; }
-        public EstadoPago Estado { get; set; }
     }
 
     public class ActualizarStockRequest

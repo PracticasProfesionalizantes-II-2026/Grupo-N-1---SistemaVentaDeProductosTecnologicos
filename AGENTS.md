@@ -28,12 +28,12 @@ No ampliar el trabajo por conveniencia ni modificar funcionalidad no solicitada.
 | `./Frontend/` | Aplicación ASP.NET Core MVC, Razor, CSS, JavaScript y clientes HTTP |
 | `./Totaltech/` | Backend ASP.NET Core Minimal API, lógica, repositorios y EF Core |
 | `./ControlProyecto/` | Perfiles especializados de instrucciones |
-| `./Tests/` | Directorio de pruebas; descubrir proyectos ejecutables antes de asumir que existen |
-| `./Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln` | Solución que actualmente incluye `./Totaltech/Totaltech.csproj` |
-| `./Frontend/Frontend.csproj` | Proyecto MVC, fuera de la solución actual |
+| `./Tests/` | Suites ejecutables `Totaltech.UnitTests` y `Totaltech.IntegrationTests`; verificar aislamiento antes de ejecutarlas |
+| `./Grupo-N-1---SistemaVentaDeProductosTecnologicos.sln` | Incluye Backend, Frontend y las dos suites de tests |
+| `./Frontend/Frontend.csproj` | Proyecto MVC incluido en la solución |
 
-No asumir que compilar la solución valida Frontend. Verificar siempre los
-`.sln` y `.csproj` reales antes de elegir comandos.
+La compilación de la solución incluye Frontend, pero no demuestra navegación ni
+pruebas E2E. Verificar siempre los `.sln` y `.csproj` reales antes de elegir comandos.
 
 ## Perfiles especializados
 
@@ -199,7 +199,7 @@ Ejecutar cada suite Frontend disponible.
 ### Cambios transversales
 
 Restaurar y compilar ambos proyectos y ejecutar todas las suites relevantes. Si se
-usa la solución, recordar que actualmente no incluye Frontend.
+usa la solución, verificar que continúe incluyendo Backend, Frontend y las dos suites.
 
 ### Regla de warnings
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using Totaltech.Entidades;
 using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
@@ -129,7 +130,7 @@ namespace Totaltech.Logica
                 requiereActualizacion = true;
             }
 
-            if (administrador.Contrasena == contrasena)
+            if (!ContrasenaCoincide(administrador, contrasena))
             {
                 administrador.Contrasena = _passwordHasher.HashPassword(administrador, contrasena);
                 requiereActualizacion = true;
@@ -144,6 +145,7 @@ namespace Totaltech.Logica
         public Task<string?> RegistrarAsync(Usuario usuario)
         {
             usuario.Rol = RolUsuario.Cliente;
+            usuario.FechaRegistro = DateTime.UtcNow;
             return CrearAsync(usuario);
         }
 
@@ -248,6 +250,19 @@ namespace Totaltech.Logica
             return email.Trim();
         }
 
+        private bool ContrasenaCoincide(Usuario usuario, string contrasena)
+        {
+            try
+            {
+                return _passwordHasher.VerifyHashedPassword(usuario, usuario.Contrasena, contrasena)
+                    is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
+
         private static string? ValidarUsuario(Usuario usuario, bool necesitaContrasena)
         {
             if (!Enum.IsDefined(usuario.Rol))
@@ -265,9 +280,24 @@ namespace Totaltech.Logica
                 return "El email es obligatorio.";
             }
 
+            if (!new EmailAddressAttribute().IsValid(usuario.Email))
+            {
+                return "El formato del email no es valido.";
+            }
+
             if (necesitaContrasena && string.IsNullOrWhiteSpace(usuario.Contrasena))
             {
                 return "La contrasena es obligatoria.";
+            }
+
+            if (necesitaContrasena && usuario.Contrasena.Length < 8)
+            {
+                return "La contrasena debe tener al menos 8 caracteres.";
+            }
+
+            if (string.IsNullOrWhiteSpace(usuario.Telefono))
+            {
+                return "El telefono es obligatorio.";
             }
 
             return null;

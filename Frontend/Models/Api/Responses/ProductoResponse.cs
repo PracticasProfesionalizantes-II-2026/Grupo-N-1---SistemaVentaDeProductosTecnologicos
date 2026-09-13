@@ -1,3 +1,8 @@
+// ============================================================================
+// MÓDULO: RESPUESTAS DE PRODUCTOS
+// RESPONSABILIDAD: Deserializar los datos de producto recibidos desde la API.
+// LÍMITE: Refleja el contrato HTTP consumido; no es una entidad rastreada por EF.
+// ============================================================================
 namespace Frontend.Models.Api.Responses;
 
 public class ProductoResponse

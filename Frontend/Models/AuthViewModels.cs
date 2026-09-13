@@ -1,3 +1,8 @@
+// ============================================================================
+// MÓDULO: AUTENTICACIÓN
+// RESPONSABILIDAD: Validar y transportar los datos de acceso y registro en MVC.
+// LÍMITE: Estos modelos no autentican ni persisten credenciales por sí mismos.
+// ============================================================================
 using System.ComponentModel.DataAnnotations;
 
 namespace Frontend.Models;
@@ -50,5 +55,4 @@ public class RegisterViewModel
     [Display(Name = "Confirmar contraseña")]
     public string ConfirmarContrasena { get; set; } = string.Empty;
 
-    public bool AceptaTerminos { get; set; }
 }

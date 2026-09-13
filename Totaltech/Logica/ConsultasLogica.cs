@@ -1,5 +1,6 @@
 using Totaltech.Entidades;
 using Totaltech.Repositorios;
+using System.ComponentModel.DataAnnotations;
 
 namespace Totaltech.Logica
 {
@@ -92,9 +93,16 @@ namespace Totaltech.Logica
                 return "El estado de la consulta no es valido.";
             }
 
-            if (string.IsNullOrWhiteSpace(consulta.Email) || string.IsNullOrWhiteSpace(consulta.Mensaje))
+            if (string.IsNullOrWhiteSpace(consulta.Nombre) ||
+                string.IsNullOrWhiteSpace(consulta.Email) ||
+                string.IsNullOrWhiteSpace(consulta.Mensaje))
             {
-                return "El email y el mensaje son obligatorios.";
+                return "El nombre, el email y el mensaje son obligatorios.";
+            }
+
+            if (!new EmailAddressAttribute().IsValid(consulta.Email))
+            {
+                return "El formato del email no es valido.";
             }
 
             if (consulta.IdUsuario.HasValue && !await _usuariosRepositorio.ExisteAsync(consulta.IdUsuario.Value))

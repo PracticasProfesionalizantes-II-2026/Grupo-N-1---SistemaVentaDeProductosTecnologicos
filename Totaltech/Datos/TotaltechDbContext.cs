@@ -117,6 +117,22 @@ namespace Totaltech.Datos
                 .HasForeignKey(pedido => pedido.IdDireccion)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Pedido>()
+                .HasOne(pedido => pedido.Carrito)
+                .WithMany()
+                .HasForeignKey(pedido => pedido.IdCarrito)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Pedido>()
+                .HasIndex(pedido => pedido.IdCarrito)
+                .IsUnique()
+                .HasFilter("[IdCarrito] IS NOT NULL");
+
+            modelBuilder.Entity<Pedido>()
+                .ToTable(tabla => tabla.HasCheckConstraint(
+                    "CK_Pedidos_Total_NoNegativo",
+                    "[Total] >= 0"));
+
             modelBuilder.Entity<Producto>()
                 .HasOne(producto => producto.Categoria)
                 .WithMany()
@@ -128,6 +144,11 @@ namespace Totaltech.Datos
                 .WithMany()
                 .HasForeignKey(producto => producto.IdProveedor)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Producto>()
+                .ToTable(tabla => tabla.HasCheckConstraint(
+                    "CK_Productos_Stock_NoNegativo",
+                    "[Stock] >= 0"));
 
             modelBuilder.Entity<Proveedor>()
                 .HasOne(proveedor => proveedor.Direccion)

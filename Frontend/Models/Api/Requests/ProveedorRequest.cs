@@ -1,6 +1,7 @@
 // ============================================================================
-// MÓDULO: PROVEEDORES
-// RESPONSABILIDAD: Representar el contrato real de alta y edición de proveedor.
+// MÓDULO: SOLICITUDES DE PROVEEDORES
+// RESPONSABILIDAD: Representar y validar el alta o edición enviada a la API.
+// LÍMITE: Es un contrato de entrada del frontend y no una entidad de persistencia.
 // ============================================================================
 using System.ComponentModel.DataAnnotations;
 

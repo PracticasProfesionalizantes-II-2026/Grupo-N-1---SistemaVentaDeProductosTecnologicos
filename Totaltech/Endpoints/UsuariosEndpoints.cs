@@ -51,6 +51,7 @@ namespace Totaltech.Endpoints
                 if (!usuarioActual.EsAdministrador())
                 {
                     usuario.Rol = existente.Rol;
+                    usuario.FechaRegistro = existente.FechaRegistro;
                 }
 
                 var error = await logica.ActualizarAsync(id, usuario);

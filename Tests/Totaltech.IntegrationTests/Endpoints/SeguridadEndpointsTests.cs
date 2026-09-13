@@ -239,6 +239,232 @@ public sealed class SeguridadEndpointsTests
         Assert.NotEqual("Admin123456789", administrador.Contrasena);
     }
 
+    [Fact]
+    public async Task RegistroIgnoraFechaEnviadaPorElCliente()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var fechaAntes = DateTime.UtcNow.AddMinutes(-1);
+
+        using var response = await client.PostAsJsonAsync("/auth/registro", new
+        {
+            nombre = "Cliente",
+            apellido = "Prueba",
+            email = "fecha-registro@test.local",
+            contrasena = "Cliente123456",
+            telefono = "1111111111",
+            fechaRegistro = new DateTime(2000, 1, 1),
+            rol = (int)RolUsuario.Cliente
+        });
+        var json = await LeerJsonAsync(response);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.True(json.GetProperty("fechaRegistro").GetDateTime() >= fechaAntes);
+    }
+
+    [Fact]
+    public async Task ClienteNoControlaEstadoFechaNiPrecioDelCarrito()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var cliente = await CrearClienteAutenticadoAsync(client, "carrito-autoritativo@test.local");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", cliente.Token);
+
+        int idProducto;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+            var producto = new Producto
+            {
+                Nombre = "Producto de prueba",
+                Precio = 1250.50m,
+                Stock = 10,
+                IdCategoria = 1,
+                IdProveedor = 1
+            };
+            contexto.Productos.Add(producto);
+            await contexto.SaveChangesAsync();
+            idProducto = producto.IdProducto;
+        }
+
+        using var alta = await client.PostAsJsonAsync("/carritos/", new
+        {
+            idUsuario = 99999,
+            fechaCreacion = new DateTime(2000, 1, 1),
+            estado = (int)EstadoCarrito.Confirmado
+        });
+        var carrito = await LeerJsonAsync(alta);
+        Assert.Equal(HttpStatusCode.Created, alta.StatusCode);
+        Assert.Equal(cliente.IdUsuario, carrito.GetProperty("idUsuario").GetInt32());
+        Assert.Equal((int)EstadoCarrito.Activo, carrito.GetProperty("estado").GetInt32());
+        Assert.True(carrito.GetProperty("fechaCreacion").GetDateTime() >= DateTime.UtcNow.AddMinutes(-1));
+        var idCarrito = carrito.GetProperty("idCarrito").GetInt32();
+
+        using var agregar = await client.PostAsJsonAsync($"/carritos/{idCarrito}/productos", new
+        {
+            idProducto,
+            cantidad = 2,
+            precioUnitario = 0.01m
+        });
+        var detalle = await LeerJsonAsync(agregar);
+        Assert.Equal(HttpStatusCode.Created, agregar.StatusCode);
+        Assert.Equal(1250.50m, detalle.GetProperty("precioUnitario").GetDecimal());
+        Assert.Equal(2501.00m, detalle.GetProperty("subtotal").GetDecimal());
+
+        using var edicion = await client.PutAsJsonAsync($"/carritos/{idCarrito}", new
+        {
+            idUsuario = cliente.IdUsuario,
+            fechaCreacion = new DateTime(2000, 1, 1),
+            estado = (int)EstadoCarrito.Cancelado
+        });
+        var carritoEditado = await LeerJsonAsync(edicion);
+        Assert.Equal(HttpStatusCode.OK, edicion.StatusCode);
+        Assert.Equal((int)EstadoCarrito.Activo, carritoEditado.GetProperty("estado").GetInt32());
+        Assert.NotEqual(2000, carritoEditado.GetProperty("fechaCreacion").GetDateTime().Year);
+
+        var idDireccion = await CrearDireccionAsync(client, cliente.IdUsuario);
+        using var confirmacion = await client.PostAsJsonAsync($"/carritos/{idCarrito}/confirmar", new
+        {
+            idDireccion
+        });
+        Assert.Equal(HttpStatusCode.Created, confirmacion.StatusCode);
+
+        using var verificacionScope = factory.Services.CreateScope();
+        var contextoVerificacion = verificacionScope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+        var detallePedido = await contextoVerificacion.DetallePedidos.SingleAsync();
+        var productoPersistido = await contextoVerificacion.Productos.FindAsync(idProducto);
+        Assert.Equal(1250.50m, detallePedido.PrecioUnitario);
+        Assert.Equal(2501.00m, detallePedido.Subtotal);
+        Assert.NotNull(productoPersistido);
+        Assert.Equal(8, productoPersistido.Stock);
+    }
+
+    [Fact]
+    public async Task ConsultaPublicaFuerzaIdentidadNulaEstadoPendienteYFechaActual()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.PostAsJsonAsync("/consultas/", new
+        {
+            idUsuario = 99999,
+            nombre = "Visitante",
+            email = "visitante@test.local",
+            mensaje = "Consulta académica",
+            fechaConsulta = new DateTime(2000, 1, 1),
+            estado = (int)EstadoConsulta.Cerrada
+        });
+        var json = await LeerJsonAsync(response);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(JsonValueKind.Null, json.GetProperty("idUsuario").ValueKind);
+        Assert.Equal((int)EstadoConsulta.Pendiente, json.GetProperty("estado").GetInt32());
+        Assert.True(json.GetProperty("fechaConsulta").GetDateTime() >= DateTime.UtcNow.AddMinutes(-1));
+    }
+
+    [Fact]
+    public async Task NoExisteCreacionDirectaDePedidos()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var cliente = await CrearClienteAutenticadoAsync(client, "pedido-directo@test.local");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", cliente.Token);
+
+        using var response = await client.PostAsJsonAsync("/pedidos/", new
+        {
+            idUsuario = cliente.IdUsuario,
+            fechaPedido = DateTime.UtcNow,
+            estado = (int)EstadoPedido.Pagado,
+            idDireccion = 1
+        });
+
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ConfirmacionIdempotenteDevuelveCreatedOkYConflict()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var cliente = await CrearClienteAutenticadoAsync(client, "checkout-http@test.local");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", cliente.Token);
+
+        int idCarrito;
+        int idDireccion;
+        int otraDireccion;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+            var categoria = new Categoria { Nombre = "Checkout HTTP", Descripcion = "Prueba" };
+            var proveedor = new Proveedor
+            {
+                RazonSocial = "Proveedor Checkout HTTP",
+                Cuit = "20-00000000-1",
+                EmailComercial = "checkout-proveedor@test.local",
+                TelefonoComercial = "1111111111",
+                CondicionIva = "Prueba",
+                MonedaPreferida = "ARS"
+            };
+            var direccion = CrearDireccionEntidad(cliente.IdUsuario, "Calle HTTP");
+            var alternativa = CrearDireccionEntidad(cliente.IdUsuario, "Otra calle HTTP");
+            var carrito = new Carrito
+            {
+                IdUsuario = cliente.IdUsuario,
+                FechaCreacion = DateTime.UtcNow,
+                Estado = EstadoCarrito.Activo
+            };
+            context.AddRange(categoria, proveedor, direccion, alternativa, carrito);
+            await context.SaveChangesAsync();
+
+            var producto = new Producto
+            {
+                Nombre = "Producto Checkout HTTP",
+                Descripcion = "Prueba",
+                Precio = 25m,
+                Stock = 3,
+                IdCategoria = categoria.IdCategoria,
+                IdProveedor = proveedor.IdProveedor
+            };
+            context.Productos.Add(producto);
+            await context.SaveChangesAsync();
+            context.DetalleCarritos.Add(new DetalleCarrito
+            {
+                IdCarrito = carrito.IdCarrito,
+                IdProducto = producto.IdProducto,
+                Cantidad = 2,
+                PrecioUnitario = producto.Precio,
+                Subtotal = 50m
+            });
+            await context.SaveChangesAsync();
+
+            idCarrito = carrito.IdCarrito;
+            idDireccion = direccion.IdDireccion;
+            otraDireccion = alternativa.IdDireccion;
+        }
+
+        using var primera = await client.PostAsJsonAsync(
+            $"/carritos/{idCarrito}/confirmar",
+            new { idDireccion });
+        var pedidoCreado = await LeerJsonAsync(primera);
+        Assert.Equal(HttpStatusCode.Created, primera.StatusCode);
+        Assert.Equal(50m, pedidoCreado.GetProperty("total").GetDecimal());
+        VerificarAusenciaDeDatosSensibles(pedidoCreado);
+
+        using var repetida = await client.PostAsJsonAsync(
+            $"/carritos/{idCarrito}/confirmar",
+            new { idDireccion });
+        var mismoPedido = await LeerJsonAsync(repetida);
+        Assert.Equal(HttpStatusCode.OK, repetida.StatusCode);
+        Assert.Equal(
+            pedidoCreado.GetProperty("idPedido").GetInt32(),
+            mismoPedido.GetProperty("idPedido").GetInt32());
+
+        using var incompatible = await client.PostAsJsonAsync(
+            $"/carritos/{idCarrito}/confirmar",
+            new { idDireccion = otraDireccion });
+        Assert.Equal(HttpStatusCode.Conflict, incompatible.StatusCode);
+    }
+
     private static async Task<HttpResponseMessage> RegistrarAsync(
         HttpClient client,
         string email,
@@ -313,6 +539,18 @@ public sealed class SeguridadEndpointsTests
             tipo = 0
         };
     }
+
+    private static Direccion CrearDireccionEntidad(int idUsuario, string calle) => new()
+    {
+        IdUsuario = idUsuario,
+        Calle = calle,
+        Numero = "123",
+        Ciudad = "Buenos Aires",
+        Provincia = "Buenos Aires",
+        CodigoPostal = "1000",
+        Pais = "Argentina",
+        Tipo = TipoDireccion.Envio
+    };
 
     private static async Task<JsonElement> LeerJsonAsync(HttpResponseMessage response)
     {

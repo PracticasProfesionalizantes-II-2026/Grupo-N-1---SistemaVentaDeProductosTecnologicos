@@ -43,6 +43,8 @@ namespace Totaltech.Endpoints
                 if (!usuarioActual.EsAdministrador())
                 {
                     request.IdUsuario = usuarioActual.ObtenerIdUsuario()!.Value;
+                    request.FechaCreacion = DateTime.UtcNow;
+                    request.Estado = EstadoCarrito.Activo;
                 }
 
                 var carrito = request.ToEntity();
@@ -67,6 +69,8 @@ namespace Totaltech.Endpoints
                 if (!usuarioActual.EsAdministrador())
                 {
                     request.IdUsuario = carrito.IdUsuario;
+                    request.FechaCreacion = carrito.FechaCreacion;
+                    request.Estado = carrito.Estado;
                 }
 
                 carrito.IdUsuario = request.IdUsuario;
@@ -151,12 +155,16 @@ namespace Totaltech.Endpoints
                 }
 
                 var resultado = await logica.ConfirmarAsync(idCarrito, request);
-                if (resultado.Error is not null)
+                return resultado.Estado switch
                 {
-                    return EsNoEncontrado(resultado.Error) ? Results.NotFound(resultado.Error) : Results.BadRequest(resultado.Error);
-                }
-
-                return Results.Created($"/pedidos/{resultado.Pedido!.IdPedido}", resultado.Pedido);
+                    EstadoConfirmacionCarrito.Creado => Results.Created(
+                        $"/pedidos/{resultado.Pedido!.IdPedido}",
+                        resultado.Pedido.ToResponse()),
+                    EstadoConfirmacionCarrito.Repetido => Results.Ok(resultado.Pedido!.ToResponse()),
+                    EstadoConfirmacionCarrito.NoEncontrado => Results.NotFound(resultado.Error),
+                    EstadoConfirmacionCarrito.Conflicto => Results.Conflict(resultado.Error),
+                    _ => Results.BadRequest(resultado.Error)
+                };
             }).RequireAuthorization();
         }
 

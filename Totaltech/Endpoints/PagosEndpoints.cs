@@ -1,108 +1,63 @@
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using Totaltech.Entidades;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
 using Totaltech.Seguridad;
 
-namespace Totaltech.Endpoints
+namespace Totaltech.Endpoints;
+
+public static class PagosEndpoints
 {
-    public static class PagosEndpoints
+    public static void MapPagosEndpoints(this WebApplication app)
     {
-        public static void MapPagosEndpoints(this WebApplication app)
+        var group = app.MapGroup("/pagos").WithTags("Pagos");
+
+        group.MapGet("/", async (IPagosLogica logica) =>
         {
-            var group = app.MapGroup("/pagos").WithTags("Pagos");
+            var pagos = await logica.ObtenerTodosAsync();
+            return Results.Ok(pagos.Select(pago => pago.ToResponse()));
+        }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
 
-            //obtener todos los pagos
-            group.MapGet("/", async (IPagosLogica logica) =>
+        group.MapGet("/{id:int}", async (
+            int id,
+            IPagosLogica logica,
+            IPedidosLogica pedidosLogica,
+            ClaimsPrincipal usuarioActual) =>
+        {
+            var pago = await logica.ObtenerPorIdAsync(id);
+            if (pago is null)
             {
-                var pagos = await logica.ObtenerTodosAsync();
-                return Results.Ok(pagos);
-            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
+                return Results.NotFound();
+            }
 
+            var pedido = await pedidosLogica.ObtenerPorIdAsync(pago.IdPedido);
+            return pedido is null || !usuarioActual.PuedeAcceder(pedido.IdUsuario)
+                ? Results.NotFound()
+                : Results.Ok(pago.ToResponse());
+        }).RequireAuthorization();
 
-            //obtener un pago por su id-------------------------------
-            group.MapGet("/{id:int}", async (int id, IPagosLogica logica, IPedidosLogica pedidosLogica, ClaimsPrincipal usuarioActual) =>
+        group.MapPatch("/{id:int}/estado", async (
+            int id,
+            ActualizarEstadoPagoRequest request,
+            IPagosLogica logica) =>
+        {
+            var resultado = await logica.ActualizarEstadoAsync(id, request.Estado);
+            if (resultado.Estado == EstadoOperacionDominio.NoEncontrado)
             {
-                var pago = await logica.ObtenerPorIdAsync(id);
-                if (pago is null)
-                {
-                    return Results.NotFound();
-                }
+                return Results.NotFound();
+            }
 
-                var pedido = await pedidosLogica.ObtenerPorIdAsync(pago.IdPedido);
-                return pedido is null || !usuarioActual.PuedeAcceder(pedido.IdUsuario)
-                    ? Results.NotFound()
-                    : Results.Ok(pago);
-            }).RequireAuthorization();
-
-            //crear un nuevo pago----------------------------
-            group.MapPost("/", async (PagoRequest request, IPagosLogica logica) =>
+            if (resultado.Estado == EstadoOperacionDominio.Conflicto)
             {
-                var pago = request.ToEntity();
-                var error = await logica.CrearAsync(pago);
-                if (error is not null)
-                {
-                    return Results.BadRequest(error);
-                }
+                return Results.Conflict(resultado.Error);
+            }
 
-                return Results.Created($"/pagos/{pago.IdPago}", pago);
-            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
-
-            //actualizar un pago existente-------------------------------------------------------------
-            group.MapPut("/{id:int}", async (int id, PagoRequest request, IPagosLogica logica) =>
+            if (resultado.Estado == EstadoOperacionDominio.Invalido)
             {
-                var pago = await logica.ObtenerPorIdAsync(id);
-                if (pago is null)
-                {
-                    return Results.NotFound();
-                }
+                return Results.BadRequest(resultado.Error);
+            }
 
-                if (pago.IdPedido != request.IdPedido)
-                {
-                    return Results.BadRequest("No se puede cambiar el pedido asociado a un pago.");
-                }
-
-                pago.IdPedido = request.IdPedido;
-                pago.FechaPago = request.FechaPago;
-                pago.MetodoPago = request.MetodoPago;
-                pago.Monto = request.Monto;
-                pago.Estado = request.Estado;
-                var error = await logica.ActualizarAsync(pago);
-                return error is null ? Results.Ok(pago) : Results.BadRequest(error);
-            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
-
-            //eliminar un pago--------------------------------------------------------------------
-            group.MapDelete("/{id:int}", async (int id, IPagosLogica logica) =>
-            {
-                try
-                {
-                    var eliminado = await logica.EliminarAsync(id);
-                    return eliminado ? Results.NoContent() : Results.NotFound();
-                }
-                catch (DbUpdateException)
-                {
-                    return Results.Conflict("No se puede eliminar porque hay datos relacionados.");
-                }
-            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
-
-            //actualizar el estado de un pago--------------------------------------------------------------
-            group.MapPatch("/{id:int}/estado", async (int id, ActualizarEstadoPagoRequest request, IPagosLogica logica) =>
-            {
-                if (await logica.ObtenerPorIdAsync(id) is null)
-                {
-                    return Results.NotFound();
-                }
-
-                var error = await logica.ActualizarEstadoAsync(id, request.Estado);
-                if (error is not null)
-                {
-                    return Results.BadRequest(error);
-                }
-
-                var pago = await logica.ObtenerPorIdAsync(id);
-                return Results.Ok(pago);
-            }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
-        }
+            var pago = await logica.ObtenerPorIdAsync(id);
+            return Results.Ok(pago!.ToResponse());
+        }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
     }
 }
