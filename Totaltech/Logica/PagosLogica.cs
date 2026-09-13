@@ -1,4 +1,8 @@
+using System.Data;
+using Microsoft.EntityFrameworkCore;
+using Totaltech.Datos;
 using Totaltech.Entidades;
+using Totaltech.Logica.DTOs;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
@@ -7,23 +11,22 @@ namespace Totaltech.Logica
     {
         Task<List<Pago>> ObtenerTodosAsync();
         Task<Pago?> ObtenerPorIdAsync(int id);
-        Task<string?> CrearAsync(Pago pago);
-        Task<string?> ActualizarAsync(Pago pago);
-        Task<bool> EliminarAsync(int id);
         Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido);
         Task<string?> CrearParaPedidoAsync(int idPedido, Pago pago);
-        Task<string?> ActualizarEstadoAsync(int id, EstadoPago estado);
+        Task<OperacionDominioResultado> ActualizarEstadoAsync(int id, EstadoPago estado);
     }
 
     public class PagosLogica : IPagosLogica
     {
         private readonly IPagosRepositorio _repositorio;
-        private readonly IPedidosRepositorio _pedidosRepositorio;
+        private readonly TotaltechDbContext _context;
 
-        public PagosLogica(IPagosRepositorio repositorio, IPedidosRepositorio pedidosRepositorio)
+        public PagosLogica(
+            TotaltechDbContext context,
+            IPagosRepositorio repositorio)
         {
+            _context = context;
             _repositorio = repositorio;
-            _pedidosRepositorio = pedidosRepositorio;
         }
 
         public Task<List<Pago>> ObtenerTodosAsync()
@@ -36,127 +39,158 @@ namespace Totaltech.Logica
             return _repositorio.ObtenerPorIdAsync(id);
         }
 
-        public async Task<string?> CrearAsync(Pago pago)
-        {
-            var error = await ValidarPagoAsync(pago);
-            if (error is not null)
-            {
-                return error;
-            }
-
-            if (pago.FechaPago == default)
-            {
-                pago.FechaPago = DateTime.Now;
-            }
-
-            await _repositorio.CrearAsync(pago);
-            await SincronizarEstadoPedidoAsync(pago.IdPedido);
-            return null;
-        }
-
-        public async Task<string?> ActualizarAsync(Pago pago)
-        {
-            var error = await ValidarPagoAsync(pago);
-            if (error is not null)
-            {
-                return error;
-            }
-
-            if (pago.FechaPago == default)
-            {
-                pago.FechaPago = DateTime.Now;
-            }
-
-            await _repositorio.ActualizarAsync(pago);
-            await SincronizarEstadoPedidoAsync(pago.IdPedido);
-            return null;
-        }
-
-        public async Task<bool> EliminarAsync(int id)
-        {
-            var pago = await _repositorio.ObtenerPorIdAsync(id);
-            if (pago is null)
-            {
-                return false;
-            }
-
-            var idPedido = pago.IdPedido;
-            await _repositorio.EliminarAsync(pago);
-            await SincronizarEstadoPedidoAsync(idPedido);
-            return true;
-        }
-
         public Task<List<Pago>> ObtenerPorPedidoAsync(int idPedido)
         {
             return _repositorio.ObtenerPorPedidoAsync(idPedido);
         }
 
-        public Task<string?> CrearParaPedidoAsync(int idPedido, Pago pago)
+        public async Task<string?> CrearParaPedidoAsync(int idPedido, Pago pago)
         {
             pago.IdPedido = idPedido;
-            return CrearAsync(pago);
-        }
+            pago.Estado = EstadoPago.Pendiente;
 
-        public async Task<string?> ActualizarEstadoAsync(int id, EstadoPago estado)
-        {
-            if (!Enum.IsDefined(estado))
-            {
-                return "El estado del pago no es valido.";
-            }
-
-            var pago = await _repositorio.ObtenerPorIdAsync(id);
-            if (pago is null)
-            {
-                return "El pago indicado no existe.";
-            }
-
-            pago.Estado = estado;
-            await _repositorio.ActualizarAsync(pago);
-            await SincronizarEstadoPedidoAsync(pago.IdPedido);
-            return null;
-        }
-
-        private async Task<string?> ValidarPagoAsync(Pago pago)
-        {
             if (pago.Monto <= 0)
             {
                 return "El monto del pago debe ser mayor a cero.";
             }
 
-            if (!Enum.IsDefined(pago.MetodoPago) || !Enum.IsDefined(pago.Estado))
+            if (!Enum.IsDefined(pago.MetodoPago))
             {
-                return "El metodo o el estado del pago no es valido.";
+                return "El metodo del pago no es valido.";
             }
 
-            if (!await _pedidosRepositorio.ExisteAsync(pago.IdPedido))
+            async Task<string?> EjecutarAsync(CancellationToken cancellationToken)
             {
-                return "El pedido indicado no existe.";
+                _context.ChangeTracker.Clear();
+                var pedido = await _context.Pedidos
+                    .SingleOrDefaultAsync(candidato => candidato.IdPedido == idPedido, cancellationToken);
+                if (pedido is null)
+                {
+                    return "El pedido indicado no existe.";
+                }
+
+                if (pedido.Estado != EstadoPedido.Pendiente)
+                {
+                    return "Solo se pueden registrar pagos para pedidos pendientes.";
+                }
+
+                pago.FechaPago = pago.FechaPago == default ? DateTime.UtcNow : pago.FechaPago;
+                _context.Pagos.Add(pago);
+                await _context.SaveChangesAsync(cancellationToken);
+                return null;
             }
 
-            return null;
+            if (!_context.Database.IsRelational())
+            {
+                return await EjecutarAsync(CancellationToken.None);
+            }
+
+            var estrategia = _context.Database.CreateExecutionStrategy();
+            return await Microsoft.EntityFrameworkCore.Storage.RelationalExecutionStrategyExtensions.ExecuteInTransactionAsync(
+                estrategia,
+                EjecutarAsync,
+                async cancellationToken =>
+                {
+                    _context.ChangeTracker.Clear();
+                    return pago.IdPago > 0 && await _context.Pagos
+                        .AsNoTracking()
+                        .AnyAsync(candidato => candidato.IdPago == pago.IdPago, cancellationToken);
+                },
+                IsolationLevel.Serializable,
+                CancellationToken.None);
         }
 
-        private async Task SincronizarEstadoPedidoAsync(int idPedido)
+        public async Task<OperacionDominioResultado> ActualizarEstadoAsync(int id, EstadoPago estado)
         {
-            var pedido = await _pedidosRepositorio.ObtenerPorIdAsync(idPedido);
-            if (pedido is null || pedido.Estado == EstadoPedido.Cancelado)
+            if (!Enum.IsDefined(estado))
             {
-                return;
+                return new(EstadoOperacionDominio.Invalido, "El estado del pago no es valido.");
             }
 
-            var pagos = await _repositorio.ObtenerPorPedidoAsync(idPedido);
-            var tienePagoAprobado = pagos.Any(pago => pago.Estado == EstadoPago.Aprobado);
+            async Task<OperacionDominioResultado> EjecutarAsync(CancellationToken cancellationToken)
+            {
+                _context.ChangeTracker.Clear();
+                var pago = await _context.Pagos
+                    .SingleOrDefaultAsync(candidato => candidato.IdPago == id, cancellationToken);
+                if (pago is null)
+                {
+                    return new(EstadoOperacionDominio.NoEncontrado, "El pago indicado no existe.");
+                }
 
-            if (tienePagoAprobado && pedido.Estado == EstadoPedido.Pendiente)
-            {
-                pedido.Estado = EstadoPedido.Pagado;
-                await _pedidosRepositorio.ActualizarAsync(pedido);
+                if (pago.Estado == estado)
+                {
+                    return new(EstadoOperacionDominio.Exitoso);
+                }
+
+                if (pago.Estado != EstadoPago.Pendiente || estado == EstadoPago.Pendiente)
+                {
+                    return new(
+                        EstadoOperacionDominio.Conflicto,
+                        "Los pagos finalizados no pueden cambiar de estado.");
+                }
+
+                var pedido = await _context.Pedidos
+                    .SingleOrDefaultAsync(candidato => candidato.IdPedido == pago.IdPedido, cancellationToken);
+                if (pedido is null)
+                {
+                    return new(EstadoOperacionDominio.NoEncontrado, "El pedido indicado no existe.");
+                }
+
+                if (estado == EstadoPago.Aprobado)
+                {
+                    if (pedido.Estado != EstadoPedido.Pendiente)
+                    {
+                        return new(
+                            EstadoOperacionDominio.Conflicto,
+                            "Solo se pueden aprobar pagos de pedidos pendientes.");
+                    }
+
+                    var montoAprobado = await _context.Pagos
+                        .Where(candidato =>
+                            candidato.IdPedido == pedido.IdPedido &&
+                            candidato.Estado == EstadoPago.Aprobado)
+                        .SumAsync(candidato => candidato.Monto, cancellationToken);
+                    var nuevoMontoAprobado = checked(montoAprobado + pago.Monto);
+
+                    if (nuevoMontoAprobado > pedido.Total)
+                    {
+                        return new(
+                            EstadoOperacionDominio.Conflicto,
+                            "El pago supera el saldo pendiente del pedido.");
+                    }
+
+                    if (nuevoMontoAprobado == pedido.Total)
+                    {
+                        pedido.Estado = EstadoPedido.Pagado;
+                    }
+                }
+
+                pago.Estado = estado;
+                await _context.SaveChangesAsync(cancellationToken);
+                return new(EstadoOperacionDominio.Exitoso);
             }
-            else if (!tienePagoAprobado && pedido.Estado == EstadoPedido.Pagado)
+
+            if (!_context.Database.IsRelational())
             {
-                pedido.Estado = EstadoPedido.Pendiente;
-                await _pedidosRepositorio.ActualizarAsync(pedido);
+                return await EjecutarAsync(CancellationToken.None);
             }
+
+            var estrategia = _context.Database.CreateExecutionStrategy();
+            return await Microsoft.EntityFrameworkCore.Storage.RelationalExecutionStrategyExtensions.ExecuteInTransactionAsync(
+                estrategia,
+                EjecutarAsync,
+                async cancellationToken =>
+                {
+                    _context.ChangeTracker.Clear();
+                    return await _context.Pagos
+                        .AsNoTracking()
+                        .AnyAsync(
+                            pago => pago.IdPago == id && pago.Estado == estado,
+                            cancellationToken);
+                },
+                IsolationLevel.Serializable,
+                CancellationToken.None);
         }
+
     }
 }

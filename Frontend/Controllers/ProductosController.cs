@@ -1,6 +1,8 @@
 // ============================================================================
 // MÓDULO: PRODUCTOS
-// RESPONSABILIDAD: Listar, consultar y gestionar productos desde MVC.
+// RESPONSABILIDAD: Coordinar catálogo, detalle y mantenimiento de productos.
+// INTEGRACIÓN: Delega productos y categorías en sus servicios de API respectivos.
+// ACCESO: El catálogo es público; crear, editar y eliminar requieren rol Admin.
 // ============================================================================
 using Frontend.Models.Api.Requests;
 using Frontend.Models.Api.Responses;

@@ -1,6 +1,8 @@
 // ============================================================================
 // MÓDULO: CATEGORÍAS
-// RESPONSABILIDAD: Listar y gestionar categorías mediante la API del backend.
+// RESPONSABILIDAD: Coordinar las vistas de consulta y mantenimiento de categorías.
+// INTEGRACIÓN: Delega los datos y las mutaciones en CategoriasApiService.
+// ACCESO: La consulta es pública; crear, editar y eliminar requieren rol Admin.
 // ============================================================================
 using Frontend.Models.Api.Requests;
 using Frontend.Services;

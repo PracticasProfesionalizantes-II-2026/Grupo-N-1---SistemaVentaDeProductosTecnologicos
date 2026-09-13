@@ -32,7 +32,7 @@ Inventario reproducido con `rg --files Totaltech Frontend Tests`, excluyendo bin
 | Migraciones y snapshot | Inventario, restricciones actuales en DbContext; lectura de la migración 20260622030413 con SQL manual y revisión parcial de otras migraciones | Designer/snapshot y DDL generado excluidos de lectura exhaustiva; no se validó aplicación/reversión de toda la cadena |
 | Configuración, launchSettings, solución y workflow | Revisión de estructura, puertos y presencia de material sensible con valores redactados | No se abrieron User Secrets ni se probaron credenciales |
 | AGENTS, Auditor, Frontend, CleanCode | Lectura de gobierno; correcciones mínimas de hechos | Auditor permanece READ_ONLY para producto; las escrituras documentales provienen del encargo explícito |
-| Backend.md y roadmap 60 | Inspección de encabezado/estructura y secciones relevantes | Backend.md sigue siendo un encargo de reescritura; no se lo ejecutó ni reescribió como nueva tarea |
+| Backend.md y antecedentes consolidados | Inspección de encabezado/estructura y secciones relevantes | Backend.md sigue siendo un encargo de reescritura; el roadmap 60 fue retirado al ejecutar Wave 2 y este archivo queda como única fuente de avance |
 | PDF funcional | Texto pp.1–10, especialmente alcance pp.7–9 | Sin revisión visual completa del PDF ni validación de versiones en Drive |
 | PDF API | Extracción e inspección parcial, incluidos Auth/consultas pp.47–54 | No se certifican todos sus contratos; el código actual prevalece |
 | Mockups locales | Inspección visual de Carrito de Compras.png y Finalizar Compra -3.png | Resto de mockups, fotos de producto y enlaces externos no revisados visualmente |
@@ -523,10 +523,10 @@ No se añadieron tests para reproducir defectos porque el encargo prohíbe modif
 
 | Archivo | Cambio autorizado | Evidencia |
 |---|---|---|
-| ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_70.md | Nuevo informe, matriz y plan | Código y comandos descritos; no sustituye auditoría 60 |
+| ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_70.md | Informe, matriz y plan consolidado | Código y comandos descritos; desde Wave 2 es la única fuente de avance técnico |
 | AGENTS.md | Corrige membresía de Frontend/tests en solución y descripción de suites | Solución contiene cuatro proyectos y build los compila |
 | ControlProyecto/CleanCode.md | Cierra el fence de ejemplo truncado al final | Archivo terminaba dentro de bloque text |
-| Backend.md, Auditor.md, Frontend.md, roadmap 60 | Sin modificación | No hay necesidad de reescritura amplia; Backend.md requiere una tarea específica |
+| Backend.md, Auditor.md y Frontend.md | Sin modificación | No hay necesidad de reescritura amplia; Backend.md requiere una tarea específica |
 | Guía personal fuera de Git | DOCX en la carpeta de artefactos autorizada | Mismos baselines, indicadores y seis waves |
 
 Las credenciales académicas, appsettings, código, tests, dependencias, DbContext, migraciones y Git permanecen sin cambios. Revisión final de diff y formato: ver nota de cierre añadida tras generar artefactos.
@@ -546,3 +546,223 @@ No fue posible renderizar el DOCX a imágenes porque el entorno Windows no tiene
 `soffice.exe` disponible. Por tanto, la apertura y la estructura están
 validadas, pero el ajuste visual final en Word permanece pendiente. Este límite
 no altera las métricas técnicas del proyecto.
+
+## 12. Ejecución de Wave 1 — consolidación local
+
+Fecha de ejecución: 2026-09-11. Rama de trabajo: `Rama--Facu`.
+
+### Baseline Git revalidada
+
+`git fetch --prune origin` completó correctamente antes de modificar archivos.
+El código funcional de la rama continúa identificado por `61ee39b`; el estado
+documental desde el cual comenzó esta ejecución es `8dcb4b1`. Las referencias
+remotas observadas fueron:
+
+| Referencia | SHA revalidado |
+|---|---|
+| `origin/Rama--Facu` | `8dcb4b1fcfb10351859c4f0c1cf75feb9c3f8a44` |
+| `origin/Develop` | `0b4eecff5b4d7476874f81480b754f74e433c01b` |
+| `origin/main` | `f0a9e1ad7fc2f865da32ebd57b3e0fb3d0b6d446` |
+
+`origin/Rama--Facu` ya era ancestro de `origin/Develop`; Develop tenía tres
+commits adicionales. La simulación de merge de la baseline de la rama hacia
+Develop no mostró marcadores de conflicto. `origin/main` y `origin/Develop`
+estaban divergidos, por lo que la promoción final requiere PR y sus gates; no se
+debe fusionar main directamente desde una referencia local desactualizada.
+
+### Decisiones aprobadas para Wave 2
+
+- La identidad idempotente será el carrito. Existirá un único pedido por carrito,
+  respaldado por `Pedido.IdCarrito` obligatorio y único.
+- La primera confirmación devolverá `201`; un reintento equivalente recuperará el
+  mismo pedido con `200`; una dirección distinta sobre un carrito confirmado
+  producirá `409`.
+- El pedido almacenará `Total decimal(18,2)` y un snapshot completo de la
+  dirección. El historial no dependerá de precios o direcciones mutables.
+- Sólo un pedido pendiente podrá cancelarse directamente. La reposición de stock
+  será transaccional e idempotente; pedidos pagados requerirán un flujo de
+  reversión posterior.
+- Un pago parcial no cambiará el pedido a Pagado. La suma aprobada debe coincidir
+  exactamente con el total y se rechazará el sobrepago.
+- No se agregará una clave de idempotencia enviada por el cliente en el alcance
+  académico inicial. Estos acuerdos son diseño de Wave 2; Wave 1 no modifica DTO,
+  endpoint, entidad ni esquema.
+
+### Casos de reproducción preparados
+
+| ID | Preparación | Acción | Resultado que debe exigir Wave 2 |
+|---|---|---|---|
+| F01 | Producto con precio servidor distinto del valor cliente | Agregar línea y confirmar | Precio y subtotal proceden únicamente del producto persistido |
+| F02 | Dos contextos SQL sincronizados sobre el mismo carrito activo | Confirmar en paralelo | Un pedido, un descuento de stock y respuesta idempotente o conflicto seguro |
+| F03 | Fallo transitorio y resultado de commit ambiguo | Reintentar la unidad completa | Estado releído por intento y recuperación del pedido sin duplicación |
+| F04 | Carrito confirmado o cancelado con una línea existente | Mover, editar o borrar la línea | Operación rechazada sin alterar origen, destino ni stock |
+| F05 | Pedido con total histórico y pago aprobado inferior o superior | Conciliar el pago | Parcial continúa pendiente; sobrepago se rechaza; sólo igualdad marca Pagado |
+| F06 | Null, texto excedido, cantidad extrema y multiplicación monetaria | Enviar requests límite | Validación segura sin truncamiento, overflow ni escritura parcial |
+| F07 | Entidades con navegaciones cargadas | Serializar respuestas de negocio | Contrato explícito sin ciclos ni datos internos no previstos |
+
+### Cambios ejecutados
+
+- El workflow WPF/.NET 8 fue sustituido por CI web .NET 10 con jobs separados
+  para regresión rápida y SQL Server relacional, ejecutados en secuencia.
+- `global.json` fija SDK 10.0.400 con avance al último patch compatible.
+- Las pruebas relacionales crean `TotaltechTests_<GUID>` exclusivamente en
+  `(localdb)\\MSSQLLocalDB`, aplican las migraciones existentes y eliminan la base
+  al terminar. La validación rechaza cualquier otro servidor o nombre, incluidos
+  Azure SQL y `TotatechDB`.
+- La cadena Azure fue retirada de `appsettings.json`. Desarrollo usa LocalDB sin
+  contraseña; otros entornos deben proporcionar la conexión mediante variables o
+  User Secrets.
+- El bootstrap Admin quedó deshabilitado por defecto y exige `Enabled`, `Email` y
+  `Password` desde configuración externa cuando se habilita.
+- `Credenciales.txt` dejó de estar versionado. `Credenciales.example.txt`
+  conserva deliberadamente valores académicos de demostración por decisión del
+  equipo; la clave activa se carga mediante User Secrets y no desde appsettings.
+  Esos valores no autorizan Azure ni un despliegue productivo.
+
+### Evidencia local y estado del gate
+
+| Gate | Resultado local |
+|---|---|
+| Restore de la solución | PASS; cuatro proyectos actualizados |
+| Build Release secuencial | PASS; 0 errores y 0 advertencias |
+| Regresión rápida | PASS; 8 unitarias + 15 HTTP, 23/23 |
+| SQL Server relacional | PASS; 3/3: guardia, migraciones e índice único |
+| Azure SQL | NO EJECUTADO; prohibido por la guardia de pruebas |
+| CI alojado y promoción | PENDIENTE hasta push/PR y ejecución de GitHub Actions |
+
+Wave 1 queda implementada y validada localmente. Su cierre integrado sólo puede
+acreditarse cuando los dos jobs pasen en el PR `Rama--Facu` → `Develop`, se
+registre el SHA resultante y luego se promueva `Develop` → `main` con los mismos
+gates. El commit local de implementación y evidencia es `b844d20`; el SHA de
+integración permanece pendiente hasta completar la promoción remota. F02–F07
+permanecen abiertos para Wave 2; no se presentan como corregidos.
+
+## 13. Ejecución de Wave 2 — carrito y confirmación protegidos
+
+Fecha de ejecución: 2026-09-12. Rama de trabajo: `Rama--Facu`. El árbol comenzó
+limpio en `13243e8`; no se creó rama, commit, push ni PR durante esta ejecución.
+El SHA final de integración continúa pendiente.
+
+### Cambios ejecutados
+
+- Se eliminó `ControlProyecto/ESTADO_ACTUAL_Y_ROADMAP_60.md`; este roadmap 70
+  concentra desde ahora el estado técnico y debe actualizarse con cada cambio.
+- `Pedido` incorpora `IdCarrito` nullable para compatibilidad histórica, índice
+  único filtrado, `Total decimal(18,2)` y snapshot completo de dirección.
+- La migración `ProtegerCheckoutEtapa2` completa total y dirección de pedidos
+  anteriores, conserva `IdCarrito = null` y agrega checks de total y stock no
+  negativos. No fue aplicada contra Azure ni contra una base compartida.
+- La confirmación relee carrito, dirección, líneas, productos y pedido dentro de
+  cada intento reintentable. Usa aislamiento serializable, reclamo atómico del
+  carrito, descuento condicionado y verificación posterior a commit ambiguo.
+- La primera confirmación produce el resultado Creado; un reintento con la misma
+  dirección recupera el pedido y uno con otra dirección produce Conflicto.
+- Agregar o eliminar líneas usa la misma coordinación serializable. Las rutas
+  genéricas de mutación de detalle de carrito fueron retiradas para evitar un
+  camino alternativo que mueva líneas desde carritos cerrados.
+- Pedidos, detalles y pagos históricos se exponen mediante DTOs explícitos. Se
+  retiraron sus POST/PUT/DELETE genéricos y se agregó la consulta protegida
+  `GET /pedidos/{id}/detalles`.
+- Las transiciones permitidas son Pendiente→Cancelado, Pagado→Enviado y
+  Enviado→Entregado. Cancelar repone stock una sola vez dentro de la transacción.
+- Todo pago nace Pendiente. Sólo puede pasar una vez a Aprobado, Rechazado o
+  Cancelado; el importe aprobado parcial mantiene el pedido Pendiente, la suma
+  exacta lo marca Pagado y el sobrepago se rechaza sin escrituras parciales.
+- Se conservaron hashing, roles y reglas actuales de registro. Las credenciales
+  de demo permanecen documentadas en el archivo de ejemplo por decisión expresa;
+  User Secrets continúa siendo la fuente activa local.
+
+### Evidencia y gates locales
+
+| Gate | Resultado |
+|---|---|
+| Build Release de la solución | PASS; cuatro proyectos, 0 errores y 0 warnings |
+| Regresión rápida | PASS; 8 unitarias + 16 HTTP, 24/24; se conservaron las 23 previas y se añadió el contrato 201/200/409 |
+| SQL Server relacional | PASS; 13/13 en LocalDB aislado; 0 bases `TotaltechTests_*` residuales |
+| Concurrencia | PASS; pedido único, última unidad y modificación de líneas serializada |
+| Rollback | PASS; fallo posterior al primer descuento revierte pedido, carrito y stock |
+| Historial | PASS; snapshot estable y backfill desde la migración anterior |
+| Pagos y cancelación | PASS; parcial/exacto/sobrepago y reposición única |
+| Azure SQL | NO EJECUTADO; prohibido por la guardia `TotaltechTests_<GUID>` |
+
+F02, F04, F05 y F07 quedan corregidos y cubiertos en el árbol de trabajo. F03
+queda tratado por relectura, estrategia reintentable, verificación de commit e
+idempotencia observable; la inyección de una excepción transitoria real durante
+el commit sigue como mejora de evidencia. F06 permanece parcial fuera de los
+límites específicamente cubiertos por checkout.
+
+La proyección de esta wave se mantiene en **Backend 58% · Frontend 12%**. El
+sistema aún no alcanzó aproximadamente 70% de solidez global, por lo que este
+archivo conserva el objetivo intermedio. Al superar ese gate con evidencia se
+reescribirá como roadmap desde el estado alcanzado hasta el 100% documental.
+
+## 14. Documentación explicativa de Controllers MVC
+
+Fecha: 2026-09-12.
+
+- Se normalizaron las cabeceras de los diez módulos ubicados en
+  `Frontend/Controllers`, indicando responsabilidad, integración, acceso o estado
+  de implementación según corresponde.
+- Los controladores activos documentados son Administración, Categorías, Inicio y
+  autenticación, Productos y Proveedores.
+- Carrito, Checkout, Consultas, Cuenta y Pedidos quedaron identificados como
+  estructuras reservadas, con su responsabilidad prevista explícita para evitar
+  que se interpreten como implementaciones funcionales.
+- El cambio es exclusivamente documental: no modifica rutas, acciones, modelos,
+  autorización, servicios ni contratos públicos.
+
+### Validación
+
+| Gate | Resultado |
+|---|---|
+| Build Release de `Frontend` | PASS; 0 errores y 0 advertencias |
+| `git diff --check` | PASS; sin errores de whitespace |
+| Marcadores de conflicto en Controllers y roadmap | PASS; ninguno encontrado |
+
+## 15. Documentación explicativa de Models MVC
+
+Fecha: 2026-09-12.
+
+- Se normalizaron las cabeceras de los 18 archivos ubicados en
+  `Frontend/Models`, diferenciando contratos de entrada, contratos de respuesta,
+  modelos de vista funcionales y estructuras reservadas.
+- Los modelos activos documentan su responsabilidad y límite arquitectónico:
+  validación y transporte en autenticación, representación de errores, intercambio
+  HTTP con la API y composición del catálogo.
+- Los nueve ViewModels todavía vacíos identifican el propósito previsto y su estado
+  pendiente, sin agregar clases ficticias ni anticipar contratos no definidos.
+- El cambio es exclusivamente documental: no modifica validaciones, propiedades,
+  serialización, enlaces de modelos ni contratos HTTP.
+
+### Validación
+
+| Gate | Resultado |
+|---|---|
+| Build Release de `Frontend` | PASS; 0 errores y 0 advertencias |
+| `git diff --check` | PASS; sin errores de whitespace |
+| Marcadores de conflicto en `Frontend/Models` | PASS; ninguno encontrado |
+
+## 16. Documentación explicativa de Services MVC
+
+Fecha: 2026-09-12.
+
+- Se documentaron los 23 archivos de `Frontend/Services`, incluyendo servicios
+  concretos y contratos reservados en `Services/Interfaces`.
+- Los servicios activos ahora explicitan su responsabilidad y límite: propagación
+  del token de sesión y traducción de operaciones HTTP hacia `TotaltechApi`, sin
+  trasladar reglas de negocio desde el backend.
+- Los servicios e interfaces vacíos indican su propósito previsto y estado real,
+  sin agregar implementaciones o contratos ficticios.
+- Se registró una deuda técnica preexistente: `CarritosApiService.cs` contiene la
+  clase funcional `CategoriasApiService`. En este cambio documental no se renombró
+  el archivo para evitar alterar referencias o ampliar el alcance.
+- El cambio no modifica inyección de dependencias, solicitudes HTTP, rutas,
+  autenticación, respuestas ni contratos públicos.
+
+### Validación
+
+| Gate | Resultado |
+|---|---|
+| Build Release de `Frontend` | PASS; 0 errores y 0 advertencias |
+| `git diff --check` | PASS; sin errores de whitespace |
+| Marcadores de conflicto en `Frontend/Services` | PASS; ninguno encontrado |

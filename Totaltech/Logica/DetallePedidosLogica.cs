@@ -7,25 +7,16 @@ namespace Totaltech.Logica
     {
         Task<List<DetallePedido>> ObtenerTodosAsync();
         Task<DetallePedido?> ObtenerPorIdAsync(int id);
-        Task<string?> CrearAsync(DetallePedido detalle);
-        Task<string?> ActualizarAsync(DetallePedido detalle);
-        Task<bool> EliminarAsync(int id);
+        Task<List<DetallePedido>> ObtenerPorPedidoAsync(int idPedido);
     }
 
     public class DetallePedidosLogica : IDetallePedidosLogica
     {
         private readonly IDetallePedidosRepositorio _repositorio;
-        private readonly IPedidosRepositorio _pedidosRepositorio;
-        private readonly IProductosRepositorio _productosRepositorio;
 
-        public DetallePedidosLogica(
-            IDetallePedidosRepositorio repositorio,
-            IPedidosRepositorio pedidosRepositorio,
-            IProductosRepositorio productosRepositorio)
+        public DetallePedidosLogica(IDetallePedidosRepositorio repositorio)
         {
             _repositorio = repositorio;
-            _pedidosRepositorio = pedidosRepositorio;
-            _productosRepositorio = productosRepositorio;
         }
 
         public Task<List<DetallePedido>> ObtenerTodosAsync()
@@ -38,62 +29,10 @@ namespace Totaltech.Logica
             return _repositorio.ObtenerPorIdAsync(id);
         }
 
-        public async Task<string?> CrearAsync(DetallePedido detalle)
+        public Task<List<DetallePedido>> ObtenerPorPedidoAsync(int idPedido)
         {
-            var error = await ValidarDetalleAsync(detalle);
-            if (error is not null)
-            {
-                return error;
-            }
-
-            detalle.Subtotal = detalle.PrecioUnitario * detalle.Cantidad;
-            await _repositorio.CrearAsync(detalle);
-            return null;
+            return _repositorio.ObtenerPorPedidoAsync(idPedido);
         }
 
-        public async Task<string?> ActualizarAsync(DetallePedido detalle)
-        {
-            var error = await ValidarDetalleAsync(detalle);
-            if (error is not null)
-            {
-                return error;
-            }
-
-            detalle.Subtotal = detalle.PrecioUnitario * detalle.Cantidad;
-            await _repositorio.ActualizarAsync(detalle);
-            return null;
-        }
-
-        public async Task<bool> EliminarAsync(int id)
-        {
-            var detalle = await _repositorio.ObtenerPorIdAsync(id);
-            if (detalle is null)
-            {
-                return false;
-            }
-
-            await _repositorio.EliminarAsync(detalle);
-            return true;
-        }
-
-        private async Task<string?> ValidarDetalleAsync(DetallePedido detalle)
-        {
-            if (detalle.Cantidad <= 0 || detalle.PrecioUnitario < 0)
-            {
-                return "La cantidad debe ser mayor a cero y el precio no puede ser negativo.";
-            }
-
-            if (!await _pedidosRepositorio.ExisteAsync(detalle.IdPedido))
-            {
-                return "El pedido indicado no existe.";
-            }
-
-            if (!await _productosRepositorio.ExisteAsync(detalle.IdProducto))
-            {
-                return "El producto indicado no existe.";
-            }
-
-            return null;
-        }
     }
 }
