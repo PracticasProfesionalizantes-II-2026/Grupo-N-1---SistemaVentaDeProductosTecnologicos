@@ -87,10 +87,10 @@ namespace Totaltech.Endpoints
             proveedor.Direccion ??= request.Direccion.ToEntity();
             proveedor.Direccion.Calle = request.Direccion.Calle;
             proveedor.Direccion.Numero = request.Direccion.Numero;
-            proveedor.Direccion.Ciudad = request.Direccion.Ciudad;
-            proveedor.Direccion.Provincia = request.Direccion.Provincia;
-            proveedor.Direccion.CodigoPostal = request.Direccion.CodigoPostal;
-            proveedor.Direccion.Pais = request.Direccion.Pais;
+            proveedor.Direccion.Ciudad = request.Direccion.Ciudad ?? string.Empty;
+            proveedor.Direccion.Provincia = request.Direccion.Provincia ?? string.Empty;
+            proveedor.Direccion.CodigoPostal = request.Direccion.CodigoPostal ?? string.Empty;
+            proveedor.Direccion.Pais = request.Direccion.Pais ?? string.Empty;
             proveedor.Direccion.IdUsuario = null;
             proveedor.Direccion.Tipo = TipoDireccion.Fiscal;
         }

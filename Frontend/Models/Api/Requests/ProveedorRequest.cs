@@ -29,8 +29,8 @@ public class DireccionProveedorRequest
     [Required(ErrorMessage = "El número es obligatorio.")]
     public string Numero { get; set; } = string.Empty;
 
-    public string Ciudad { get; set; } = string.Empty;
-    public string Provincia { get; set; } = string.Empty;
-    public string CodigoPostal { get; set; } = string.Empty;
-    public string Pais { get; set; } = string.Empty;
+    public string? Ciudad { get; set; }
+    public string? Provincia { get; set; }
+    public string? CodigoPostal { get; set; }
+    public string? Pais { get; set; }
 }

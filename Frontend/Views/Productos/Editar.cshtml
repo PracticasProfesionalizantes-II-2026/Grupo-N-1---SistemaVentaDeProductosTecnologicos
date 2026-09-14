@@ -3,4 +3,39 @@
 @* RESPONSABILIDAD: Recibir los datos para editar un producto.                *@
 @* ============================================================================ *@
 @model Frontend.Models.Api.Requests.ProductoRequest
-<div class="container py-4"><h1>Editar producto</h1><form asp-action="Editar" asp-route-id="@Context.Request.RouteValues["id"]" method="post">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger"></div><label asp-for="Nombre"></label><input asp-for="Nombre" class="form-control"/><label asp-for="Descripcion"></label><input asp-for="Descripcion" class="form-control"/><label asp-for="Precio"></label><input asp-for="Precio" type="number" step="0.01" min="0" class="form-control"/><label asp-for="Stock"></label><input asp-for="Stock" type="number" min="0" class="form-control"/><label asp-for="IdCategoria">Categoría</label><select asp-for="IdCategoria" asp-items="@(new SelectList(ViewBag.Categorias, "IdCategoria", "Nombre"))" class="form-select"><option value="">Seleccioná una categoría</option></select><span asp-validation-for="IdCategoria" class="text-danger"></span><label asp-for="IdProveedor"></label><input asp-for="IdProveedor" type="number" min="1" class="form-control"/><button class="btn btn-warning mt-3">Guardar cambios</button></form></div>
+@{
+    var hayProveedoresActivos = ViewBag.HayProveedoresActivos is true;
+}
+<div class="container py-4">
+    <h1>Editar producto</h1>
+    @if (!hayProveedoresActivos)
+    {
+        <div class="alert alert-warning">
+            No hay proveedores activos. Activá o registrá uno antes de guardar cambios.
+            <a asp-controller="Proveedores" asp-action="Crear" class="alert-link">Crear proveedor</a>
+        </div>
+    }
+    <form asp-action="Editar" asp-route-id="@Context.Request.RouteValues["id"]" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <label asp-for="Nombre"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <label asp-for="Descripcion"></label>
+        <input asp-for="Descripcion" class="form-control" />
+        <label asp-for="Precio"></label>
+        <input asp-for="Precio" type="number" step="0.01" min="0" class="form-control" />
+        <label asp-for="Stock"></label>
+        <input asp-for="Stock" type="number" min="0" class="form-control" />
+        <label asp-for="IdCategoria">Categoría</label>
+        <select asp-for="IdCategoria" asp-items="@(new SelectList(ViewBag.Categorias, "IdCategoria", "Nombre"))" class="form-select">
+            <option value="">Seleccioná una categoría</option>
+        </select>
+        <span asp-validation-for="IdCategoria" class="text-danger"></span>
+        <label asp-for="IdProveedor">Proveedor</label>
+        <select asp-for="IdProveedor" asp-items="@(new SelectList(ViewBag.Proveedores, "IdProveedor", "NombreParaSeleccion"))" class="form-select" disabled="@(!hayProveedoresActivos)">
+            <option value="">Seleccioná un proveedor</option>
+        </select>
+        <span asp-validation-for="IdProveedor" class="text-danger"></span>
+        <button class="btn btn-warning mt-3" disabled="@(!hayProveedoresActivos)">Guardar cambios</button>
+    </form>
+</div>

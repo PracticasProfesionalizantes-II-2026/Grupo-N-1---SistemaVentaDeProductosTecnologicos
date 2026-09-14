@@ -82,19 +82,19 @@ namespace Totaltech.Logica.DTOs
     {
         public string Calle { get; set; } = string.Empty;
         public string Numero { get; set; } = string.Empty;
-        public string Ciudad { get; set; } = string.Empty;
-        public string Provincia { get; set; } = string.Empty;
-        public string CodigoPostal { get; set; } = string.Empty;
-        public string Pais { get; set; } = string.Empty;
+        public string? Ciudad { get; set; }
+        public string? Provincia { get; set; }
+        public string? CodigoPostal { get; set; }
+        public string? Pais { get; set; }
 
         public Direccion ToEntity() => new()
         {
             Calle = Calle,
             Numero = Numero,
-            Ciudad = Ciudad,
-            Provincia = Provincia,
-            CodigoPostal = CodigoPostal,
-            Pais = Pais,
+            Ciudad = Ciudad ?? string.Empty,
+            Provincia = Provincia ?? string.Empty,
+            CodigoPostal = CodigoPostal ?? string.Empty,
+            Pais = Pais ?? string.Empty,
             IdUsuario = null,
             Tipo = TipoDireccion.Fiscal
         };
