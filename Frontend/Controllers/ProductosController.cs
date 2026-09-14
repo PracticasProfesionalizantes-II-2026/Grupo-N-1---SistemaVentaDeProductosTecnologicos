@@ -17,13 +17,16 @@ public class ProductosController : Controller
 {
     private readonly ProductosApiService _productosApiService;
     private readonly CategoriasApiService _categoriasApiService;
+    private readonly ProveedoresApiService _proveedoresApiService;
 
     public ProductosController(
         ProductosApiService productosApiService,
-        CategoriasApiService categoriasApiService)
+        CategoriasApiService categoriasApiService,
+        ProveedoresApiService proveedoresApiService)
     {
         _productosApiService = productosApiService;
         _categoriasApiService = categoriasApiService;
+        _proveedoresApiService = proveedoresApiService;
     }
 
     [HttpGet]
@@ -50,7 +53,7 @@ public class ProductosController : Controller
     [HttpGet, Authorize(Roles = "Admin")]
     public async Task<IActionResult> Crear()
     {
-        await CargarCategoriasAsync();
+        await CargarOpcionesAsync();
         return View(new ProductoRequest());
     }
 
@@ -59,7 +62,7 @@ public class ProductosController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await CargarCategoriasAsync();
+            await CargarOpcionesAsync(request.IdProveedor);
             return View(request);
         }
 
@@ -67,7 +70,7 @@ public class ProductosController : Controller
         if (!response.IsSuccessStatusCode)
         {
             ModelState.AddModelError(string.Empty, await response.Content.ReadAsStringAsync());
-            await CargarCategoriasAsync();
+            await CargarOpcionesAsync(request.IdProveedor);
             return View(request);
         }
 
@@ -80,7 +83,7 @@ public class ProductosController : Controller
     {
         var producto = await _productosApiService.ObtenerPorIdAsync(id);
         if (producto is null) return NotFound();
-        await CargarCategoriasAsync();
+        await CargarOpcionesAsync(producto.IdProveedor);
         return View(new ProductoRequest { Nombre = producto.Nombre, Descripcion = producto.Descripcion, Precio = producto.Precio, Stock = producto.Stock, IdCategoria = producto.IdCategoria, IdProveedor = producto.IdProveedor });
     }
 
@@ -89,7 +92,7 @@ public class ProductosController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await CargarCategoriasAsync();
+            await CargarOpcionesAsync(request.IdProveedor);
             return View(request);
         }
 
@@ -97,7 +100,7 @@ public class ProductosController : Controller
         if (!response.IsSuccessStatusCode)
         {
             ModelState.AddModelError(string.Empty, await response.Content.ReadAsStringAsync());
-            await CargarCategoriasAsync();
+            await CargarOpcionesAsync(request.IdProveedor);
             return View(request);
         }
 
@@ -173,8 +176,19 @@ public class ProductosController : Controller
         });
     }
 
-    private async Task CargarCategoriasAsync()
+    private async Task CargarOpcionesAsync(int? idProveedorActual = null)
     {
-        ViewBag.Categorias = await _categoriasApiService.ObtenerTodosAsync();
+        var categoriasTask = _categoriasApiService.ObtenerTodosAsync();
+        var proveedoresTask = _proveedoresApiService.ObtenerTodosAsync();
+        await Task.WhenAll(categoriasTask, proveedoresTask);
+
+        var proveedores = (await proveedoresTask)
+            .Where(proveedor => proveedor.Activo || proveedor.IdProveedor == idProveedorActual)
+            .OrderBy(proveedor => proveedor.RazonSocial)
+            .ToList();
+
+        ViewBag.Categorias = await categoriasTask;
+        ViewBag.Proveedores = proveedores;
+        ViewBag.HayProveedoresActivos = proveedores.Any(proveedor => proveedor.Activo);
     }
 }

@@ -9,14 +9,28 @@ namespace Frontend.Models.Api.Requests;
 
 public class ProveedorRequest
 {
-    public string RazonSocial { get; set; } = string.Empty;
+    [Required] public string RazonSocial { get; set; } = string.Empty;
     [Required] public string Cuit { get; set; } = string.Empty;
     [Required, EmailAddress] public string EmailComercial { get; set; } = string.Empty;
     public string TelefonoComercial { get; set; } = string.Empty;
     [Required] public string CondicionIva { get; set; } = string.Empty;
-    public int? IdDireccion { get; set; }
+    [Required] public DireccionProveedorRequest Direccion { get; set; } = new();
     [Range(0, int.MaxValue)] public int PlazoPagoDias { get; set; }
     [Range(0, int.MaxValue)] public int TiempoEntregaDias { get; set; }
     [Required] public string MonedaPreferida { get; set; } = string.Empty;
     public bool Activo { get; set; } = true;
+}
+
+public class DireccionProveedorRequest
+{
+    [Required(ErrorMessage = "La calle es obligatoria.")]
+    public string Calle { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El número es obligatorio.")]
+    public string Numero { get; set; } = string.Empty;
+
+    public string Ciudad { get; set; } = string.Empty;
+    public string Provincia { get; set; } = string.Empty;
+    public string CodigoPostal { get; set; } = string.Empty;
+    public string Pais { get; set; } = string.Empty;
 }

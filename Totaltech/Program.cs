@@ -99,6 +99,28 @@ builder.Services.AddScoped<IConsultasLogica, ConsultasLogica>();
 
 var app = builder.Build();
 
+var aplicarMigraciones = builder.Configuration.GetValue<bool?>("Database:ApplyMigrations")
+    ?? app.Environment.IsDevelopment();
+
+if (aplicarMigraciones)
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+
+        if (contexto.Database.IsRelational())
+        {
+            await contexto.Database.MigrateAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(ex, "No se pudo crear o actualizar la base de datos.");
+        throw;
+    }
+}
+
 try
 {
     using var scope = app.Services.CreateScope();

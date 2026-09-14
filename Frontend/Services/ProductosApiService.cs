@@ -1,8 +1,3 @@
-// ============================================================================
-// MÓDULO: SERVICIO API DE PRODUCTOS
-// RESPONSABILIDAD: Consultar y mantener productos mediante el cliente TotaltechApi.
-// LÍMITE: Traduce operaciones HTTP; no aplica reglas de inventario localmente.
-// ============================================================================
 using System.Net;
 using System.Net.Http.Json;
 using Frontend.Models.Api.Responses;
