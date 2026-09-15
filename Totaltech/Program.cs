@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -63,6 +64,25 @@ builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta configurar la cadena de conexión 'DefaultConnection'.");
+
+if (builder.Environment.IsDevelopment())
+{
+    var connectionBuilder = new SqlConnectionStringBuilder(connectionString);
+
+    if (connectionBuilder.DataSource.StartsWith("(localdb)", StringComparison.OrdinalIgnoreCase) &&
+        !string.IsNullOrWhiteSpace(connectionBuilder.InitialCatalog))
+    {
+        var archivoBaseLocal = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            $"{connectionBuilder.InitialCatalog}.mdf");
+
+        if (File.Exists(archivoBaseLocal))
+        {
+            connectionBuilder.AttachDBFilename = archivoBaseLocal;
+            connectionString = connectionBuilder.ConnectionString;
+        }
+    }
+}
 
 builder.Services.AddDbContext<TotaltechDbContext>(options =>
     options.UseSqlServer(

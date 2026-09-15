@@ -12,8 +12,8 @@ using Totaltech.Datos;
 namespace Totaltech.Migrations
 {
     [DbContext(typeof(TotaltechDbContext))]
-    [Migration("20260613220646_Inicial")]
-    partial class Inicial
+    [Migration("20260914231145_InicialActualizada")]
+    partial class InicialActualizada
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,12 +42,9 @@ namespace Totaltech.Migrations
                     b.Property<int>("IdUsuario")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UsuarioIdUsuario")
-                        .HasColumnType("int");
-
                     b.HasKey("IdCarrito");
 
-                    b.HasIndex("UsuarioIdUsuario");
+                    b.HasIndex("IdUsuario");
 
                     b.ToTable("Carritos");
                 });
@@ -90,17 +87,83 @@ namespace Totaltech.Migrations
                     b.Property<int>("IdProveedor")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ProveedorIdProveedor")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("IdCompra");
 
-                    b.HasIndex("ProveedorIdProveedor");
+                    b.HasIndex("IdProveedor");
 
                     b.ToTable("Compras");
+                });
+
+            modelBuilder.Entity("Totaltech.Entidades.Consulta", b =>
+                {
+                    b.Property<int>("IdConsulta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdConsulta"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaConsulta")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("IdUsuario")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("IdConsulta");
+
+                    b.HasIndex("IdUsuario");
+
+                    b.ToTable("Consultas");
+                });
+
+            modelBuilder.Entity("Totaltech.Entidades.DetalleCarrito", b =>
+                {
+                    b.Property<int>("IdDetalleCarrito")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdDetalleCarrito"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdCarrito")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdProducto")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("IdDetalleCarrito");
+
+                    b.HasIndex("IdProducto");
+
+                    b.HasIndex("IdCarrito", "IdProducto")
+                        .IsUnique();
+
+                    b.ToTable("DetalleCarritos");
                 });
 
             modelBuilder.Entity("Totaltech.Entidades.DetallePedido", b =>
@@ -120,23 +183,17 @@ namespace Totaltech.Migrations
                     b.Property<int>("IdProducto")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PedidoIdPedido")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("PrecioUnitario")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("ProductoIdProducto")
-                        .HasColumnType("int");
 
                     b.Property<decimal>("Subtotal")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("IdDetallePedido");
 
-                    b.HasIndex("PedidoIdPedido");
+                    b.HasIndex("IdPedido");
 
-                    b.HasIndex("ProductoIdProducto");
+                    b.HasIndex("IdProducto");
 
                     b.ToTable("DetallePedidos");
                 });
@@ -209,12 +266,9 @@ namespace Totaltech.Migrations
                     b.Property<decimal>("Monto")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("PedidoIdPedido")
-                        .HasColumnType("int");
-
                     b.HasKey("IdPago");
 
-                    b.HasIndex("PedidoIdPedido");
+                    b.HasIndex("IdPedido");
 
                     b.ToTable("Pagos");
                 });
@@ -227,8 +281,29 @@ namespace Totaltech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdPedido"));
 
-                    b.Property<int?>("DireccionIdDireccion")
-                        .HasColumnType("int");
+                    b.Property<string>("DireccionCalle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DireccionCiudad")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DireccionCodigoPostal")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DireccionNumero")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DireccionPais")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DireccionProvincia")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Estado")
                         .HasColumnType("int");
@@ -236,22 +311,32 @@ namespace Totaltech.Migrations
                     b.Property<DateTime>("FechaPedido")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("IdCarrito")
+                        .HasColumnType("int");
+
                     b.Property<int>("IdDireccion")
                         .HasColumnType("int");
 
                     b.Property<int?>("IdUsuario")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UsuarioIdUsuario")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("IdPedido");
 
-                    b.HasIndex("DireccionIdDireccion");
+                    b.HasIndex("IdCarrito")
+                        .IsUnique()
+                        .HasFilter("[IdCarrito] IS NOT NULL");
 
-                    b.HasIndex("UsuarioIdUsuario");
+                    b.HasIndex("IdDireccion");
 
-                    b.ToTable("Pedidos");
+                    b.HasIndex("IdUsuario");
+
+                    b.ToTable("Pedidos", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pedidos_Total_NoNegativo", "[Total] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Totaltech.Entidades.Producto", b =>
@@ -261,9 +346,6 @@ namespace Totaltech.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdProducto"));
-
-                    b.Property<int?>("CategoriaIdCategoria")
-                        .HasColumnType("int");
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
@@ -282,19 +364,19 @@ namespace Totaltech.Migrations
                     b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("ProveedorIdProveedor")
-                        .HasColumnType("int");
-
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
                     b.HasKey("IdProducto");
 
-                    b.HasIndex("CategoriaIdCategoria");
+                    b.HasIndex("IdCategoria");
 
-                    b.HasIndex("ProveedorIdProveedor");
+                    b.HasIndex("IdProveedor");
 
-                    b.ToTable("Productos");
+                    b.ToTable("Productos", t =>
+                        {
+                            t.HasCheckConstraint("CK_Productos_Stock_NoNegativo", "[Stock] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Totaltech.Entidades.Proveedor", b =>
@@ -316,9 +398,6 @@ namespace Totaltech.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<int?>("DireccionIdDireccion")
-                        .HasColumnType("int");
 
                     b.Property<string>("EmailComercial")
                         .IsRequired()
@@ -347,7 +426,7 @@ namespace Totaltech.Migrations
 
                     b.HasKey("IdProveedor");
 
-                    b.HasIndex("DireccionIdDireccion");
+                    b.HasIndex("IdDireccion");
 
                     b.ToTable("Proveedores");
                 });
@@ -372,12 +451,9 @@ namespace Totaltech.Migrations
                     b.Property<int>("TipoReporte")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UsuarioIdUsuario")
-                        .HasColumnType("int");
-
                     b.HasKey("IdReporte");
 
-                    b.HasIndex("UsuarioIdUsuario");
+                    b.HasIndex("IdUsuario");
 
                     b.ToTable("Reportes");
                 });
@@ -396,11 +472,13 @@ namespace Totaltech.Migrations
 
                     b.Property<string>("Contrasena")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<DateTime>("FechaRegistro")
                         .HasColumnType("datetime2");
@@ -418,6 +496,9 @@ namespace Totaltech.Migrations
 
                     b.HasKey("IdUsuario");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("Usuarios");
                 });
 
@@ -425,7 +506,9 @@ namespace Totaltech.Migrations
                 {
                     b.HasOne("Totaltech.Entidades.Usuario", "Usuario")
                         .WithMany()
-                        .HasForeignKey("UsuarioIdUsuario");
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Usuario");
                 });
@@ -434,20 +517,55 @@ namespace Totaltech.Migrations
                 {
                     b.HasOne("Totaltech.Entidades.Proveedor", "Proveedor")
                         .WithMany()
-                        .HasForeignKey("ProveedorIdProveedor");
+                        .HasForeignKey("IdProveedor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Proveedor");
+                });
+
+            modelBuilder.Entity("Totaltech.Entidades.Consulta", b =>
+                {
+                    b.HasOne("Totaltech.Entidades.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Totaltech.Entidades.DetalleCarrito", b =>
+                {
+                    b.HasOne("Totaltech.Entidades.Carrito", "Carrito")
+                        .WithMany()
+                        .HasForeignKey("IdCarrito")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Totaltech.Entidades.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("IdProducto")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Carrito");
+
+                    b.Navigation("Producto");
                 });
 
             modelBuilder.Entity("Totaltech.Entidades.DetallePedido", b =>
                 {
                     b.HasOne("Totaltech.Entidades.Pedido", "Pedido")
                         .WithMany()
-                        .HasForeignKey("PedidoIdPedido");
+                        .HasForeignKey("IdPedido")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Totaltech.Entidades.Producto", "Producto")
                         .WithMany()
-                        .HasForeignKey("ProductoIdProducto");
+                        .HasForeignKey("IdProducto")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Pedido");
 
@@ -458,7 +576,8 @@ namespace Totaltech.Migrations
                 {
                     b.HasOne("Totaltech.Entidades.Usuario", "Usuario")
                         .WithMany()
-                        .HasForeignKey("IdUsuario");
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Usuario");
                 });
@@ -467,20 +586,32 @@ namespace Totaltech.Migrations
                 {
                     b.HasOne("Totaltech.Entidades.Pedido", "Pedido")
                         .WithMany()
-                        .HasForeignKey("PedidoIdPedido");
+                        .HasForeignKey("IdPedido")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Pedido");
                 });
 
             modelBuilder.Entity("Totaltech.Entidades.Pedido", b =>
                 {
+                    b.HasOne("Totaltech.Entidades.Carrito", "Carrito")
+                        .WithMany()
+                        .HasForeignKey("IdCarrito")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Totaltech.Entidades.Direccion", "Direccion")
                         .WithMany()
-                        .HasForeignKey("DireccionIdDireccion");
+                        .HasForeignKey("IdDireccion")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Totaltech.Entidades.Usuario", "Usuario")
                         .WithMany()
-                        .HasForeignKey("UsuarioIdUsuario");
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Carrito");
 
                     b.Navigation("Direccion");
 
@@ -491,11 +622,15 @@ namespace Totaltech.Migrations
                 {
                     b.HasOne("Totaltech.Entidades.Categoria", "Categoria")
                         .WithMany()
-                        .HasForeignKey("CategoriaIdCategoria");
+                        .HasForeignKey("IdCategoria")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Totaltech.Entidades.Proveedor", "Proveedor")
                         .WithMany()
-                        .HasForeignKey("ProveedorIdProveedor");
+                        .HasForeignKey("IdProveedor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Categoria");
 
@@ -506,7 +641,8 @@ namespace Totaltech.Migrations
                 {
                     b.HasOne("Totaltech.Entidades.Direccion", "Direccion")
                         .WithMany()
-                        .HasForeignKey("DireccionIdDireccion");
+                        .HasForeignKey("IdDireccion")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Direccion");
                 });
@@ -515,7 +651,9 @@ namespace Totaltech.Migrations
                 {
                     b.HasOne("Totaltech.Entidades.Usuario", "Usuario")
                         .WithMany()
-                        .HasForeignKey("UsuarioIdUsuario");
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Usuario");
                 });

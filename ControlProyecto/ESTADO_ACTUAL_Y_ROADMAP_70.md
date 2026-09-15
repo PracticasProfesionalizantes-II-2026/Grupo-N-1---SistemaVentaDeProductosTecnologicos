@@ -766,3 +766,65 @@ Fecha: 2026-09-12.
 | Build Release de `Frontend` | PASS; 0 errores y 0 advertencias |
 | `git diff --check` | PASS; sin errores de whitespace |
 | Marcadores de conflicto en `Frontend/Services` | PASS; ninguno encontrado |
+
+## 17. Auditoría del modo Administrador
+
+Fecha: 2026-09-14. Rama inspeccionada: `Rama--Facu`. Estado global de la
+auditoría: **WARN**. El usuario confirmó manualmente que la navegación y el CRUD
+administrativo funcionan de manera fluida; la revisión de código y las pruebas
+rápidas respaldan ese resultado. No se modificó código funcional durante esta
+auditoría.
+
+### Controles confirmados
+
+- El frontend crea la identidad MVC a partir de una autenticación exitosa contra
+  `POST /auth/login`, conserva el JWT en el ticket protegido de autenticación y lo
+  propaga como Bearer hacia la API.
+- `AdministracionController` y todo `ProveedoresController` requieren rol `Admin`.
+  Las mutaciones de Categorías y Productos también exigen ese rol; sus consultas
+  públicas permanecen separadas.
+- Todos los formularios administrativos POST inspeccionados usan protección
+  antiforgery y patrón POST-Redirect-GET después de una mutación exitosa.
+- La API vuelve a comprobar autorización mediante la política `Administrador`;
+  no depende sólo de que Razor o MVC oculten botones. Categorías, Productos y
+  Proveedores protegen sus mutaciones en el servidor.
+- El registro público fuerza el rol Cliente en la lógica Backend y las contraseñas
+  se almacenan con `PasswordHasher`. Un email administrativo por sí solo no concede
+  permisos.
+- Los contratos MVC/API de Categorías, Productos y Proveedores coinciden en rutas,
+  verbos y campos utilizados. La dirección fiscal del proveedor se representa como
+  objeto anidado en ambos extremos.
+
+### Hallazgos y riesgos pendientes
+
+| ID | Severidad | Evidencia | Hallazgo y criterio de cierre |
+|---|---|---|---|
+| ADM-01 | Media | Confirmado | No existe acción ni enlace de cierre de sesión en `Frontend`. Una sesión administrativa sólo termina al cerrar la sesión del navegador o por expiración. Cerrar cuando exista un POST antiforgery que ejecute `SignOutAsync`, elimine la cookie y redirija al inicio. |
+| ADM-02 | Media | Confirmado | Los CRUD de Categorías, Productos y Proveedores no traducen `HttpRequestException` ni timeout; una caída de la API puede terminar en la página genérica de error. Cerrar cuando las tres áreas muestren un mensaje seguro y recuperable sin perder silenciosamente el formulario. |
+| ADM-03 | Alta condicionada | Confirmado | El árbol actual elimina las seis migraciones históricas y agrega `InicialActualizada`, cuyo `Up` vuelve a crear tablas. Una base con historial anterior no tiene esa nueva migración registrada e intentaría recrear tablas existentes. Antes de promover, decidir y probar explícitamente “sólo base nueva” o restaurar una ruta incremental compatible. |
+| ADM-04 | Baja | Confirmado | `CarritosApiService.cs` contiene `CategoriasApiService`; no rompe ejecución, pero dificulta mantenimiento y descubrimiento. Cerrar mediante un renombrado aislado con build y pruebas. |
+
+No se encontraron bypasses confirmados de rol en el CRUD administrativo revisado.
+ADM-01 y ADM-02 no contradicen la fluidez observada mientras la API permanece
+disponible, pero reducen seguridad operativa y recuperación ante fallos.
+
+### Evidencia de validación
+
+| Gate | Resultado |
+|---|---|
+| `dotnet restore` de la solución | PASS fuera del sandbox; proyectos actualizados |
+| Build Release de la solución | PASS; cuatro proyectos, 0 errores y 0 advertencias |
+| Pruebas unitarias | PASS; 8/8 |
+| Pruebas HTTP/integración rápidas | PASS; 21/21 |
+| Seguridad administrativa específica | PASS dentro de las 21 pruebas: login Admin, CRUD autorizado, anónimo 401, Cliente 403, registro sin escalada y bootstrap idempotente |
+| SQL Server relacional | NO VALIDADO; 13/13 no pudieron iniciar `(localdb)\\MSSQLLocalDB` (`SQL Server process failed to start`) incluso fuera del sandbox |
+| Azure SQL | NO EJECUTADO |
+| `git diff --check` previo a esta actualización | PASS; sólo avisos de normalización LF/CRLF |
+
+### Decisión de avance
+
+El modo Administrador se considera **funcional y correctamente autorizado en los
+flujos cubiertos**, pero no se declara cerrado para promoción mientras ADM-03 no
+tenga una decisión explícita y las pruebas LocalDB no puedan volver a ejecutarse.
+La evidencia actual mantiene el avance por debajo del umbral global del 70%; este
+archivo continúa siendo el roadmap hacia ese objetivo intermedio.
