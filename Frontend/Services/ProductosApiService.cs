@@ -7,10 +7,14 @@ namespace Frontend.Services;
 public class ProductosApiService
 {
 	private readonly IHttpClientFactory _httpClientFactory;
+	private readonly ProductoImagenResolver _imagenResolver;
 
-	public ProductosApiService(IHttpClientFactory httpClientFactory)
+	public ProductosApiService(
+		IHttpClientFactory httpClientFactory,
+		ProductoImagenResolver imagenResolver)
 	{
 		_httpClientFactory = httpClientFactory;
+		_imagenResolver = imagenResolver;
 	}
 
 	private HttpClient CrearCliente()
@@ -69,7 +73,7 @@ public class ProductosApiService
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
 			"/productos/");
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
 	}
 
 	public async Task<ProductoResponse?> ObtenerPorIdAsync(int id)
@@ -85,7 +89,8 @@ public class ProductosApiService
 
 		respuesta.EnsureSuccessStatusCode();
 
-		return await respuesta.Content.ReadFromJsonAsync<ProductoResponse>();
+		return AplicarImagen(
+			await respuesta.Content.ReadFromJsonAsync<ProductoResponse>());
 	}
 
 	public async Task<List<ProductoResponse>> BuscarAsync(string? texto)
@@ -97,7 +102,7 @@ public class ProductosApiService
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(ruta);
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
 	}
 
 	public async Task<List<ProductoResponse>> ObtenerPorCategoriaAsync(int idCategoria)
@@ -107,7 +112,7 @@ public class ProductosApiService
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
 			$"/productos/categoria/{idCategoria}");
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
 	}
 
 	public async Task<List<ProductoResponse>> ObtenerDisponiblesAsync()
@@ -117,6 +122,27 @@ public class ProductosApiService
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
 			"/productos/disponibles");
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
+	}
+
+	private List<ProductoResponse> AplicarImagenes(List<ProductoResponse>? productos)
+	{
+		var resultado = productos ?? [];
+		foreach (var producto in resultado)
+		{
+			AplicarImagen(producto);
+		}
+
+		return resultado;
+	}
+
+	private ProductoResponse? AplicarImagen(ProductoResponse? producto)
+	{
+		if (producto is not null)
+		{
+			producto.ImagenUrl = _imagenResolver.Resolver(producto.Nombre);
+		}
+
+		return producto;
 	}
 }

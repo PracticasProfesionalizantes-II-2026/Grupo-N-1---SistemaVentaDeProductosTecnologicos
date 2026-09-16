@@ -159,6 +159,26 @@ catch (Exception ex)
     app.Logger.LogWarning(ex, "No se pudieron verificar o inicializar las categorías canónicas.");
 }
 
+if (builder.Configuration.GetValue<bool>("DemoData:Enabled"))
+{
+    CatalogoDemostracionIniciales.ValidarDestino(app.Environment, connectionString);
+
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        await CatalogoDemostracionIniciales.InicializarAsync(
+            scope.ServiceProvider.GetRequiredService<ICategoriasLogica>(),
+            scope.ServiceProvider.GetRequiredService<IProveedoresLogica>(),
+            scope.ServiceProvider.GetRequiredService<IProductosLogica>(),
+            app.Logger);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(ex, "No se pudo cargar el catálogo de demostración.");
+        throw;
+    }
+}
+
 if (builder.Configuration.GetValue<bool>("BootstrapAdmin:Enabled"))
 {
     var emailAdministrador = builder.Configuration["BootstrapAdmin:Email"];

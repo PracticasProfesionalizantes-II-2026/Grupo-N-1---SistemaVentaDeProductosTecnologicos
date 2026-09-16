@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Totaltech/Totaltech.csproj" />
+    <ProjectReference Include="../../Frontend/Frontend.csproj" />
   </ItemGroup>
 
   <ItemGroup>

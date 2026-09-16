@@ -19,6 +19,7 @@ builder.Services.AddHttpClient("TotaltechApi", client =>
 builder.Services.AddScoped<CategoriasApiService>();
 builder.Services.AddScoped<ProductosApiService>();
 builder.Services.AddScoped<ProveedoresApiService>();
+builder.Services.AddSingleton<ProductoImagenResolver>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -102,6 +102,19 @@
 
                     <div class="card h-100">
 
+                        @if (!string.IsNullOrWhiteSpace(producto.ImagenUrl))
+                        {
+                            <img src="@producto.ImagenUrl"
+                                 class="card-img-top product-catalog-image"
+                                 alt="@producto.Nombre" />
+                        }
+                        else
+                        {
+                            <div class="product-image-placeholder" aria-hidden="true">
+                                Sin imagen disponible
+                            </div>
+                        }
+
                         <div class="card-body">
 
                             <h5 class="card-title">

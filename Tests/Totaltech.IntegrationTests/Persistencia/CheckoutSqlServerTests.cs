@@ -353,7 +353,7 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
 
     [Fact]
     [Trait("Category", "SqlServer")]
-    public async Task MigracionCompletaTotalYSnapshotDePedidoHistorico()
+    public async Task MigracionCompletaPersisteTotalYSnapshotDePedido()
     {
         var nombreBase = $"{SqlServerTestDatabase.DatabasePrefix}{Guid.NewGuid():N}";
         var cadena = new SqlConnectionStringBuilder
@@ -374,8 +374,7 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
             const int idPedidoHistorico = 700001;
             await using (var context = new TotaltechDbContext(opciones))
             {
-                await context.Database.MigrateAsync(
-                    "20260622030413_AjustarContratosValidacionesYRestricciones");
+                await context.Database.MigrateAsync();
 
                 var sufijo = Guid.NewGuid().ToString("N");
                 var usuario = new Usuario
@@ -416,8 +415,14 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
                 var fecha = DateTime.UtcNow;
                 await context.Database.ExecuteSqlInterpolatedAsync($$"""
                     SET IDENTITY_INSERT Pedidos ON;
-                    INSERT INTO Pedidos (IdPedido, IdUsuario, FechaPedido, Estado, IdDireccion)
-                    VALUES ({{idPedidoHistorico}}, {{usuario.IdUsuario}}, {{fecha}}, {{(int)EstadoPedido.Pendiente}}, {{direccion.IdDireccion}});
+                    INSERT INTO Pedidos (
+                        IdPedido, IdUsuario, IdCarrito, FechaPedido, Estado, IdDireccion, Total,
+                        DireccionCalle, DireccionNumero, DireccionCiudad, DireccionProvincia,
+                        DireccionCodigoPostal, DireccionPais)
+                    VALUES (
+                        {{idPedidoHistorico}}, {{usuario.IdUsuario}}, NULL, {{fecha}},
+                        {{(int)EstadoPedido.Pendiente}}, {{direccion.IdDireccion}}, 50,
+                        N'Calle historica', N'123', N'Ciudad', N'Provincia', N'1000', N'Argentina');
                     SET IDENTITY_INSERT Pedidos OFF;
 
                     INSERT INTO DetallePedidos (IdPedido, IdProducto, Cantidad, PrecioUnitario, Subtotal)

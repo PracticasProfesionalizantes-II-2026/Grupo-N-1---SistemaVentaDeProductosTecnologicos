@@ -20,4 +20,6 @@ public class ProductoResponse
     public int IdCategoria { get; set; }
 
     public int IdProveedor { get; set; }
+
+    public string? ImagenUrl { get; set; }
 }

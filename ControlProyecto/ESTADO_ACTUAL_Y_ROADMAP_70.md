@@ -828,3 +828,59 @@ flujos cubiertos**, pero no se declara cerrado para promoción mientras ADM-03 n
 tenga una decisión explícita y las pruebas LocalDB no puedan volver a ejecutarse.
 La evidencia actual mantiene el avance por debajo del umbral global del 70%; este
 archivo continúa siendo el roadmap hacia ese objetivo intermedio.
+
+## 18. Catálogo local de demostración
+
+Fecha: 2026-09-16. Rama: `Rama--Facu`. Alcance: base local `TotaltechDev`, sin
+migraciones ni cambios de esquema.
+
+### Implementación
+
+- Se agregó un inicializador explícito activado por `DemoData:Enabled=true`. Antes
+  de escribir exige entorno `Development`, servidor exacto
+  `(localdb)\MSSQLLocalDB` y base exacta `TotaltechDev`; cualquier otro destino se
+  rechaza y nunca se muestra la cadena de conexión en logs.
+- La carga conserva los dos proveedores existentes y crea tres proveedores demo
+  identificados por CUIT y email estables. Crea 20 productos identificados por
+  nombre normalizado: 8 notebooks y 12 periféricos (6 auriculares y 6 teclados).
+- La carga es idempotente y no sobrescribe precio, stock, dirección ni cambios
+  manuales cuando encuentra un registro existente.
+- Se añadió al Frontend un resolver inyectado por DI que asocia los 20 nombres con
+  imágenes públicas existentes. `ImagenUrl` pertenece sólo al modelo Frontend y
+  el contrato JSON de la API permanece sin cambios.
+- Catálogo, detalle, búsqueda, categoría y disponibles aplican el resolver. Las
+  vistas evitan imágenes rotas mediante un estado neutro cuando no existe mapeo.
+- Se corrigió una prueba SQL que todavía apuntaba a la migración eliminada
+  `20260622030413_AjustarContratosValidacionesYRestricciones`; ahora valida la
+  migración consolidada realmente incluida y la persistencia del total y snapshot.
+
+### Ejecución real e idempotencia
+
+| Comprobación | Resultado |
+|---|---|
+| Conteo previo | 2 proveedores, 0 productos y 6 categorías |
+| Primera carga | 3 proveedores y 20 productos creados |
+| Segunda carga | 0 proveedores y 0 productos creados; 3 y 20 omitidos por existir |
+| Conteo final | 5 proveedores y 20 productos |
+| Distribución | 8 Notebooks, 12 Periféricos y 0 en las otras cuatro categorías |
+| Integridad | 0 referencias huérfanas; precios y stocks no negativos |
+| Disponibilidad | 19 disponibles y 1 auricular con stock 0 |
+| Azure SQL | NO EJECUTADO; destino prohibido por la guardia |
+
+### Evidencia y gates
+
+| Gate | Resultado |
+|---|---|
+| Restore | PASS; cuatro proyectos restaurados/actualizados |
+| Build Release | PASS; cuatro proyectos, 0 errores y 0 advertencias |
+| Pruebas rápidas | PASS; 8 unitarias + 27 integración, 35/35 |
+| SQL Server aislado | PASS; 13/13 en bases LocalDB temporales |
+| Pruebas nuevas | PASS; creación, doble ejecución, preservación manual, referencias, rangos, guardia y 20 imágenes |
+| API pública | PASS; 20 productos, 19 disponibles, 8 notebooks y búsqueda `Lenovo` con 2 resultados |
+| Vistas MVC | PASS; catálogo, detalle, búsqueda, categoría y disponibles responden 200 |
+| Archivos visuales | PASS; 20 rutas únicas del catálogo responden 200 y detalle contiene su imagen |
+
+No se agregaron imágenes, migraciones ni columnas; tampoco se eliminaron datos.
+No se ejecutaron commit, push ni cambios de rama. El avance global continúa por
+debajo del umbral documentado del 70%, por lo que se conserva este roadmap hacia
+ese objetivo intermedio.
