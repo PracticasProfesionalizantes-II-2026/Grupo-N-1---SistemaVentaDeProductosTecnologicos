@@ -3,7 +3,6 @@ html {
   --azul-200: #90caf9;
   --header-blue: #2474ee;
   --navigation-gray: #dedede;
-  --accent-violet: #d850eb;
 }
 
 @media (min-width: 768px) {
@@ -151,12 +150,6 @@ body {
   height: auto;
   margin: 0 auto;
   transform: translateY(-45px);
-}
-
-.site-footer {
-  height: 15px;
-  flex: 0 0 auto;
-  background-color: var(--accent-violet);
 }
 
 @media (max-width: 700px) {
@@ -623,10 +616,6 @@ body {
   display: flex;
   overflow: visible;
   background: #f4f7fc;
-}
-
-.login-body .site-footer {
-  display: none;
 }
 
 .login-section {
