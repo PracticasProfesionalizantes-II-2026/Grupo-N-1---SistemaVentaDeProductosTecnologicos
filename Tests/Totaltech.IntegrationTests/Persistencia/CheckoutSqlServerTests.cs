@@ -563,6 +563,8 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
         public Task<List<Producto>> ObtenerPorCategoriaAsync(int idCategoria) =>
             _inner.ObtenerPorCategoriaAsync(idCategoria);
         public Task<List<Producto>> ObtenerDisponiblesAsync() => _inner.ObtenerDisponiblesAsync();
+        public Task<Totaltech.Logica.DTOs.CatalogoProductosResponse> ObtenerCatalogoAsync(
+            Totaltech.Logica.DTOs.FiltroCatalogoProductos filtro) => _inner.ObtenerCatalogoAsync(filtro);
 
         public Task<bool> DescontarStockAsync(int idProducto, int cantidad)
         {

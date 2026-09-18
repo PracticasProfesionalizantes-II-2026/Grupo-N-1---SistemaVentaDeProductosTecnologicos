@@ -18,8 +18,10 @@ public class ProductoResponse
     public int Stock { get; set; }
 
     public int IdCategoria { get; set; }
+    public string CategoriaNombre { get; set; } = string.Empty;
 
     public int IdProveedor { get; set; }
+    public string ProveedorNombre { get; set; } = string.Empty;
 
     public string? ImagenUrl { get; set; }
 }

@@ -1,30 +1,3 @@
-@* ============================================================================ *@
-@* MÓDULO: PRODUCTOS                                                          *@
-@* RESPONSABILIDAD: Mostrar el detalle de un producto.                         *@
-@* ============================================================================ *@
-@model Frontend.Models.Api.Responses.ProductoResponse
-<div class="container py-4">
-    <h1>@Model.Nombre</h1>
-    @if (!string.IsNullOrWhiteSpace(Model.ImagenUrl))
-    {
-        <img src="@Model.ImagenUrl"
-             class="product-detail-image mb-4"
-             alt="@Model.Nombre" />
-    }
-    else
-    {
-        <div class="product-image-placeholder product-detail-image mb-4" aria-hidden="true">
-            Sin imagen disponible
-        </div>
-    }
-    <p>@Model.Descripcion</p>
-    <p>Precio: $ @Model.Precio.ToString("N2")</p>
-    <p>Stock: @Model.Stock</p>
-    <p>Categoría: @Model.IdCategoria</p>
-    <p>Proveedor: @Model.IdProveedor</p>
-    <a asp-action="Index" class="btn btn-secondary">Volver</a>
-    @if (User.IsInRole("Admin"))
-    {
-        <a asp-action="Editar" asp-route-id="@Model.IdProducto" class="btn btn-warning">Editar</a>
-    }
-</div>
+@model Frontend.Models.ViewModels.Productos.ProductoDetalleViewModel
+@{ViewData["Title"]=Model.Nombre;}
+<main class="container py-4 producto-detalle"><a asp-action="Index" class="btn btn-link">← Volver al catálogo</a><article class="producto-detalle__contenido">@if(!string.IsNullOrWhiteSpace(Model.ImagenUrl)){<img src="@Model.ImagenUrl" class="product-detail-image" alt="@Model.Nombre" />}else{<div class="product-image-placeholder product-detail-image" role="img" aria-label="@Model.Nombre: imagen no disponible">Sin imagen disponible</div>}<div><p class="text-muted">@Model.CategoriaNombre</p><h1>@Model.Nombre</h1><p>@Model.Descripcion</p><p class="h3">$ @Model.Precio.ToString("N2")</p><p class="@(Model.Stock>0?"text-success":"text-danger")"><strong>@(Model.Stock>0?$"Disponible ({Model.Stock})":"Sin stock")</strong></p></div></article></main>

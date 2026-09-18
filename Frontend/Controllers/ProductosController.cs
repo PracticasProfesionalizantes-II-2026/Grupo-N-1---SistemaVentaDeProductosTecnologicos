@@ -30,24 +30,57 @@ public class ProductosController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? texto, int? idCategoria, decimal? precioMin,
+        decimal? precioMax, bool soloDisponibles = false, int pagina = 1, int tamanoPagina = 12)
     {
-        return await MostrarCatalogoAsync(
-            _productosApiService.ObtenerTodosAsync(),
-            "Todos los productos");
+        var modelo = new CatalogoViewModel { Texto = texto, CategoriaSeleccionadaId = idCategoria,
+            PrecioMin = precioMin, PrecioMax = precioMax, SoloDisponibles = soloDisponibles,
+            Pagina = pagina, TamanoPagina = tamanoPagina };
+        try
+        {
+            var categoriasTask = _categoriasApiService.ObtenerTodosAsync();
+            var catalogoTask = _productosApiService.ObtenerCatalogoAsync(texto, idCategoria, precioMin, precioMax,
+                soloDisponibles, pagina, tamanoPagina);
+            await Task.WhenAll(categoriasTask, catalogoTask);
+            modelo.Categorias = await categoriasTask;
+            var (catalogo, error) = await catalogoTask;
+            modelo.Error = error;
+            if (catalogo is not null)
+            {
+                modelo.Productos = catalogo.Items; modelo.Pagina = catalogo.Pagina;
+                modelo.TamanoPagina = catalogo.TamanoPagina; modelo.TotalItems = catalogo.TotalItems;
+                modelo.TotalPaginas = catalogo.TotalPaginas;
+            }
+        }
+        catch (HttpRequestException) { modelo.Error = "El catálogo no está disponible en este momento. Podés reintentar."; }
+        catch (TaskCanceledException) { modelo.Error = "La consulta tardó demasiado. Podés reintentar."; }
+        return View(modelo);
     }
 
     [HttpGet]
     public async Task<IActionResult> Detalle(int id)
     {
-        var producto = await _productosApiService.ObtenerPorIdAsync(id);
-
-        if (producto is null)
+        try
         {
-            return NotFound();
-        }
+            var producto = await _productosApiService.ObtenerPorIdAsync(id);
 
-        return View(producto);
+            if (producto is null)
+            {
+                Response.StatusCode = StatusCodes.Status404NotFound;
+                return View("NoEncontrado");
+            }
+
+            var categorias = await _categoriasApiService.ObtenerTodosAsync();
+            return View(new ProductoDetalleViewModel { IdProducto = producto.IdProducto, Nombre = producto.Nombre,
+                Descripcion = producto.Descripcion, Precio = producto.Precio, Stock = producto.Stock,
+                ImagenUrl = producto.ImagenUrl,
+                CategoriaNombre = categorias.FirstOrDefault(c => c.IdCategoria == producto.IdCategoria)?.Nombre ?? "Sin categoría" });
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            TempData["Error"] = "No pudimos cargar el producto. Intentá nuevamente.";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [HttpGet, Authorize(Roles = "Admin")]
@@ -119,61 +152,19 @@ public class ProductosController : Controller
     [HttpGet]
     public async Task<IActionResult> Buscar(string? texto)
     {
-        var titulo = string.IsNullOrWhiteSpace(texto)
-            ? "Resultados de búsqueda"
-            : $"Resultados para: {texto}";
-
-        return await MostrarCatalogoAsync(
-            _productosApiService.BuscarAsync(texto),
-            titulo);
+        return RedirectToAction(nameof(Index), new { texto });
     }
 
     [HttpGet]
     public async Task<IActionResult> Categoria(int id)
     {
-        var productosTask = _productosApiService.ObtenerPorCategoriaAsync(id);
-        var categoriasTask = _categoriasApiService.ObtenerTodosAsync();
-        await Task.WhenAll(productosTask, categoriasTask);
-
-        var categorias = await categoriasTask;
-        var categoria = categorias.FirstOrDefault(item => item.IdCategoria == id);
-        if (categoria is null)
-        {
-            return NotFound();
-        }
-
-        ViewData["TituloProductos"] = $"Productos de {categoria.Nombre}";
-
-        return View("Index", new CatalogoViewModel
-        {
-            Productos = await productosTask,
-            Categorias = categorias,
-            CategoriaSeleccionadaId = id
-        });
+        return RedirectToAction(nameof(Index), new { idCategoria = id });
     }
 
     [HttpGet]
     public async Task<IActionResult> Disponibles()
     {
-        return await MostrarCatalogoAsync(
-            _productosApiService.ObtenerDisponiblesAsync(),
-            "Productos disponibles");
-    }
-
-    private async Task<IActionResult> MostrarCatalogoAsync(
-        Task<List<ProductoResponse>> productosTask,
-        string titulo)
-    {
-        var categoriasTask = _categoriasApiService.ObtenerTodosAsync();
-        await Task.WhenAll(productosTask, categoriasTask);
-
-        ViewData["TituloProductos"] = titulo;
-
-        return View("Index", new CatalogoViewModel
-        {
-            Productos = await productosTask,
-            Categorias = await categoriasTask
-        });
+        return RedirectToAction(nameof(Index), new { soloDisponibles = true });
     }
 
     private async Task CargarOpcionesAsync(int? idProveedorActual = null)

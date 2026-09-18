@@ -125,6 +125,32 @@ public class ProductosApiService
 		return AplicarImagenes(productos);
 	}
 
+	public async Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(
+		string? texto, int? idCategoria, decimal? precioMin, decimal? precioMax,
+		bool soloDisponibles, int pagina, int tamanoPagina)
+	{
+		var parametros = new Dictionary<string, string?>
+		{
+			["texto"] = texto,
+			["idCategoria"] = idCategoria?.ToString(),
+			["precioMin"] = precioMin?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			["precioMax"] = precioMax?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			["soloDisponibles"] = soloDisponibles.ToString().ToLowerInvariant(),
+			["pagina"] = pagina.ToString(),
+			["tamanoPagina"] = tamanoPagina.ToString()
+		};
+		var query = string.Join("&", parametros
+			.Where(item => !string.IsNullOrWhiteSpace(item.Value))
+			.Select(item => $"{item.Key}={Uri.EscapeDataString(item.Value!)}"));
+		var respuesta = await CrearCliente().GetAsync($"/productos/catalogo?{query}");
+		if (respuesta.StatusCode == HttpStatusCode.BadRequest)
+			return (null, (await respuesta.Content.ReadAsStringAsync()).Trim('"'));
+		respuesta.EnsureSuccessStatusCode();
+		var catalogo = await respuesta.Content.ReadFromJsonAsync<CatalogoProductosResponse>();
+		if (catalogo is not null) AplicarImagenes(catalogo.Items);
+		return (catalogo, null);
+	}
+
 	private List<ProductoResponse> AplicarImagenes(List<ProductoResponse>? productos)
 	{
 		var resultado = productos ?? [];
