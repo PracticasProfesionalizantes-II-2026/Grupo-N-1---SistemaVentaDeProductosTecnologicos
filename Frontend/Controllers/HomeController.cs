@@ -113,7 +113,9 @@ public class HomeController : Controller
                 propiedades);
 
             TempData["AuthSuccess"] = $"¡Bienvenido, {usuario.Nombre}!";
-            return RedirectToAction(nameof(Index));
+            return usuario.Rol == 1
+                ? RedirectToAction("Index", "Administracion")
+                : RedirectToAction(nameof(Index));
         }
         catch (HttpRequestException exception)
         {

@@ -8,11 +8,11 @@
     ViewData["Title"] = "Detalle de la categoría";
 }
 
-<div class="container py-4">
+<div class="container py-4 admin-module">
 
-    <h1 class="mb-4">Detalle de la categoría</h1>
+    <div class="admin-module__header mb-4"><div>@if (User.IsInRole("Admin")) { <p class="admin-module__eyebrow">Categorías</p> }<h1>Detalle de la categoría</h1></div></div>
 
-    <div class="card">
+    <div class="card admin-panel admin-detail-card admin-detail-card--stacked">
 
         <div class="card-body">
 

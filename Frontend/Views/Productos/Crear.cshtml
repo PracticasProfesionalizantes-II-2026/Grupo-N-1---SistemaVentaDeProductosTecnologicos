@@ -4,10 +4,11 @@
 @* ============================================================================ *@
 @model Frontend.Models.Api.Requests.ProductoRequest
 @{
+    ViewData["Title"] = "Nuevo producto";
     var hayProveedoresActivos = ViewBag.HayProveedoresActivos is true;
 }
-<div class="container py-4">
-    <h1>Nuevo producto</h1>
+<div class="container py-4 admin-module">
+    <div class="admin-module__header"><div><p class="admin-module__eyebrow">Productos</p><h1>Nuevo producto</h1></div></div>
     @if (!hayProveedoresActivos)
     {
         <div class="alert alert-warning">
@@ -15,7 +16,7 @@
             <a asp-controller="Proveedores" asp-action="Crear" class="alert-link">Crear proveedor</a>
         </div>
     }
-    <form asp-action="Crear" method="post">
+    <form asp-action="Crear" method="post" class="admin-form admin-panel">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <label asp-for="Nombre"></label>

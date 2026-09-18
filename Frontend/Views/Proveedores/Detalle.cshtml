@@ -3,7 +3,11 @@
 @* RESPONSABILIDAD: Mostrar el detalle de un proveedor.                        *@
 @* ============================================================================ *@
 @model Frontend.Models.Api.Responses.ProveedorResponse
-<div class="container py-4">
+@{ ViewData["Title"] = Model.RazonSocial; }
+<div class="container py-4 admin-module">
+    <a asp-action="Index" class="btn btn-link admin-module__back">← Volver a proveedores</a>
+    <article class="admin-panel admin-detail-card admin-detail-card--stacked">
+    <p class="admin-module__eyebrow">Proveedor</p>
     <h1>@Model.RazonSocial</h1>
     <p>ID: @Model.IdProveedor</p>
     <p>CUIT: @Model.Cuit</p>
@@ -38,9 +42,11 @@
     {
         <p class="text-muted">Sin dirección registrada.</p>
     }
-    <a asp-action="Index" class="btn btn-secondary">Volver</a>
+    <div class="admin-detail-card__actions">
     @if (User.IsInRole("Admin"))
     {
         <a asp-action="Editar" asp-route-id="@Model.IdProveedor" class="btn btn-warning">Editar</a>
     }
+    </div>
+    </article>
 </div>

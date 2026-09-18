@@ -1,10 +1,43 @@
 @model Frontend.Models.ViewModels.Productos.CatalogoViewModel
-@{ ViewData["Title"] = "Catálogo"; }
-<main class="container py-4 catalogo" id="contenido-principal">
- <div class="catalogo__encabezado"><div><h1>Catálogo</h1><p>@Model.TotalItems resultado(s)</p></div>@if(User.IsInRole("Admin")){<a asp-action="Crear" class="btn btn-success">Nuevo producto</a>}</div>
- <form asp-action="Index" method="get" class="catalogo__filtros" aria-label="Filtros del catálogo">
+@{
+ ViewData["Title"] = "Catálogo";
+ var esAdmin = User.IsInRole("Admin");
+ var mostrarCategorias = Context.Request.Query["categorias"] == "1" || Model.CategoriaSeleccionadaId is not null;
+ var filtrosSinCategoria = Filtros(Model);
+ filtrosSinCategoria["idCategoria"] = "";
+}
+<div class="container py-4 catalogo admin-module admin-module--catalog @(esAdmin ? null : "public-catalog")">
+ @if (User.IsInRole("Admin"))
+ {
+  <div class="catalogo__encabezado admin-module__header"><div><p class="admin-module__eyebrow">Gestión de catálogo</p><h1>Productos</h1><p>@Model.TotalItems resultado(s)</p></div><a asp-action="Crear" class="btn btn-primary">Nuevo producto</a></div>
+ }
+ else
+ {
+  <div class="catalogo__encabezado"><div><h1>Productos</h1><p>@Model.TotalItems resultado(s)</p></div></div>
+
+  <details id="categorias" class="catalog-categories" open="@(mostrarCategorias ? "open" : null)">
+   <summary>Categorías</summary>
+   <nav class="catalog-categories__list" aria-label="Filtrar productos por categoría">
+    <a asp-action="Index" asp-all-route-data="@filtrosSinCategoria" class="@(Model.CategoriaSeleccionadaId is null ? "is-active" : null)" aria-current="@(Model.CategoriaSeleccionadaId is null ? "page" : null)">Todas</a>
+    @foreach (var categoria in Model.Categorias)
+    {
+     var filtrosCategoria = Filtros(Model);
+     filtrosCategoria["idCategoria"] = categoria.IdCategoria.ToString();
+     <a asp-action="Index" asp-all-route-data="@filtrosCategoria" class="@(categoria.IdCategoria == Model.CategoriaSeleccionadaId ? "is-active" : null)" aria-current="@(categoria.IdCategoria == Model.CategoriaSeleccionadaId ? "page" : null)">@categoria.Nombre</a>
+    }
+   </nav>
+  </details>
+ }
+ <form asp-action="Index" method="get" class="catalogo__filtros admin-panel" aria-label="Filtros del catálogo">
   <div><label for="texto">Buscar</label><input id="texto" name="texto" value="@Model.Texto" maxlength="100" class="form-control" placeholder="Nombre o descripción" /></div>
-  <div><label for="idCategoria">Categoría</label><select id="idCategoria" name="idCategoria" class="form-select"><option value="">Todas</option>@foreach(var c in Model.Categorias){<option value="@c.IdCategoria" selected="@(c.IdCategoria==Model.CategoriaSeleccionadaId)">@c.Nombre</option>}</select></div>
+  @if (esAdmin)
+  {
+   <div><label for="idCategoria">Categoría</label><select id="idCategoria" name="idCategoria" class="form-select"><option value="">Todas</option>@foreach(var c in Model.Categorias){<option value="@c.IdCategoria" selected="@(c.IdCategoria==Model.CategoriaSeleccionadaId)">@c.Nombre</option>}</select></div>
+  }
+  else if (Model.CategoriaSeleccionadaId is not null)
+  {
+   <input type="hidden" name="idCategoria" value="@Model.CategoriaSeleccionadaId" />
+  }
   <div><label for="precioMin">Precio mínimo</label><input id="precioMin" name="precioMin" value="@Model.PrecioMin" type="number" min="0" step="0.01" class="form-control" /></div>
   <div><label for="precioMax">Precio máximo</label><input id="precioMax" name="precioMax" value="@Model.PrecioMax" type="number" min="0" step="0.01" class="form-control" /></div>
   <div><label for="tamanoPagina">Por página</label><select id="tamanoPagina" name="tamanoPagina" class="form-select"><option value="12" selected="@(Model.TamanoPagina==12)">12</option><option value="24" selected="@(Model.TamanoPagina==24)">24</option></select></div>
@@ -14,8 +47,8 @@
  @if(!string.IsNullOrWhiteSpace(Model.Error)){<div class="alert alert-warning" role="alert">@Model.Error <a asp-action="Index" asp-all-route-data="@Filtros(Model)">Reintentar</a></div>}
  else if(Model.Productos.Count==0){<div class="alert alert-info">No hay productos que coincidan con los filtros. <a asp-action="Index">Limpiar filtros</a>.</div>}
  else {
-  <div class="catalogo__grilla">@foreach(var p in Model.Productos){<article class="card h-100">@if(!string.IsNullOrWhiteSpace(p.ImagenUrl)){<img src="@p.ImagenUrl" class="card-img-top product-catalog-image" alt="@p.Nombre" />}else{<div class="product-image-placeholder" role="img" aria-label="@p.Nombre: imagen no disponible">Sin imagen disponible</div>}<div class="card-body"><h2 class="h5">@p.Nombre</h2><p>@p.Descripcion</p><p><strong>$ @p.Precio.ToString("N2")</strong></p><p>@p.CategoriaNombre</p><p class="@(p.Stock>0?"text-success":"text-danger")">@(p.Stock>0?$"Stock: {p.Stock}":"Sin stock")</p><a asp-action="Detalle" asp-route-id="@p.IdProducto" class="btn btn-primary">Ver producto</a></div></article>}</div>
+  <div class="catalogo__grilla">@foreach(var p in Model.Productos){<article class="card h-100 admin-product-card">@if(!string.IsNullOrWhiteSpace(p.ImagenUrl)){<img src="@p.ImagenUrl" class="card-img-top product-catalog-image" alt="@p.Nombre" />}else{<div class="product-image-placeholder" role="img" aria-label="@p.Nombre: imagen no disponible">Sin imagen disponible</div>}<div class="card-body"><h2 class="h5">@p.Nombre</h2><p>@p.Descripcion</p><p><strong>$ @p.Precio.ToString("N2")</strong></p><p>@p.CategoriaNombre</p><p class="@(p.Stock>0?"text-success":"text-danger")">@(p.Stock>0?$"Stock: {p.Stock}":"Sin stock")</p><a asp-action="Detalle" asp-route-id="@p.IdProducto" class="btn btn-primary">Ver producto</a></div></article>}</div>
   @if(Model.TotalPaginas>1){<nav aria-label="Páginas del catálogo"><ul class="pagination justify-content-center mt-4">@for(var n=Math.Max(1,Model.Pagina-2);n<=Math.Min(Model.TotalPaginas,Model.Pagina+2);n++){var routes=Filtros(Model);routes["pagina"]=n.ToString();<li class="page-item @(n==Model.Pagina?"active":null)"><a class="page-link" aria-current="@(n==Model.Pagina?"page":null)" asp-action="Index" asp-all-route-data="@routes">@n</a></li>}</ul></nav>}
  }
-</main>
+</div>
 @functions { static Dictionary<string,string> Filtros(Frontend.Models.ViewModels.Productos.CatalogoViewModel m)=>new(){["texto"]=m.Texto??"",["idCategoria"]=m.CategoriaSeleccionadaId?.ToString()??"",["precioMin"]=m.PrecioMin?.ToString(System.Globalization.CultureInfo.InvariantCulture)??"",["precioMax"]=m.PrecioMax?.ToString(System.Globalization.CultureInfo.InvariantCulture)??"",["soloDisponibles"]=m.SoloDisponibles.ToString().ToLowerInvariant(),["tamanoPagina"]=m.TamanoPagina.ToString()}; }

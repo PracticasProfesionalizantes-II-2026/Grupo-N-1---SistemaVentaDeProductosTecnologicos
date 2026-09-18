@@ -1,62 +1,83 @@
 @* ============================================================================ *@
 @* MÓDULO: PROVEEDORES                                                         *@
-@* RESPONSABILIDAD: Compartir campos del formulario de proveedor.             *@
+@* RESPONSABILIDAD: Compartir campos de alta y edición del proveedor.          *@
 @* ============================================================================ *@
 @model Frontend.Models.Api.Requests.ProveedorRequest
-<label asp-for="RazonSocial"></label>
-<input asp-for="RazonSocial" class="form-control" />
-<span asp-validation-for="RazonSocial" class="text-danger"></span>
 
-<label asp-for="Cuit"></label>
-<input asp-for="Cuit" class="form-control" />
-<span asp-validation-for="Cuit" class="text-danger"></span>
+<div class="admin-form__grid">
+    <div class="admin-form__field">
+        <label asp-for="RazonSocial"></label>
+        <input asp-for="RazonSocial" class="form-control" />
+        <span asp-validation-for="RazonSocial" class="text-danger"></span>
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="Cuit"></label>
+        <input asp-for="Cuit" class="form-control" />
+        <span asp-validation-for="Cuit" class="text-danger"></span>
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="EmailComercial"></label>
+        <input asp-for="EmailComercial" class="form-control" />
+        <span asp-validation-for="EmailComercial" class="text-danger"></span>
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="TelefonoComercial"></label>
+        <input asp-for="TelefonoComercial" class="form-control" />
+    </div>
+    <div class="admin-form__field admin-form__field--wide">
+        <label asp-for="CondicionIva"></label>
+        <input asp-for="CondicionIva" class="form-control" />
+        <span asp-validation-for="CondicionIva" class="text-danger"></span>
+    </div>
+</div>
 
-<label asp-for="EmailComercial"></label>
-<input asp-for="EmailComercial" class="form-control" />
-<span asp-validation-for="EmailComercial" class="text-danger"></span>
-
-<label asp-for="TelefonoComercial"></label>
-<input asp-for="TelefonoComercial" class="form-control" />
-
-<label asp-for="CondicionIva"></label>
-<input asp-for="CondicionIva" class="form-control" />
-<span asp-validation-for="CondicionIva" class="text-danger"></span>
-
-<fieldset class="border rounded p-3 my-3">
-    <legend class="float-none w-auto px-2 fs-5">Domicilio fiscal</legend>
-
-    <label asp-for="Direccion.Calle">Calle</label>
-    <input asp-for="Direccion.Calle" class="form-control" />
-    <span asp-validation-for="Direccion.Calle" class="text-danger"></span>
-
-    <label asp-for="Direccion.Numero">Número</label>
-    <input asp-for="Direccion.Numero" class="form-control" />
-    <span asp-validation-for="Direccion.Numero" class="text-danger"></span>
-
-    <label asp-for="Direccion.Ciudad">Ciudad</label>
-    <input asp-for="Direccion.Ciudad" class="form-control" />
-
-    <label asp-for="Direccion.Provincia">Provincia</label>
-    <input asp-for="Direccion.Provincia" class="form-control" />
-
-    <label asp-for="Direccion.CodigoPostal">Código postal</label>
-    <input asp-for="Direccion.CodigoPostal" class="form-control" />
-
-    <label asp-for="Direccion.Pais">País</label>
-    <input asp-for="Direccion.Pais" class="form-control" />
+<fieldset class="admin-form__section">
+    <legend>Domicilio fiscal</legend>
+    <div class="admin-form__field">
+        <label asp-for="Direccion.Calle">Calle</label>
+        <input asp-for="Direccion.Calle" class="form-control" />
+        <span asp-validation-for="Direccion.Calle" class="text-danger"></span>
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="Direccion.Numero">Número</label>
+        <input asp-for="Direccion.Numero" class="form-control" />
+        <span asp-validation-for="Direccion.Numero" class="text-danger"></span>
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="Direccion.Ciudad">Ciudad</label>
+        <input asp-for="Direccion.Ciudad" class="form-control" />
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="Direccion.Provincia">Provincia</label>
+        <input asp-for="Direccion.Provincia" class="form-control" />
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="Direccion.CodigoPostal">Código postal</label>
+        <input asp-for="Direccion.CodigoPostal" class="form-control" />
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="Direccion.Pais">País</label>
+        <input asp-for="Direccion.Pais" class="form-control" />
+    </div>
 </fieldset>
 
-<label asp-for="PlazoPagoDias"></label>
-<input asp-for="PlazoPagoDias" type="number" min="0" class="form-control" />
-<span asp-validation-for="PlazoPagoDias" class="text-danger"></span>
-
-<label asp-for="TiempoEntregaDias"></label>
-<input asp-for="TiempoEntregaDias" type="number" min="0" class="form-control" />
-<span asp-validation-for="TiempoEntregaDias" class="text-danger"></span>
-
-<label asp-for="MonedaPreferida"></label>
-<input asp-for="MonedaPreferida" class="form-control" />
-<span asp-validation-for="MonedaPreferida" class="text-danger"></span>
+<div class="admin-form__grid">
+    <div class="admin-form__field">
+        <label asp-for="PlazoPagoDias"></label>
+        <input asp-for="PlazoPagoDias" type="number" min="0" class="form-control" />
+        <span asp-validation-for="PlazoPagoDias" class="text-danger"></span>
+    </div>
+    <div class="admin-form__field">
+        <label asp-for="TiempoEntregaDias"></label>
+        <input asp-for="TiempoEntregaDias" type="number" min="0" class="form-control" />
+        <span asp-validation-for="TiempoEntregaDias" class="text-danger"></span>
+    </div>
+    <div class="admin-form__field admin-form__field--wide">
+        <label asp-for="MonedaPreferida"></label>
+        <input asp-for="MonedaPreferida" class="form-control" />
+        <span asp-validation-for="MonedaPreferida" class="text-danger"></span>
+    </div>
+</div>
 
 <div class="form-check my-3">
     <input asp-for="Activo" class="form-check-input" />

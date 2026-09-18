@@ -23,6 +23,12 @@ public class CategoriasController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        if (!User.IsInRole("Admin"))
+        {
+            var catalogoUrl = Url.Action("Index", "Productos", new { categorias = 1 }) ?? "/Productos";
+            return Redirect($"{catalogoUrl}#categorias");
+        }
+
         var categorias = await _categoriasApiService.ObtenerTodosAsync();
 
         return View(categorias);
@@ -31,6 +37,11 @@ public class CategoriasController : Controller
     [HttpGet]
     public async Task<IActionResult> Detalle(int id)
     {
+        if (!User.IsInRole("Admin"))
+        {
+            return RedirectToAction("Categoria", "Productos", new { id });
+        }
+
         var categoria = await _categoriasApiService.ObtenerPorIdAsync(id);
 
         if (categoria is null)
