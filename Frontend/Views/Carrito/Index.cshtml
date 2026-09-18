@@ -1,1 +1,35 @@
-@* Estructura reservada. Implementación pendiente. *@
+@model Frontend.Models.ViewModels.Carrito.CarritoViewModel
+@{ ViewData["Title"] = "Carrito"; }
+<main class="container py-4 carrito">
+    <h1>Mi carrito</h1>
+    @if (TempData["Error"] is string error) { <div class="alert alert-warning" role="alert">@error</div> }
+    @if (TempData["Mensaje"] is string mensaje) { <div class="alert alert-success" role="status">@mensaje</div> }
+    @if (Model.Vacio)
+    {
+        <section class="alert alert-info" aria-label="Carrito vacío">
+            <p>Tu carrito está vacío.</p><a asp-controller="Productos" asp-action="Index" class="btn btn-primary">Explorar productos</a>
+        </section>
+    }
+    else
+    {
+        <div class="carrito__lista">
+        @foreach (var item in Model.Items)
+        {
+            <article class="carrito__item">
+                @if (!string.IsNullOrWhiteSpace(item.ImagenUrl)) { <img src="@item.ImagenUrl" alt="@item.Nombre" /> }
+                else { <div class="product-image-placeholder" role="img" aria-label="@item.Nombre: imagen no disponible">Sin imagen disponible</div> }
+                <div class="carrito__producto"><h2>@item.Nombre</h2><p>@item.Descripcion</p><p>Precio unitario: <strong>$ @item.PrecioUnitario.ToString("N2")</strong></p></div>
+                <form asp-action="ActualizarCantidad" method="post" class="carrito__cantidad">
+                    @Html.AntiForgeryToken()<input type="hidden" name="idProducto" value="@item.IdProducto" />
+                    <label for="cantidad-@item.IdProducto">Cantidad de @item.Nombre</label>
+                    <input id="cantidad-@item.IdProducto" name="cantidad" type="number" min="1" value="@item.Cantidad" inputmode="numeric" />
+                    <button class="btn btn-outline-primary" type="submit">Actualizar</button>
+                </form>
+                <p class="carrito__subtotal">Subtotal: <strong>$ @item.Subtotal.ToString("N2")</strong></p>
+                <form asp-action="Eliminar" method="post">@Html.AntiForgeryToken()<input type="hidden" name="idProducto" value="@item.IdProducto" /><button class="btn btn-outline-danger" type="submit">Eliminar</button></form>
+            </article>
+        }
+        </div>
+        <section class="carrito__total" aria-label="Resumen de compra"><span>@Model.CantidadTotal unidad(es)</span><strong>Total: $ @Model.Total.ToString("N2")</strong></section>
+    }
+</main>

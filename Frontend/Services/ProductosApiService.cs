@@ -144,7 +144,10 @@ public class ProductosApiService
 			.Select(item => $"{item.Key}={Uri.EscapeDataString(item.Value!)}"));
 		var respuesta = await CrearCliente().GetAsync($"/productos/catalogo?{query}");
 		if (respuesta.StatusCode == HttpStatusCode.BadRequest)
-			return (null, (await respuesta.Content.ReadAsStringAsync()).Trim('"'));
+		{
+			var error = await respuesta.Content.ReadFromJsonAsync<ErrorCatalogoResponse>();
+			return (null, error?.Mensaje ?? "Los filtros ingresados no son válidos.");
+		}
 		respuesta.EnsureSuccessStatusCode();
 		var catalogo = await respuesta.Content.ReadFromJsonAsync<CatalogoProductosResponse>();
 		if (catalogo is not null) AplicarImagenes(catalogo.Items);

@@ -9,6 +9,7 @@ namespace Frontend.Models;
 
 public class LoginViewModel
 {
+    public string? ReturnUrl { get; set; }
     [Required(ErrorMessage = "Ingresá tu email.")]
     [EmailAddress(ErrorMessage = "Ingresá un email válido.")]
     [Display(Name = "Email")]
