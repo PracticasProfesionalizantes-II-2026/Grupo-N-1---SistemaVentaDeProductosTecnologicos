@@ -15,7 +15,9 @@ namespace Totaltech.Logica
         Task<List<Producto>> ObtenerPorCategoriaAsync(int idCategoria);
         Task<List<Producto>> ObtenerDisponiblesAsync();
         Task<bool> ActualizarStockAsync(int id, int stock);
-        Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(FiltroCatalogoProductos filtro);
+        Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(
+            FiltroCatalogoProductos filtro,
+            CancellationToken cancellationToken = default);
     }
 
     public class ProductosLogica : IProductosLogica
@@ -108,7 +110,9 @@ namespace Totaltech.Logica
             return true;
         }
 
-        public async Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(FiltroCatalogoProductos filtro)
+        public async Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(
+            FiltroCatalogoProductos filtro,
+            CancellationToken cancellationToken = default)
         {
             filtro.Texto = filtro.Texto?.Trim();
             if (filtro.Pagina < 1) return (null, "La página debe ser mayor o igual a 1.");
@@ -118,7 +122,7 @@ namespace Totaltech.Logica
             if (filtro.PrecioMin > filtro.PrecioMax) return (null, "El precio mínimo no puede superar al precio máximo.");
             if (filtro.Texto?.Length > 100) return (null, "El texto no puede superar los 100 caracteres.");
 
-            return (await _repositorio.ObtenerCatalogoAsync(filtro), null);
+            return (await _repositorio.ObtenerCatalogoAsync(filtro, cancellationToken), null);
         }
 
         private async Task<string?> ValidarProductoAsync(Producto producto)

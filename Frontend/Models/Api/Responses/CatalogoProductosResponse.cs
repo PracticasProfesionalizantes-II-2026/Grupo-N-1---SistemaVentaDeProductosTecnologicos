@@ -8,3 +8,9 @@ public sealed class CatalogoProductosResponse
     public int TotalItems { get; set; }
     public int TotalPaginas { get; set; }
 }
+
+public sealed class ErrorCatalogoResponse
+{
+    public string Codigo { get; set; } = string.Empty;
+    public string Mensaje { get; set; } = string.Empty;
+}

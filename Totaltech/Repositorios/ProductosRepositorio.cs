@@ -17,7 +17,9 @@ namespace Totaltech.Repositorios
         Task<List<Producto>> ObtenerPorCategoriaAsync(int idCategoria);
         Task<List<Producto>> ObtenerDisponiblesAsync();
         Task<bool> DescontarStockAsync(int idProducto, int cantidad);
-        Task<CatalogoProductosResponse> ObtenerCatalogoAsync(FiltroCatalogoProductos filtro);
+        Task<CatalogoProductosResponse> ObtenerCatalogoAsync(
+            FiltroCatalogoProductos filtro,
+            CancellationToken cancellationToken = default);
     }
 
     public class ProductosRepositorio : IProductosRepositorio
@@ -88,7 +90,9 @@ namespace Totaltech.Repositorios
                 .ToListAsync();
         }
 
-        public async Task<CatalogoProductosResponse> ObtenerCatalogoAsync(FiltroCatalogoProductos filtro)
+        public async Task<CatalogoProductosResponse> ObtenerCatalogoAsync(
+            FiltroCatalogoProductos filtro,
+            CancellationToken cancellationToken = default)
         {
             var consulta = _context.Productos.AsNoTracking().AsQueryable();
 
@@ -108,7 +112,7 @@ namespace Totaltech.Repositorios
             if (filtro.SoloDisponibles)
                 consulta = consulta.Where(producto => producto.Stock > 0);
 
-            var totalItems = await consulta.CountAsync();
+            var totalItems = await consulta.CountAsync(cancellationToken);
             var items = await consulta
                 .OrderBy(producto => producto.Nombre)
                 .ThenBy(producto => producto.IdProducto)
@@ -126,7 +130,7 @@ namespace Totaltech.Repositorios
                     IdProveedor = producto.IdProveedor,
                     ProveedorNombre = producto.Proveedor!.RazonSocial
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return new CatalogoProductosResponse
             {

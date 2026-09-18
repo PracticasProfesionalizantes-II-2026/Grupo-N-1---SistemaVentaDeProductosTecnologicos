@@ -37,9 +37,9 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult Login(string? email = null)
+    public IActionResult Login(string? email = null, string? returnUrl = null)
     {
-        return View(new LoginViewModel { Email = email?.Trim() ?? string.Empty });
+        return View(new LoginViewModel { Email = email?.Trim() ?? string.Empty, ReturnUrl = returnUrl });
     }
 
     [HttpPost]
@@ -113,9 +113,9 @@ public class HomeController : Controller
                 propiedades);
 
             TempData["AuthSuccess"] = $"¡Bienvenido, {usuario.Nombre}!";
-            return usuario.Rol == 1
-                ? RedirectToAction("Index", "Administracion")
-                : RedirectToAction(nameof(Index));
+            if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+                return LocalRedirect(model.ReturnUrl);
+            return usuario.Rol == 1 ? RedirectToAction("Index", "Administracion") : RedirectToAction(nameof(Index));
         }
         catch (HttpRequestException exception)
         {

@@ -1,4 +1,5 @@
 using Frontend.Services;
+using Frontend.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,7 @@ builder.Services.AddScoped<CategoriasApiService>();
 builder.Services.AddScoped<ProductosApiService>();
 builder.Services.AddScoped<ProveedoresApiService>();
 builder.Services.AddScoped<AdministracionApiService>();
+builder.Services.AddScoped<ICarritosApiService, CarritosApiService>();
 builder.Services.AddSingleton<ProductoImagenResolver>();
 
 builder.Services

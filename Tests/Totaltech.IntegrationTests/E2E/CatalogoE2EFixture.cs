@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Totaltech.IntegrationTests.Infrastructure;
 using Totaltech.Logica;
 using Totaltech.Repositorios;
+using Entidades = Totaltech.Entidades;
 
 namespace Totaltech.IntegrationTests.E2E;
 
@@ -18,6 +19,21 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
 
     public string FrontendUrl { get; private set; } = string.Empty;
     public IBrowser Browser => _browser ?? throw new InvalidOperationException("El navegador no está iniciado.");
+
+    public async Task<(string Email, string Contrasena)> CrearClienteAsync()
+    {
+        var email = $"carrito-{Guid.NewGuid():N}@test.local";
+        const string contrasena = "Cliente123456";
+        await using var db = _database.CreateContext();
+        var logica = new UsuariosLogica(new UsuariosRepositorio(db));
+        var error = await logica.RegistrarAsync(new Entidades.Usuario
+        {
+            Nombre = "Cliente", Apellido = "E2E", Email = email, Contrasena = contrasena,
+            Telefono = "1111111111", FechaRegistro = DateTime.UtcNow, Rol = Entidades.RolUsuario.Cliente
+        });
+        if (error is not null) throw new InvalidOperationException(error);
+        return (email, contrasena);
+    }
 
     public async Task InitializeAsync()
     {

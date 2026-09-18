@@ -74,6 +74,62 @@ public sealed class CatalogoEndpointsTests
         Assert.Equal(0, result.TotalItems);
     }
 
+    [Fact]
+    public async Task Catalogo_FiltrosIndividualesFuncionan()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var ids = await SembrarAsync(factory);
+
+        var texto = await client.GetFromJsonAsync<CatalogoProductosResponse>("/productos/catalogo?texto=Mouse");
+        var categoria = await client.GetFromJsonAsync<CatalogoProductosResponse>($"/productos/catalogo?idCategoria={ids.Categoria}");
+        var minimo = await client.GetFromJsonAsync<CatalogoProductosResponse>("/productos/catalogo?precioMin=150");
+        var maximo = await client.GetFromJsonAsync<CatalogoProductosResponse>("/productos/catalogo?precioMax=50");
+        var disponibles = await client.GetFromJsonAsync<CatalogoProductosResponse>("/productos/catalogo?soloDisponibles=true");
+
+        Assert.Single(texto!.Items);
+        Assert.Equal(3, categoria!.TotalItems);
+        Assert.Contains(minimo!.Items, producto => producto.Nombre == "Portátil Alfa");
+        Assert.Contains(maximo!.Items, producto => producto.Nombre == "Mouse Gamma");
+        Assert.DoesNotContain(disponibles!.Items, producto => producto.Stock == 0);
+    }
+
+    [Fact]
+    public async Task Catalogo_TextoSeRecortaYAceptaHastaCienCaracteres()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        await SembrarAsync(factory);
+
+        var recortado = await client.GetFromJsonAsync<CatalogoProductosResponse>(
+            $"/productos/catalogo?texto={Uri.EscapeDataString("  Mouse  ")}");
+        using var limiteValido = await client.GetAsync($"/productos/catalogo?texto={new string('a', 100)}");
+        using var excedido = await client.GetAsync($"/productos/catalogo?texto={new string('a', 101)}");
+
+        Assert.Single(recortado!.Items);
+        Assert.Equal(HttpStatusCode.OK, limiteValido.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, excedido.StatusCode);
+        var error = await excedido.Content.ReadFromJsonAsync<ErrorCatalogoResponse>();
+        Assert.Equal("catalogo_parametros_invalidos", error!.Codigo);
+        Assert.Contains("100", error.Mensaje);
+    }
+
+    [Fact]
+    public async Task Catalogo_PaginaPosteriorALaUltimaConservaMetadatos()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        await SembrarAsync(factory);
+
+        var result = await client.GetFromJsonAsync<CatalogoProductosResponse>(
+            "/productos/catalogo?pagina=50&tamanoPagina=2");
+
+        Assert.Empty(result!.Items);
+        Assert.Equal(50, result.Pagina);
+        Assert.True(result.TotalItems >= 3);
+        Assert.True(result.TotalPaginas >= 2);
+    }
+
     private static async Task<(int Categoria, int Proveedor)> SembrarAsync(TotaltechWebApplicationFactory factory)
     {
         using var scope = factory.Services.CreateScope();
