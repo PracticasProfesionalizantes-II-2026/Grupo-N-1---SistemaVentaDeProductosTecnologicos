@@ -3,7 +3,6 @@ html {
   --azul-200: #90caf9;
   --header-blue: #2474ee;
   --navigation-gray: #dedede;
-  --accent-violet: #d850eb;
 }
 
 @media (min-width: 768px) {
@@ -44,7 +43,6 @@ body {
   align-items: center;
   justify-content: center;
   background-color: var(--header-blue);
-  border-bottom: 3px solid var(--accent-violet);
 }
 
 .header-brand {
@@ -152,12 +150,6 @@ body {
   height: auto;
   margin: 0 auto;
   transform: translateY(-45px);
-}
-
-.site-footer {
-  height: 15px;
-  flex: 0 0 auto;
-  background-color: var(--accent-violet);
 }
 
 @media (max-width: 700px) {
@@ -624,10 +616,6 @@ body {
   display: flex;
   overflow: visible;
   background: #f4f7fc;
-}
-
-.login-body .site-footer {
-  display: none;
 }
 
 .login-section {
@@ -1240,4 +1228,104 @@ body {
     grid-template-columns: 1fr;
   }
 
+}
+
+.product-catalog-image {
+  width: 100%;
+  height: 240px;
+  object-fit: contain;
+  padding: 12px;
+  background: #fff;
+}
+
+.product-detail-image {
+  display: block;
+  width: min(100%, 560px);
+  height: 420px;
+  object-fit: contain;
+  padding: 16px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-image-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  color: #6c757d;
+  background: #f1f3f5;
+}
+
+/* Catálogo público: las categorías viven dentro de Productos. */
+.public-catalog {
+  width: min(1180px, calc(100% - 2rem));
+}
+
+.public-catalog .catalogo__encabezado p {
+  margin-bottom: 0;
+  color: #667085;
+}
+
+.catalog-categories {
+  margin: 1.25rem 0;
+  border: 1px solid #d8e2f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.catalog-categories summary {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  color: #174ea6;
+  font-weight: 700;
+  list-style-position: inside;
+}
+
+.catalog-categories summary:hover,
+.catalog-categories summary:focus-visible {
+  background: #f5f8ff;
+}
+
+.catalog-categories__list {
+  padding: 0 1rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.catalog-categories__list a {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #344054;
+  text-decoration: none;
+}
+
+.catalog-categories__list a:hover,
+.catalog-categories__list a:focus-visible,
+.catalog-categories__list a.is-active {
+  border-color: #2474ee;
+  background: #2474ee;
+  color: #fff;
+}
+
+.public-catalog .catalogo__filtros {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .public-catalog .catalogo__filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .public-catalog {
+    width: min(100% - 1rem, 1180px);
+  }
+
+  .public-catalog .catalogo__filtros {
+    grid-template-columns: 1fr;
+  }
 }

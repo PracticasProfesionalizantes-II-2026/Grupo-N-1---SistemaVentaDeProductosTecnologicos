@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Totaltech.Datos;
 using Totaltech.Entidades;
+using Totaltech.Logica.DTOs;
 
 namespace Totaltech.Repositorios
 {
@@ -16,6 +17,7 @@ namespace Totaltech.Repositorios
         Task<List<Producto>> ObtenerPorCategoriaAsync(int idCategoria);
         Task<List<Producto>> ObtenerDisponiblesAsync();
         Task<bool> DescontarStockAsync(int idProducto, int cantidad);
+        Task<CatalogoProductosResponse> ObtenerCatalogoAsync(FiltroCatalogoProductos filtro);
     }
 
     public class ProductosRepositorio : IProductosRepositorio
@@ -84,6 +86,56 @@ namespace Totaltech.Repositorios
             return await _context.Productos
                 .Where(producto => producto.Stock > 0)
                 .ToListAsync();
+        }
+
+        public async Task<CatalogoProductosResponse> ObtenerCatalogoAsync(FiltroCatalogoProductos filtro)
+        {
+            var consulta = _context.Productos.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filtro.Texto))
+            {
+                consulta = consulta.Where(producto =>
+                    producto.Nombre.Contains(filtro.Texto) ||
+                    producto.Descripcion.Contains(filtro.Texto));
+            }
+
+            if (filtro.IdCategoria.HasValue)
+                consulta = consulta.Where(producto => producto.IdCategoria == filtro.IdCategoria.Value);
+            if (filtro.PrecioMin.HasValue)
+                consulta = consulta.Where(producto => producto.Precio >= filtro.PrecioMin.Value);
+            if (filtro.PrecioMax.HasValue)
+                consulta = consulta.Where(producto => producto.Precio <= filtro.PrecioMax.Value);
+            if (filtro.SoloDisponibles)
+                consulta = consulta.Where(producto => producto.Stock > 0);
+
+            var totalItems = await consulta.CountAsync();
+            var items = await consulta
+                .OrderBy(producto => producto.Nombre)
+                .ThenBy(producto => producto.IdProducto)
+                .Skip((filtro.Pagina - 1) * filtro.TamanoPagina)
+                .Take(filtro.TamanoPagina)
+                .Select(producto => new ProductoCatalogoResponse
+                {
+                    IdProducto = producto.IdProducto,
+                    Nombre = producto.Nombre,
+                    Descripcion = producto.Descripcion,
+                    Precio = producto.Precio,
+                    Stock = producto.Stock,
+                    IdCategoria = producto.IdCategoria,
+                    CategoriaNombre = producto.Categoria!.Nombre,
+                    IdProveedor = producto.IdProveedor,
+                    ProveedorNombre = producto.Proveedor!.RazonSocial
+                })
+                .ToListAsync();
+
+            return new CatalogoProductosResponse
+            {
+                Items = items,
+                Pagina = filtro.Pagina,
+                TamanoPagina = filtro.TamanoPagina,
+                TotalItems = totalItems,
+                TotalPaginas = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)filtro.TamanoPagina)
+            };
         }
 
         public async Task<bool> DescontarStockAsync(int idProducto, int cantidad)

@@ -15,12 +15,10 @@ namespace Totaltech.Logica
     public class ProveedoresLogica : IProveedoresLogica
     {
         private readonly IProveedoresRepositorio _repositorio;
-        private readonly IDireccionesRepositorio _direccionesRepositorio;
 
-        public ProveedoresLogica(IProveedoresRepositorio repositorio, IDireccionesRepositorio direccionesRepositorio)
+        public ProveedoresLogica(IProveedoresRepositorio repositorio)
         {
             _repositorio = repositorio;
-            _direccionesRepositorio = direccionesRepositorio;
         }
 
         public Task<List<Proveedor>> ObtenerTodosAsync()
@@ -35,7 +33,7 @@ namespace Totaltech.Logica
 
         public async Task<string?> CrearAsync(Proveedor proveedor)
         {
-            var error = await ValidarProveedorAsync(proveedor);
+            var error = ValidarProveedor(proveedor);
             if (error is not null)
             {
                 return error;
@@ -47,7 +45,7 @@ namespace Totaltech.Logica
 
         public async Task<string?> ActualizarAsync(Proveedor proveedor)
         {
-            var error = await ValidarProveedorAsync(proveedor);
+            var error = ValidarProveedor(proveedor);
             if (error is not null)
             {
                 return error;
@@ -69,7 +67,7 @@ namespace Totaltech.Logica
             return true;
         }
 
-        private async Task<string?> ValidarProveedorAsync(Proveedor proveedor)
+        private static string? ValidarProveedor(Proveedor proveedor)
         {
             if (string.IsNullOrWhiteSpace(proveedor.RazonSocial) || string.IsNullOrWhiteSpace(proveedor.Cuit))
             {
@@ -93,9 +91,15 @@ namespace Totaltech.Logica
                 return "Los plazos no pueden ser negativos.";
             }
 
-            if (proveedor.IdDireccion.HasValue && !await _direccionesRepositorio.ExisteAsync(proveedor.IdDireccion.Value))
+            if (proveedor.Direccion is null)
             {
-                return "La direccion indicada no existe.";
+                return "La direccion del proveedor es obligatoria.";
+            }
+
+            if (string.IsNullOrWhiteSpace(proveedor.Direccion.Calle)
+                || string.IsNullOrWhiteSpace(proveedor.Direccion.Numero))
+            {
+                return "La calle y el numero de la direccion son obligatorios.";
             }
 
             return null;

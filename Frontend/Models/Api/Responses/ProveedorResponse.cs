@@ -21,6 +21,8 @@ public class ProveedorResponse
 
     public int? IdDireccion { get; set; }
 
+    public DireccionProveedorResponse? Direccion { get; set; }
+
     public int PlazoPagoDias { get; set; }
 
     public int TiempoEntregaDias { get; set; }
@@ -28,4 +30,19 @@ public class ProveedorResponse
     public string MonedaPreferida { get; set; } = string.Empty;
 
     public bool Activo { get; set; }
+
+    public string NombreParaSeleccion => Activo
+        ? RazonSocial
+        : $"{RazonSocial} (inactivo)";
+}
+
+public class DireccionProveedorResponse
+{
+    public int IdDireccion { get; set; }
+    public string Calle { get; set; } = string.Empty;
+    public string Numero { get; set; } = string.Empty;
+    public string Ciudad { get; set; } = string.Empty;
+    public string Provincia { get; set; } = string.Empty;
+    public string CodigoPostal { get; set; } = string.Empty;
+    public string Pais { get; set; } = string.Empty;
 }

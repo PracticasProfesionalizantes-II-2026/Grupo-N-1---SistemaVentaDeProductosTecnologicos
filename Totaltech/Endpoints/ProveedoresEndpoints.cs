@@ -72,11 +72,27 @@ namespace Totaltech.Endpoints
             proveedor.EmailComercial = request.EmailComercial;
             proveedor.TelefonoComercial = request.TelefonoComercial;
             proveedor.CondicionIva = request.CondicionIva;
-            proveedor.IdDireccion = request.IdDireccion;
             proveedor.PlazoPagoDias = request.PlazoPagoDias;
             proveedor.TiempoEntregaDias = request.TiempoEntregaDias;
             proveedor.MonedaPreferida = request.MonedaPreferida;
             proveedor.Activo = request.Activo;
+
+            if (request.Direccion is null)
+            {
+                proveedor.Direccion = null;
+                proveedor.IdDireccion = null;
+                return;
+            }
+
+            proveedor.Direccion ??= request.Direccion.ToEntity();
+            proveedor.Direccion.Calle = request.Direccion.Calle;
+            proveedor.Direccion.Numero = request.Direccion.Numero;
+            proveedor.Direccion.Ciudad = request.Direccion.Ciudad ?? string.Empty;
+            proveedor.Direccion.Provincia = request.Direccion.Provincia ?? string.Empty;
+            proveedor.Direccion.CodigoPostal = request.Direccion.CodigoPostal ?? string.Empty;
+            proveedor.Direccion.Pais = request.Direccion.Pais ?? string.Empty;
+            proveedor.Direccion.IdUsuario = null;
+            proveedor.Direccion.Tipo = TipoDireccion.Fiscal;
         }
     }
 }

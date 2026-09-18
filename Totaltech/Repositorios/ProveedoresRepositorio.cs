@@ -25,12 +25,16 @@ namespace Totaltech.Repositorios
 
         public async Task<List<Proveedor>> ObtenerTodosAsync()
         {
-            return await _context.Proveedores.ToListAsync();
+            return await _context.Proveedores
+                .Include(proveedor => proveedor.Direccion)
+                .ToListAsync();
         }
 
         public async Task<Proveedor?> ObtenerPorIdAsync(int id)
         {
-            return await _context.Proveedores.FindAsync(id);
+            return await _context.Proveedores
+                .Include(proveedor => proveedor.Direccion)
+                .SingleOrDefaultAsync(proveedor => proveedor.IdProveedor == id);
         }
 
         public async Task<bool> ExisteAsync(int id)

@@ -1,8 +1,3 @@
-// ============================================================================
-// MÓDULO: SERVICIO API DE PRODUCTOS
-// RESPONSABILIDAD: Consultar y mantener productos mediante el cliente TotaltechApi.
-// LÍMITE: Traduce operaciones HTTP; no aplica reglas de inventario localmente.
-// ============================================================================
 using System.Net;
 using System.Net.Http.Json;
 using Frontend.Models.Api.Responses;
@@ -12,10 +7,14 @@ namespace Frontend.Services;
 public class ProductosApiService
 {
 	private readonly IHttpClientFactory _httpClientFactory;
+	private readonly ProductoImagenResolver _imagenResolver;
 
-	public ProductosApiService(IHttpClientFactory httpClientFactory)
+	public ProductosApiService(
+		IHttpClientFactory httpClientFactory,
+		ProductoImagenResolver imagenResolver)
 	{
 		_httpClientFactory = httpClientFactory;
+		_imagenResolver = imagenResolver;
 	}
 
 	private HttpClient CrearCliente()
@@ -74,7 +73,7 @@ public class ProductosApiService
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
 			"/productos/");
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
 	}
 
 	public async Task<ProductoResponse?> ObtenerPorIdAsync(int id)
@@ -90,7 +89,8 @@ public class ProductosApiService
 
 		respuesta.EnsureSuccessStatusCode();
 
-		return await respuesta.Content.ReadFromJsonAsync<ProductoResponse>();
+		return AplicarImagen(
+			await respuesta.Content.ReadFromJsonAsync<ProductoResponse>());
 	}
 
 	public async Task<List<ProductoResponse>> BuscarAsync(string? texto)
@@ -102,7 +102,7 @@ public class ProductosApiService
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(ruta);
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
 	}
 
 	public async Task<List<ProductoResponse>> ObtenerPorCategoriaAsync(int idCategoria)
@@ -112,7 +112,7 @@ public class ProductosApiService
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
 			$"/productos/categoria/{idCategoria}");
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
 	}
 
 	public async Task<List<ProductoResponse>> ObtenerDisponiblesAsync()
@@ -122,6 +122,53 @@ public class ProductosApiService
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
 			"/productos/disponibles");
 
-		return productos ?? new List<ProductoResponse>();
+		return AplicarImagenes(productos);
+	}
+
+	public async Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(
+		string? texto, int? idCategoria, decimal? precioMin, decimal? precioMax,
+		bool soloDisponibles, int pagina, int tamanoPagina)
+	{
+		var parametros = new Dictionary<string, string?>
+		{
+			["texto"] = texto,
+			["idCategoria"] = idCategoria?.ToString(),
+			["precioMin"] = precioMin?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			["precioMax"] = precioMax?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			["soloDisponibles"] = soloDisponibles.ToString().ToLowerInvariant(),
+			["pagina"] = pagina.ToString(),
+			["tamanoPagina"] = tamanoPagina.ToString()
+		};
+		var query = string.Join("&", parametros
+			.Where(item => !string.IsNullOrWhiteSpace(item.Value))
+			.Select(item => $"{item.Key}={Uri.EscapeDataString(item.Value!)}"));
+		var respuesta = await CrearCliente().GetAsync($"/productos/catalogo?{query}");
+		if (respuesta.StatusCode == HttpStatusCode.BadRequest)
+			return (null, (await respuesta.Content.ReadAsStringAsync()).Trim('"'));
+		respuesta.EnsureSuccessStatusCode();
+		var catalogo = await respuesta.Content.ReadFromJsonAsync<CatalogoProductosResponse>();
+		if (catalogo is not null) AplicarImagenes(catalogo.Items);
+		return (catalogo, null);
+	}
+
+	private List<ProductoResponse> AplicarImagenes(List<ProductoResponse>? productos)
+	{
+		var resultado = productos ?? [];
+		foreach (var producto in resultado)
+		{
+			AplicarImagen(producto);
+		}
+
+		return resultado;
+	}
+
+	private ProductoResponse? AplicarImagen(ProductoResponse? producto)
+	{
+		if (producto is not null)
+		{
+			producto.ImagenUrl = _imagenResolver.Resolver(producto.Nombre);
+		}
+
+		return producto;
 	}
 }

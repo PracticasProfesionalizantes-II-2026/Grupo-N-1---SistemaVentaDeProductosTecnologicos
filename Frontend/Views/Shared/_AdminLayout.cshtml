@@ -1,0 +1,111 @@
+@{
+    var nombreAdministrador = string.IsNullOrWhiteSpace(User.Identity?.Name)
+        ? "Administrador"
+        : User.Identity.Name;
+    var controladorActual = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    bool EsModuloActivo(string controlador) =>
+        string.Equals(controladorActual, controlador, StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TotalTech</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-modules.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="admin-shell" data-admin-shell>
+        <header class="admin-topbar">
+            <button class="admin-menu-toggle"
+                    type="button"
+                    aria-label="Abrir menú de administración"
+                    aria-controls="admin-sidebar"
+                    aria-expanded="false"
+                    data-admin-menu-toggle>
+                <span></span><span></span><span></span>
+            </button>
+
+            <a class="admin-brand" asp-controller="Administracion" asp-action="Index" aria-label="Ir al panel de TotalTech">
+                <img src="~/images/totaltech-logo.png" alt="TotalTech" />
+            </a>
+
+            <form class="admin-search" asp-controller="Productos" asp-action="Buscar" method="get" role="search">
+                <label class="visually-hidden" for="admin-search-input">Buscar productos</label>
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
+                <input id="admin-search-input" type="search" name="texto" placeholder="Buscar productos" />
+                <button type="submit">Buscar</button>
+            </form>
+
+            <div class="admin-account" aria-label="Cuenta activa">
+                <span class="admin-account__avatar" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" /></svg>
+                </span>
+                <span class="admin-account__text">
+                    <small>Cuenta</small>
+                    <strong>@nombreAdministrador</strong>
+                </span>
+            </div>
+        </header>
+
+        <aside class="admin-sidebar" id="admin-sidebar" aria-label="Navegación administrativa" data-admin-sidebar>
+            <nav class="admin-sidebar__nav">
+                <a class="admin-nav-link @(EsModuloActivo("Administracion") ? "admin-nav-link--active" : null)"
+                   asp-controller="Administracion" asp-action="Index"
+                   aria-current="@(EsModuloActivo("Administracion") ? "page" : null)">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v11h14V10M9 21v-7h6v7" /></svg>
+                    <span>Inicio</span>
+                </a>
+                <a class="admin-nav-link @(EsModuloActivo("Productos") ? "admin-nav-link--active" : null)"
+                   asp-controller="Productos" asp-action="Index"
+                   aria-current="@(EsModuloActivo("Productos") ? "page" : null)">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10" /></svg>
+                    <span>Productos</span>
+                </a>
+                <a class="admin-nav-link @(EsModuloActivo("Proveedores") ? "admin-nav-link--active" : null)"
+                   asp-controller="Proveedores" asp-action="Index"
+                   aria-current="@(EsModuloActivo("Proveedores") ? "page" : null)">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7M7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm10 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /></svg>
+                    <span>Proveedores</span>
+                </a>
+                <a class="admin-nav-link @(EsModuloActivo("Categorias") ? "admin-nav-link--active" : null)"
+                   asp-controller="Categorias" asp-action="Index"
+                   aria-current="@(EsModuloActivo("Categorias") ? "page" : null)">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></svg>
+                    <span>Categorías</span>
+                </a>
+
+                <div class="admin-sidebar__separator" role="separator"></div>
+
+                <span class="admin-nav-link admin-nav-link--disabled" aria-disabled="true">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M16 11h6" /></svg>
+                    <span>Usuarios</span><small>Próximamente</small>
+                </span>
+                <span class="admin-nav-link admin-nav-link--disabled" aria-disabled="true">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4" /></svg>
+                    <span>Pedidos</span><small>Próximamente</small>
+                </span>
+                <span class="admin-nav-link admin-nav-link--disabled" aria-disabled="true">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6v.1H10v-.1a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1H4v-4h.1a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6V4h4v.1a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.1.38.3.72.6 1h.1v4h-.1c-.3.28-.5.62-.6 1Z" /></svg>
+                    <span>Configuración</span><small>Próximamente</small>
+                </span>
+            </nav>
+
+            <a class="admin-sidebar__store-link" asp-controller="Home" asp-action="Index">
+                Volver a la tienda <span aria-hidden="true">→</span>
+            </a>
+        </aside>
+
+        <button class="admin-backdrop" type="button" aria-label="Cerrar menú" data-admin-menu-close></button>
+
+        <main class="admin-content" id="contenido-principal">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

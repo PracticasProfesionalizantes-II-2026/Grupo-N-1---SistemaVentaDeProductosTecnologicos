@@ -1,1 +1,83 @@
-<div class="container py-5"><h1>Panel de administración</h1><p>Modo Administrador Activo</p><a class="btn btn-primary" asp-controller="Categorias" asp-action="Index">Gestionar categorías</a> <a class="btn btn-primary" asp-controller="Productos" asp-action="Index">Gestionar productos</a> <a class="btn btn-primary" asp-controller="Proveedores" asp-action="Index">Gestionar proveedores</a></div>
+@model Frontend.Models.ViewModels.Administracion.AdminDashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Panel de administración";
+}
+
+<section class="admin-dashboard" aria-labelledby="admin-dashboard-title">
+    <header class="admin-dashboard__heading">
+        <p class="admin-dashboard__eyebrow">Resumen general</p>
+        <h1 id="admin-dashboard-title">Panel de administración</h1>
+        <p>Gestioná el catálogo y consultá el estado general de TotalTech.</p>
+    </header>
+
+    @if (Model.TieneMetricasNoDisponibles)
+    {
+        <div class="admin-dashboard__notice" role="status">
+            Algunas métricas no están disponibles en este momento. Podés seguir usando el panel normalmente.
+        </div>
+    }
+
+    <div class="admin-metrics" aria-label="Indicadores generales">
+        <article class="admin-metric admin-metric--products">
+            <div class="admin-metric__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10" /></svg>
+            </div>
+            <div>
+                <h2>Total productos</h2>
+                <p>@ValorMetrica(Model.TotalProductos)</p>
+            </div>
+        </article>
+
+        <article class="admin-metric admin-metric--users">
+            <div class="admin-metric__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            </div>
+            <div>
+                <h2>Total usuarios</h2>
+                <p>@ValorMetrica(Model.TotalUsuarios)</p>
+            </div>
+        </article>
+
+        <article class="admin-metric admin-metric--orders">
+            <div class="admin-metric__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3 3h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6M10 20a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm9 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" /></svg>
+            </div>
+            <div>
+                <h2>Pedidos pendientes</h2>
+                <p>@ValorMetrica(Model.PedidosPendientes)</p>
+            </div>
+        </article>
+    </div>
+
+    <section class="admin-shortcuts" aria-labelledby="admin-shortcuts-title">
+        <div class="admin-shortcuts__heading">
+            <div>
+                <p class="admin-dashboard__eyebrow">Accesos rápidos</p>
+                <h2 id="admin-shortcuts-title">Gestión diaria</h2>
+            </div>
+        </div>
+
+        <div class="admin-shortcuts__grid">
+            <a asp-controller="Productos" asp-action="Index" class="admin-shortcut">
+                <strong>Productos</strong>
+                <span>Consultá el catálogo, stock y precios.</span>
+                <span class="admin-shortcut__action">Gestionar productos <span aria-hidden="true">→</span></span>
+            </a>
+            <a asp-controller="Proveedores" asp-action="Index" class="admin-shortcut">
+                <strong>Proveedores</strong>
+                <span>Administrá proveedores y domicilios fiscales.</span>
+                <span class="admin-shortcut__action">Gestionar proveedores <span aria-hidden="true">→</span></span>
+            </a>
+            <a asp-controller="Categorias" asp-action="Index" class="admin-shortcut">
+                <strong>Categorías</strong>
+                <span>Organizá las categorías disponibles.</span>
+                <span class="admin-shortcut__action">Gestionar categorías <span aria-hidden="true">→</span></span>
+            </a>
+        </div>
+    </section>
+</section>
+
+@functions {
+    private static string ValorMetrica(int? valor) => valor?.ToString("N0") ?? "No disponible";
+}

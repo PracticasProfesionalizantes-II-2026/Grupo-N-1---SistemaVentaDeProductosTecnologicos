@@ -3,4 +3,50 @@
 @* RESPONSABILIDAD: Mostrar el detalle de un proveedor.                        *@
 @* ============================================================================ *@
 @model Frontend.Models.Api.Responses.ProveedorResponse
-<div class="container py-4"><h1>@Model.RazonSocial</h1><p>ID: @Model.IdProveedor</p><p>CUIT: @Model.Cuit</p><p>Email: @Model.EmailComercial</p><p>Teléfono: @Model.TelefonoComercial</p><p>Condición IVA: @Model.CondicionIva</p><p>Moneda: @Model.MonedaPreferida</p><a asp-action="Index" class="btn btn-secondary">Volver</a>@if (User.IsInRole("Admin")){<a asp-action="Editar" asp-route-id="@Model.IdProveedor" class="btn btn-warning">Editar</a>}</div>
+@{ ViewData["Title"] = Model.RazonSocial; }
+<div class="container py-4 admin-module">
+    <a asp-action="Index" class="btn btn-link admin-module__back">← Volver a proveedores</a>
+    <article class="admin-panel admin-detail-card admin-detail-card--stacked">
+    <p class="admin-module__eyebrow">Proveedor</p>
+    <h1>@Model.RazonSocial</h1>
+    <p>ID: @Model.IdProveedor</p>
+    <p>CUIT: @Model.Cuit</p>
+    <p>Email: @Model.EmailComercial</p>
+    <p>Teléfono: @Model.TelefonoComercial</p>
+    <p>Condición IVA: @Model.CondicionIva</p>
+    <p>Moneda: @Model.MonedaPreferida</p>
+    @if (Model.Direccion is not null)
+    {
+        <h2 class="fs-4">Domicilio fiscal</h2>
+        <address>
+            @Model.Direccion.Calle @Model.Direccion.Numero<br />
+            @if (!string.IsNullOrWhiteSpace(Model.Direccion.Ciudad))
+            {
+                @Model.Direccion.Ciudad
+                <br />
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Direccion.Provincia))
+            {
+                @Model.Direccion.Provincia
+                <br />
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Direccion.CodigoPostal))
+            {
+                <span>CP @Model.Direccion.CodigoPostal</span>
+                <br />
+            }
+            @Model.Direccion.Pais
+        </address>
+    }
+    else
+    {
+        <p class="text-muted">Sin dirección registrada.</p>
+    }
+    <div class="admin-detail-card__actions">
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Editar" asp-route-id="@Model.IdProveedor" class="btn btn-warning">Editar</a>
+    }
+    </div>
+    </article>
+</div>

@@ -1,0 +1,336 @@
+.admin-shell .admin-module {
+  width: min(100%, 80rem);
+  margin: 0 auto;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.admin-shell .admin-module__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.admin-shell .admin-module__header h1,
+.admin-shell .admin-detail-card h1 {
+  margin: 0;
+  color: var(--admin-blue-deep);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 850;
+  letter-spacing: -0.035em;
+}
+
+.admin-shell .admin-module__header p:not(.admin-module__eyebrow) {
+  margin: 0.55rem 0 0;
+  color: var(--admin-muted);
+}
+
+.admin-shell .admin-module__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--admin-blue-dark);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-shell .admin-panel {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 1rem;
+  box-shadow: 0 12px 30px rgb(29 56 95 / 8%);
+}
+
+.admin-shell .admin-module .btn {
+  border-radius: 0.65rem;
+  font-weight: 700;
+}
+
+.admin-shell .admin-module .btn-primary {
+  background: var(--admin-blue-dark);
+  border-color: var(--admin-blue-dark);
+}
+
+.admin-shell .admin-module .btn-primary:hover,
+.admin-shell .admin-module .btn-primary:focus-visible {
+  background: var(--admin-blue-deep);
+  border-color: var(--admin-blue-deep);
+}
+
+.admin-shell .admin-module .btn:focus-visible,
+.admin-shell .admin-module .form-control:focus,
+.admin-shell .admin-module .form-select:focus,
+.admin-shell .admin-module .form-check-input:focus,
+.admin-shell .admin-module a:focus-visible {
+  outline: 3px solid #f7c948;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.admin-shell .admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-shell .admin-table-wrap .table {
+  min-width: 42rem;
+  margin: 0;
+}
+
+.admin-shell .admin-table-wrap thead th {
+  padding: 1rem;
+  color: #fff;
+  background: var(--admin-blue-deep);
+  border: 0;
+  white-space: nowrap;
+}
+
+.admin-shell .admin-table-wrap thead th:first-child {
+  border-radius: 1rem 0 0;
+}
+
+.admin-shell .admin-table-wrap thead th:last-child {
+  border-radius: 0 1rem 0 0;
+}
+
+.admin-shell .admin-table-wrap tbody td {
+  padding: 0.9rem 1rem;
+  border-color: var(--admin-border);
+  vertical-align: middle;
+}
+
+.admin-shell .admin-table-wrap tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-shell .admin-table-wrap td:last-child {
+  white-space: nowrap;
+}
+
+.admin-shell .admin-table-wrap td:last-child .btn,
+.admin-shell .admin-table-wrap td:last-child form {
+  margin: 0.15rem 0.15rem 0.15rem 0;
+}
+
+.admin-shell .admin-form {
+  width: min(100%, 58rem);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.admin-shell .admin-form > label,
+.admin-shell .admin-form__section label {
+  display: block;
+  margin: 1rem 0 0.35rem;
+  color: var(--admin-ink);
+  font-weight: 700;
+}
+
+.admin-shell .admin-form > label:first-of-type {
+  margin-top: 0;
+}
+
+.admin-shell .admin-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 1.25rem;
+}
+
+.admin-shell .admin-form__field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-shell .admin-form__field label {
+  display: block;
+  margin: 1rem 0 0.35rem;
+  color: var(--admin-ink);
+  font-weight: 700;
+}
+
+.admin-shell .admin-form__field .text-danger {
+  display: block;
+  min-height: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.admin-shell .admin-form .form-control,
+.admin-shell .admin-form .form-select {
+  min-height: 2.8rem;
+  border-color: #cbd6e5;
+  border-radius: 0.65rem;
+}
+
+.admin-shell .admin-form textarea.form-control {
+  min-height: 7rem;
+}
+
+.admin-shell .admin-form > .btn,
+.admin-shell .admin-form > a.btn {
+  margin-top: 1.25rem;
+}
+
+.admin-shell .admin-form__section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  margin: 1.5rem 0;
+  padding: 0 1.25rem 1.25rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.85rem;
+}
+
+.admin-shell .admin-form__section legend {
+  grid-column: 1 / -1;
+  width: auto;
+  margin: 0;
+  padding: 0 0.5rem;
+  color: var(--admin-blue-deep);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.admin-shell .admin-form__section .text-danger {
+  min-height: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.admin-shell .admin-module__back {
+  margin: 0 0 1rem;
+  padding-left: 0;
+  color: var(--admin-blue-dark);
+  text-decoration: none;
+}
+
+.admin-shell .admin-detail-card {
+  display: grid;
+  grid-template-columns: minmax(14rem, 24rem) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.admin-shell .admin-detail-card--stacked {
+  display: block;
+  width: min(100%, 58rem);
+}
+
+.admin-shell .admin-detail-card--stacked h1 {
+  margin-bottom: 1.5rem;
+}
+
+.admin-shell .admin-detail-card__actions {
+  margin-top: 1.5rem;
+}
+
+.admin-shell .producto-detalle__contenido .product-detail-image {
+  width: 100%;
+  max-height: 24rem;
+  object-fit: contain;
+  border-radius: 0.85rem;
+  background: #eef3f9;
+}
+
+.admin-shell .catalogo__filtros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+  margin: 0 0 1.5rem;
+  padding: 1.25rem;
+}
+
+.admin-shell .catalogo__filtros label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
+.admin-shell .catalogo__acciones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-shell .catalogo__grilla {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.admin-shell .admin-product-card {
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 1rem;
+  box-shadow: 0 10px 26px rgb(29 56 95 / 7%);
+}
+
+.admin-shell .admin-product-card .product-catalog-image,
+.admin-shell .admin-product-card .product-image-placeholder {
+  width: 100%;
+  height: 13rem;
+  object-fit: contain;
+  background: #eef3f9;
+}
+
+.admin-shell .admin-product-card .product-image-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  color: var(--admin-muted);
+  text-align: center;
+}
+
+.admin-shell .admin-product-card .card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-shell .admin-product-card .card-body .btn {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.admin-shell .pagination {
+  flex-wrap: wrap;
+}
+
+.admin-shell .pagination .page-link {
+  color: var(--admin-blue-dark);
+}
+
+.admin-shell .pagination .active .page-link {
+  color: #fff;
+  background: var(--admin-blue-dark);
+  border-color: var(--admin-blue-dark);
+}
+
+@media (max-width: 1100px) {
+  .admin-shell .catalogo__filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-shell .catalogo__grilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-shell .admin-module__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-shell .admin-module__header > .btn {
+    align-self: flex-start;
+  }
+
+  .admin-shell .admin-form__section,
+  .admin-shell .admin-form__grid,
+  .admin-shell .catalogo__filtros,
+  .admin-shell .catalogo__grilla,
+  .admin-shell .admin-detail-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-shell .catalogo__acciones .btn {
+    flex: 1;
+  }
+}
