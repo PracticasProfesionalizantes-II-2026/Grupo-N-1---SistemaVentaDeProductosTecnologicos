@@ -104,6 +104,7 @@ namespace Totaltech.Logica.DTOs
     {
         public string Nombre { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
+        public string? ImagenUrl { get; set; }
         public decimal Precio { get; set; }
         public int Stock { get; set; }
         public int IdCategoria { get; set; }
@@ -113,6 +114,7 @@ namespace Totaltech.Logica.DTOs
         {
             Nombre = Nombre,
             Descripcion = Descripcion,
+            ImagenUrl = ImagenUrl,
             Precio = Precio,
             Stock = Stock,
             IdCategoria = IdCategoria,

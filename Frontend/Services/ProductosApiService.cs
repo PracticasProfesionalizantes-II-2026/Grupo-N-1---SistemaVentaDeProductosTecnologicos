@@ -48,7 +48,8 @@ public class ProductosApiService
 		decimal precio,
 		int stock,
 		int idCategoria,
-		int idProveedor)
+		int idProveedor,
+		string? imagenUrl = null)
 	{
 		return CrearCliente().PutAsJsonAsync($"/productos/{id}", new
 		{
@@ -57,7 +58,8 @@ public class ProductosApiService
 			precio,
 			stock,
 			idCategoria,
-			idProveedor
+			idProveedor,
+			imagenUrl
 		});
 	}
 
@@ -167,7 +169,7 @@ public class ProductosApiService
 
 	private ProductoResponse? AplicarImagen(ProductoResponse? producto)
 	{
-		if (producto is not null)
+		if (producto is not null && string.IsNullOrWhiteSpace(producto.ImagenUrl))
 		{
 			producto.ImagenUrl = _imagenResolver.Resolver(producto.Nombre);
 		}

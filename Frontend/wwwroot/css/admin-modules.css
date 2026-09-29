@@ -288,6 +288,50 @@
   margin-top: auto;
 }
 
+.admin-shell .catalogo__producto-acciones,
+.admin-shell .producto-edicion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-shell .catalogo__producto-acciones {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.admin-shell .catalogo__producto-acciones form,
+.admin-shell .catalogo__producto-acciones .btn {
+  margin: 0;
+}
+
+.admin-shell .producto-edicion__acciones {
+  margin-top: 1.5rem;
+}
+
+.admin-shell .producto-edicion__imagen {
+  margin-top: 1.5rem;
+  min-width: 0;
+}
+
+.admin-shell .producto-edicion__imagen label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
+.admin-shell .producto-edicion__preview {
+  width: min(100%, 20rem);
+  height: 14rem;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background: #eef3f9;
+}
+
 .admin-shell .pagination {
   flex-wrap: wrap;
 }

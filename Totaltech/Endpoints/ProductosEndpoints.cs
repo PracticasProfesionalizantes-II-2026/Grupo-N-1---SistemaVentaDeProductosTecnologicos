@@ -112,6 +112,10 @@ namespace Totaltech.Endpoints
         {
             producto.Nombre = request.Nombre;
             producto.Descripcion = request.Descripcion;
+            if (request.ImagenUrl is not null)
+            {
+                producto.ImagenUrl = request.ImagenUrl;
+            }
             producto.Precio = request.Precio;
             producto.Stock = request.Stock;
             producto.IdCategoria = request.IdCategoria;

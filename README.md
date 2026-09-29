@@ -1,4 +1,22 @@
 ﻿# TotalTech
+## Imágenes del catálogo
+
+El administrador puede editar y eliminar productos desde sus tarjetas en **Productos**.
+La edición admite una imagen JPG, PNG o WebP de hasta 5 MB. Al guardar sin elegir
+otro archivo se conserva la imagen actual, incluso al cambiar el nombre.
+
+La migración `AgregarImagenProducto` agrega la columna opcional `Productos.ImagenUrl`.
+Debe aplicarse antes de ejecutar la versión actualizada del backend; el inicio en
+desarrollo ya usa la configuración existente `Database:ApplyMigrations`.
+Las pruebas de migración y eliminación utilizan bases LocalDB desechables
+`TotaltechTests_<GUID>`.
+
+Los archivos se guardan en `Frontend/wwwroot/uploads/productos`, fuera del control
+de versiones. Al publicar, conservar esa carpeta y sus permisos de escritura;
+respaldarla junto con la base de datos. Reemplazar una imagen no borra archivos
+anteriores. Las rutas de las imágenes originales se mantienen como alternativa
+para productos que todavía no tienen una imagen guardada.
+
 ## Integrantes:
 - Daiana Chinellato
 - Facundo Sola

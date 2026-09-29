@@ -1,6 +1,7 @@
 using Totaltech.Entidades;
 using Totaltech.Repositorios;
 using Totaltech.Logica.DTOs;
+using Totaltech.Validaciones;
 
 namespace Totaltech.Logica
 {
@@ -135,6 +136,11 @@ namespace Totaltech.Logica
             if (producto.Precio < 0 || producto.Stock < 0)
             {
                 return "El precio y el stock no pueden ser negativos.";
+            }
+
+            if (!ProductoImagenUrl.EsValida(producto.ImagenUrl))
+            {
+                return "La imagen debe ser una ruta local permitida de hasta 500 caracteres (JPG, PNG o WebP).";
             }
 
             if (!await _categoriasRepositorio.ExisteAsync(producto.IdCategoria))

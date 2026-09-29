@@ -2,7 +2,7 @@
 @* MÓDULO: PRODUCTOS                                                          *@
 @* RESPONSABILIDAD: Recibir los datos para editar un producto.                *@
 @* ============================================================================ *@
-@model Frontend.Models.Api.Requests.ProductoRequest
+@model Frontend.Models.ViewModels.Productos.ProductoEdicionViewModel
 @{
     ViewData["Title"] = "Editar producto";
     var hayProveedoresActivos = ViewBag.HayProveedoresActivos is true;
@@ -16,17 +16,21 @@
             <a asp-controller="Proveedores" asp-action="Crear" class="alert-link">Crear proveedor</a>
         </div>
     }
-    <form asp-action="Editar" asp-route-id="@Context.Request.RouteValues["id"]" method="post" class="admin-form admin-panel">
+    <form asp-action="Editar" asp-route-id="@Model.IdProducto" method="post" enctype="multipart/form-data" class="admin-form admin-panel">
         @Html.AntiForgeryToken()
+        <input asp-for="ReturnUrl" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <label asp-for="Nombre"></label>
         <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
         <label asp-for="Descripcion"></label>
         <input asp-for="Descripcion" class="form-control" />
         <label asp-for="Precio"></label>
         <input asp-for="Precio" type="number" step="0.01" min="0" class="form-control" />
+        <span asp-validation-for="Precio" class="text-danger"></span>
         <label asp-for="Stock"></label>
         <input asp-for="Stock" type="number" min="0" class="form-control" />
+        <span asp-validation-for="Stock" class="text-danger"></span>
         <label asp-for="IdCategoria">Categoría</label>
         <select asp-for="IdCategoria" asp-items="@(new SelectList(ViewBag.Categorias, "IdCategoria", "Nombre"))" class="form-select">
             <option value="">Seleccioná una categoría</option>
@@ -37,6 +41,23 @@
             <option value="">Seleccioná un proveedor</option>
         </select>
         <span asp-validation-for="IdProveedor" class="text-danger"></span>
-        <button class="btn btn-warning mt-3" disabled="@(!hayProveedoresActivos)">Guardar cambios</button>
+        <div class="producto-edicion__imagen">
+            <label asp-for="ImagenArchivo"></label>
+            <p id="imagen-ayuda" class="text-muted">JPG, PNG o WebP. Máximo 5 MB. Si no elegís otra imagen, se conserva la actual.</p>
+            <img id="imagen-preview" src="@Model.ImagenActualUrl" alt="Vista previa de la imagen del producto"
+                 class="producto-edicion__preview" hidden="@(string.IsNullOrWhiteSpace(Model.ImagenActualUrl))" />
+            <p id="imagen-vacia" hidden="@(!string.IsNullOrWhiteSpace(Model.ImagenActualUrl))">Sin imagen disponible</p>
+            <input asp-for="ImagenArchivo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                   class="form-control" aria-describedby="imagen-ayuda imagen-error" />
+            <span asp-validation-for="ImagenArchivo" class="text-danger"></span>
+            <p id="imagen-error" class="text-danger" role="status" aria-live="polite"></p>
+        </div>
+        <div class="producto-edicion__acciones">
+            <button type="submit" class="btn btn-primary" disabled="@(!hayProveedoresActivos)">Guardar cambios</button>
+            <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
     </form>
 </div>
+@section Scripts {
+    <script src="~/js/productos-editar.js" asp-append-version="true"></script>
+}

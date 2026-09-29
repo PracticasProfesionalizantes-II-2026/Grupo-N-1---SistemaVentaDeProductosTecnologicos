@@ -23,6 +23,7 @@ builder.Services.AddScoped<ProveedoresApiService>();
 builder.Services.AddScoped<AdministracionApiService>();
 builder.Services.AddScoped<ICarritosApiService, CarritosApiService>();
 builder.Services.AddSingleton<ProductoImagenResolver>();
+builder.Services.AddSingleton<ProductoImagenStorage>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -46,6 +47,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
