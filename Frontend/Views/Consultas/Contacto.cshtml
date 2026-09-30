@@ -1,1 +1,46 @@
-@* Estructura reservada. Implementación pendiente. *@
+@{
+    ViewData["Title"] = "Contactos";
+}
+
+<section class="contact-page" aria-labelledby="contacto-titulo">
+    <div class="contact-page__heading">
+        <p class="contact-page__eyebrow">ESTAMOS PARA AYUDARTE</p>
+        <h1 id="contacto-titulo">Contactanos</h1>
+        <p>Completá tus datos y contanos en qué podemos ayudarte.</p>
+    </div>
+
+    <form id="contacto-form" class="contact-form" method="post">
+        <div class="contact-form__field">
+            <label for="contacto-nombre">Nombre</label>
+            <input id="contacto-nombre" name="nombre" type="text" autocomplete="name" required
+                   placeholder="Tu nombre" aria-describedby="contacto-nombre-error" />
+            <span id="contacto-nombre-error" class="contact-form__error" aria-live="polite"></span>
+        </div>
+        <div class="contact-form__field">
+            <label for="contacto-email">Email</label>
+            <input id="contacto-email" name="email" type="email" autocomplete="email" inputmode="email" required
+                   placeholder="nombre@ejemplo.com" aria-describedby="contacto-email-error" />
+            <span id="contacto-email-error" class="contact-form__error" aria-live="polite"></span>
+        </div>
+        <div class="contact-form__field">
+            <label for="contacto-mensaje">Mensaje</label>
+            <textarea id="contacto-mensaje" name="mensaje" rows="6" required
+                      placeholder="Escribí tu mensaje" aria-describedby="contacto-mensaje-error"></textarea>
+            <span id="contacto-mensaje-error" class="contact-form__error" aria-live="polite"></span>
+        </div>
+        <button id="contacto-enviar" type="submit" class="btn btn-primary" disabled>Enviar</button>
+        <noscript><p>Activá JavaScript para usar este formulario de demostración.</p></noscript>
+    </form>
+
+    <dialog id="contacto-confirmacion" class="contact-dialog" aria-labelledby="contacto-confirmacion-titulo"
+            aria-describedby="contacto-confirmacion-texto">
+        <span class="contact-dialog__check" aria-hidden="true">✓</span>
+        <h2 id="contacto-confirmacion-titulo">Mensaje enviado</h2>
+        <p id="contacto-confirmacion-texto">Gracias por contactarnos</p>
+        <button id="contacto-aceptar" type="button" class="btn btn-primary" autofocus>Aceptar</button>
+    </dialog>
+</section>
+
+@section Scripts {
+    <script src="~/js/contacto.js" asp-append-version="true"></script>
+}

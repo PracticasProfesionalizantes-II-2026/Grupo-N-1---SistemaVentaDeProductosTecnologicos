@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Garantía";
+}
+
+<section class="contact-page warranty-page" aria-labelledby="garantia-titulo">
+    <div class="contact-page__heading">
+        <p class="contact-page__eyebrow">ESTAMOS PARA AYUDARTE</p>
+        <h1 id="garantia-titulo">Consultá por la garantía de tu producto</h1>
+        <p>Completá tus datos y contanos qué problema presenta tu producto.</p>
+    </div>
+
+    <form id="garantia-form" class="contact-form" method="post" aria-describedby="garantia-demo">
+        <p class="text-muted">Los campos marcados con * son obligatorios.</p>
+        <div class="row g-3">
+            <div class="col-12 col-md-6 contact-form__field">
+                <label for="garantia-nombre">Nombre *</label>
+                <input id="garantia-nombre" name="nombre" type="text" autocomplete="name" required
+                       aria-describedby="garantia-nombre-error" />
+                <span id="garantia-nombre-error" class="contact-form__error" aria-live="polite"></span>
+            </div>
+            <div class="col-12 col-md-6 contact-form__field">
+                <label for="garantia-email">Email *</label>
+                <input id="garantia-email" name="email" type="email" autocomplete="email" inputmode="email" required
+                       placeholder="nombre@ejemplo.com" aria-describedby="garantia-email-error" />
+                <span id="garantia-email-error" class="contact-form__error" aria-live="polite"></span>
+            </div>
+            <div class="col-12 col-md-6 contact-form__field">
+                <label for="garantia-telefono">Teléfono (opcional)</label>
+                <input id="garantia-telefono" name="telefono" type="tel" autocomplete="tel" />
+            </div>
+            <div class="col-12 col-md-6 contact-form__field">
+                <label for="garantia-producto">Producto *</label>
+                <input id="garantia-producto" name="producto" type="text" required
+                       placeholder="Nombre o modelo del producto" aria-describedby="garantia-producto-error" />
+                <span id="garantia-producto-error" class="contact-form__error" aria-live="polite"></span>
+            </div>
+            <div class="col-12 col-md-6 contact-form__field">
+                <label for="garantia-serie">Número de serie (opcional)</label>
+                <input id="garantia-serie" name="numeroSerie" type="text" />
+            </div>
+            <div class="col-12 col-md-6 contact-form__field">
+                <label for="garantia-fecha">Fecha de compra *</label>
+                <input id="garantia-fecha" name="fechaCompra" type="date" required
+                       aria-describedby="garantia-fecha-error" />
+                <span id="garantia-fecha-error" class="contact-form__error" aria-live="polite"></span>
+            </div>
+            <div class="col-12 contact-form__field">
+                <label for="garantia-problema">Descripción del problema *</label>
+                <textarea id="garantia-problema" name="problema" rows="5" required
+                          placeholder="Contanos qué sucede y desde cuándo" aria-describedby="garantia-problema-error"></textarea>
+                <span id="garantia-problema-error" class="contact-form__error" aria-live="polite"></span>
+            </div>
+        </div>
+        <button id="garantia-enviar" type="submit" class="btn btn-primary" disabled>Enviar consulta</button>
+        <p id="garantia-demo" class="text-muted small mt-3 mb-0">Formulario de demostración: no guarda tus datos ni realiza envíos reales.</p>
+        <noscript><p>Activá JavaScript para usar este formulario de demostración.</p></noscript>
+    </form>
+
+    <dialog id="garantia-confirmacion" class="contact-dialog" aria-labelledby="garantia-confirmacion-titulo"
+            aria-describedby="garantia-confirmacion-texto">
+        <span class="contact-dialog__check" aria-hidden="true">✓</span>
+        <h2 id="garantia-confirmacion-titulo">Consulta enviada</h2>
+        <p id="garantia-confirmacion-texto">Gracias por contactarnos. En breve nos pondremos en contacto con vos para orientarte sobre la gestión de la garantía con el proveedor o el soporte oficial del fabricante.</p>
+        <button id="garantia-aceptar" type="button" class="btn btn-primary" autofocus>Aceptar</button>
+    </dialog>
+</section>
+
+@section Scripts {
+    <script src="~/js/garantia.js" asp-append-version="true"></script>
+}

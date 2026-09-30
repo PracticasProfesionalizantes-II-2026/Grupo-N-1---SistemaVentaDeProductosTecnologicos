@@ -16,19 +16,26 @@
  {
   <div class="catalogo__encabezado"><div><h1>Productos</h1><p>@Model.TotalItems resultado(s)</p></div></div>
 
-  <details id="categorias" class="catalog-categories" open="@(mostrarCategorias ? "open" : null)">
+ }
+ <div class="@(esAdmin ? null : "row g-4 public-catalog__layout")">
+ @if (!esAdmin)
+ {
+  <aside class="col-12 catalogo__sidebar" aria-label="Categorías del catálogo">
+  <details id="categorias" class="catalog-categories" open data-mobile-open="@mostrarCategorias.ToString().ToLowerInvariant()">
    <summary>Categorías</summary>
-   <nav class="catalog-categories__list" aria-label="Filtrar productos por categoría">
-    <a asp-action="Index" asp-all-route-data="@filtrosSinCategoria" class="@(Model.CategoriaSeleccionadaId is null ? "is-active" : null)" aria-current="@(Model.CategoriaSeleccionadaId is null ? "page" : null)">Todas</a>
+   <nav class="list-group list-group-flush catalog-categories__list" aria-label="Filtrar productos por categoría">
+    <a asp-action="Index" asp-all-route-data="@filtrosSinCategoria" class="list-group-item list-group-item-action @(Model.CategoriaSeleccionadaId is null ? "active" : null)" aria-current="@(Model.CategoriaSeleccionadaId is null ? "page" : null)">Todas</a>
     @foreach (var categoria in Model.Categorias)
     {
      var filtrosCategoria = Filtros(Model);
      filtrosCategoria["idCategoria"] = categoria.IdCategoria.ToString();
-     <a asp-action="Index" asp-all-route-data="@filtrosCategoria" class="@(categoria.IdCategoria == Model.CategoriaSeleccionadaId ? "is-active" : null)" aria-current="@(categoria.IdCategoria == Model.CategoriaSeleccionadaId ? "page" : null)">@categoria.Nombre</a>
+     <a asp-action="Index" asp-all-route-data="@filtrosCategoria" class="list-group-item list-group-item-action @(categoria.IdCategoria == Model.CategoriaSeleccionadaId ? "active" : null)" aria-current="@(categoria.IdCategoria == Model.CategoriaSeleccionadaId ? "page" : null)">@categoria.Nombre</a>
     }
    </nav>
   </details>
+  </aside>
  }
+ <div class="@(esAdmin ? null : "col-12 catalogo__contenido")">
  @if (TempData["Mensaje"] is string mensaje) { <div class="alert alert-success" role="status">@mensaje</div> }
  @if (TempData["Error"] is string error) { <div class="alert alert-warning" role="alert">@error</div> }
  <form asp-action="Index" method="get" class="catalogo__filtros admin-panel" aria-label="Filtros del catálogo">
@@ -81,7 +88,10 @@
   @if(Model.TotalPaginas>1){<nav aria-label="Páginas del catálogo"><ul class="pagination justify-content-center mt-4">@for(var n=Math.Max(1,Model.Pagina-2);n<=Math.Min(Model.TotalPaginas,Model.Pagina+2);n++){var routes=Filtros(Model);routes["pagina"]=n.ToString();<li class="page-item @(n==Model.Pagina?"active":null)"><a class="page-link" aria-current="@(n==Model.Pagina?"page":null)" asp-action="Index" asp-all-route-data="@routes">@n</a></li>}</ul></nav>}
  }
 </div>
+</div>
+</div>
 @section Scripts {
  @if (esAdmin) { <script src="~/js/productos-catalogo.js" asp-append-version="true"></script> }
+ else { <script src="~/js/catalogo-categorias.js" asp-append-version="true"></script> }
 }
 @functions { static Dictionary<string,string> Filtros(Frontend.Models.ViewModels.Productos.CatalogoViewModel m)=>new(){["texto"]=m.Texto??"",["idCategoria"]=m.CategoriaSeleccionadaId?.ToString()??"",["precioMin"]=m.PrecioMin?.ToString(System.Globalization.CultureInfo.InvariantCulture)??"",["precioMax"]=m.PrecioMax?.ToString(System.Globalization.CultureInfo.InvariantCulture)??"",["soloDisponibles"]=m.SoloDisponibles.ToString().ToLowerInvariant(),["tamanoPagina"]=m.TamanoPagina.ToString()}; }
