@@ -5,14 +5,15 @@
     var idCategoria = ViewBag.IdCategoria;
 }
 
-<div class="container py-4">
+<div class="container py-4 admin-module">
 
-    <h1 class="mb-4">Editar categoría</h1>
+    <div class="admin-module__header"><div><p class="admin-module__eyebrow">Categorías</p><h1>Editar categoría</h1><p>Actualizá el nombre o la descripción de la clasificación.</p></div></div>
 
     <form asp-controller="Categorias"
           asp-action="Editar"
           asp-route-id="@idCategoria"
-          method="post">
+          method="post"
+          class="admin-form admin-panel">
 
         @Html.AntiForgeryToken()
 

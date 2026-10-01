@@ -1,4 +1,5 @@
 using Frontend.Services;
+using Frontend.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,10 @@ builder.Services.AddHttpClient("TotaltechApi", client =>
 builder.Services.AddScoped<CategoriasApiService>();
 builder.Services.AddScoped<ProductosApiService>();
 builder.Services.AddScoped<ProveedoresApiService>();
+builder.Services.AddScoped<AdministracionApiService>();
+builder.Services.AddScoped<ICarritosApiService, CarritosApiService>();
+builder.Services.AddSingleton<ProductoImagenResolver>();
+builder.Services.AddSingleton<ProductoImagenStorage>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -42,6 +47,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();

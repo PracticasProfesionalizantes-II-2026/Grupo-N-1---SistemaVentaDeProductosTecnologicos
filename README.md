@@ -1,4 +1,43 @@
 ﻿# TotalTech
+## Referencia actual de la API
+
+- [Documentación de API actualizada (PDF)](output/pdf/Documentacion-de-API.pdf)
+- [Referencia editable: rutas, permisos, contratos y ejemplos](Documentacion/API.md)
+
+Edición del 1 de octubre de 2026, contrastada con las 81 operaciones del backend.
+Incluye autenticación JWT, catálogo paginado, imágenes de productos, carrito,
+confirmación de pedidos, pagos y permisos por recurso. El PDF de
+`Documentacion/Documentación de API.pdf` se conserva como documento histórico.
+
+Para regenerar ambos archivos desde esta raíz, usar un intérprete Python con
+`reportlab` disponible:
+
+```powershell
+python Documentacion/tools/generar_api.py
+```
+
+El generador extrae rutas y esquemas del código. Las notas y ejemplos requieren
+revisión cuando cambien las reglas de negocio. No inicia la aplicación ni aplica
+migraciones.
+
+## Imágenes del catálogo
+
+El administrador puede editar y eliminar productos desde sus tarjetas en **Productos**.
+La edición admite una imagen JPG, PNG o WebP de hasta 5 MB. Al guardar sin elegir
+otro archivo se conserva la imagen actual, incluso al cambiar el nombre.
+
+La migración `AgregarImagenProducto` agrega la columna opcional `Productos.ImagenUrl`.
+Debe aplicarse antes de ejecutar la versión actualizada del backend; el inicio en
+desarrollo ya usa la configuración existente `Database:ApplyMigrations`.
+Las pruebas de migración y eliminación utilizan bases LocalDB desechables
+`TotaltechTests_<GUID>`.
+
+Los archivos se guardan en `Frontend/wwwroot/uploads/productos`, fuera del control
+de versiones. Al publicar, conservar esa carpeta y sus permisos de escritura;
+respaldarla junto con la base de datos. Reemplazar una imagen no borra archivos
+anteriores. Las rutas de las imágenes originales se mantienen como alternativa
+para productos que todavía no tienen una imagen guardada.
+
 ## Integrantes:
 - Daiana Chinellato
 - Facundo Sola
@@ -15,5 +54,5 @@
 
 ### 2026
 1. [Documentación del Proyecto-V2](https://docs.google.com/document/d/14_6aZhFY5ACk26mPNe4lj_6eVJhEZgfSD8BGV72ycTA/edit?usp=drive_link)
-2. [Documentacioón de API](https://drive.google.com/drive/folders/17Abiy8YNVnRDhoZ459KW4iJ1ks2JFkFt?usp=sharing)
+2. [Documentacioón de API](https://drive.google.com/file/d/1uB4R9esellhJg2zGNR4G1xXL_0wX-4_U/view?usp=drive_link)
 

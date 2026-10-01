@@ -1,5 +1,13 @@
-// ============================================================================
-// MÓDULO: CONSULTAS
-// RESPONSABILIDAD PREVISTA: Reunir vistas de consulta y búsqueda del sistema.
-// ESTADO: Estructura reservada; el módulo todavía no posee acciones MVC.
-// ============================================================================
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Frontend.Controllers;
+
+public class ConsultasController : Controller
+{
+    [HttpGet, AllowAnonymous]
+    public IActionResult Contacto() => View();
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult Garantia() => View();
+}

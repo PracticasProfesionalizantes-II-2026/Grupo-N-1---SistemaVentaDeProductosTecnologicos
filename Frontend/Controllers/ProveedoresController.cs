@@ -60,7 +60,27 @@ public class ProveedoresController : Controller
     {
         var proveedor = await _proveedoresApiService.ObtenerPorIdAsync(id);
         if (proveedor is null) return NotFound();
-        return View(new ProveedorRequest { RazonSocial = proveedor.RazonSocial, Cuit = proveedor.Cuit, EmailComercial = proveedor.EmailComercial, TelefonoComercial = proveedor.TelefonoComercial, CondicionIva = proveedor.CondicionIva, IdDireccion = proveedor.IdDireccion, PlazoPagoDias = proveedor.PlazoPagoDias, TiempoEntregaDias = proveedor.TiempoEntregaDias, MonedaPreferida = proveedor.MonedaPreferida, Activo = proveedor.Activo });
+        return View(new ProveedorRequest
+        {
+            RazonSocial = proveedor.RazonSocial,
+            Cuit = proveedor.Cuit,
+            EmailComercial = proveedor.EmailComercial,
+            TelefonoComercial = proveedor.TelefonoComercial,
+            CondicionIva = proveedor.CondicionIva,
+            Direccion = new DireccionProveedorRequest
+            {
+                Calle = proveedor.Direccion?.Calle ?? string.Empty,
+                Numero = proveedor.Direccion?.Numero ?? string.Empty,
+                Ciudad = proveedor.Direccion?.Ciudad ?? string.Empty,
+                Provincia = proveedor.Direccion?.Provincia ?? string.Empty,
+                CodigoPostal = proveedor.Direccion?.CodigoPostal ?? string.Empty,
+                Pais = proveedor.Direccion?.Pais ?? string.Empty
+            },
+            PlazoPagoDias = proveedor.PlazoPagoDias,
+            TiempoEntregaDias = proveedor.TiempoEntregaDias,
+            MonedaPreferida = proveedor.MonedaPreferida,
+            Activo = proveedor.Activo
+        });
     }
 
     [HttpPost, Authorize(Roles = "Admin"), ValidateAntiForgeryToken]

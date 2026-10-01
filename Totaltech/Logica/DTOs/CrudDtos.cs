@@ -57,7 +57,7 @@ namespace Totaltech.Logica.DTOs
         public string EmailComercial { get; set; } = string.Empty;
         public string TelefonoComercial { get; set; } = string.Empty;
         public string CondicionIva { get; set; } = string.Empty;
-        public int? IdDireccion { get; set; }
+        public DireccionProveedorRequest? Direccion { get; set; }
         public int PlazoPagoDias { get; set; }
         public int TiempoEntregaDias { get; set; }
         public string MonedaPreferida { get; set; } = string.Empty;
@@ -70,7 +70,7 @@ namespace Totaltech.Logica.DTOs
             EmailComercial = EmailComercial,
             TelefonoComercial = TelefonoComercial,
             CondicionIva = CondicionIva,
-            IdDireccion = IdDireccion,
+            Direccion = Direccion?.ToEntity(),
             PlazoPagoDias = PlazoPagoDias,
             TiempoEntregaDias = TiempoEntregaDias,
             MonedaPreferida = MonedaPreferida,
@@ -78,10 +78,33 @@ namespace Totaltech.Logica.DTOs
         };
     }
 
+    public class DireccionProveedorRequest
+    {
+        public string Calle { get; set; } = string.Empty;
+        public string Numero { get; set; } = string.Empty;
+        public string? Ciudad { get; set; }
+        public string? Provincia { get; set; }
+        public string? CodigoPostal { get; set; }
+        public string? Pais { get; set; }
+
+        public Direccion ToEntity() => new()
+        {
+            Calle = Calle,
+            Numero = Numero,
+            Ciudad = Ciudad ?? string.Empty,
+            Provincia = Provincia ?? string.Empty,
+            CodigoPostal = CodigoPostal ?? string.Empty,
+            Pais = Pais ?? string.Empty,
+            IdUsuario = null,
+            Tipo = TipoDireccion.Fiscal
+        };
+    }
+
     public class ProductoRequest
     {
         public string Nombre { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
+        public string? ImagenUrl { get; set; }
         public decimal Precio { get; set; }
         public int Stock { get; set; }
         public int IdCategoria { get; set; }
@@ -91,6 +114,7 @@ namespace Totaltech.Logica.DTOs
         {
             Nombre = Nombre,
             Descripcion = Descripcion,
+            ImagenUrl = ImagenUrl,
             Precio = Precio,
             Stock = Stock,
             IdCategoria = IdCategoria,

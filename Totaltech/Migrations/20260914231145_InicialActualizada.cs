@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Totaltech.Migrations
 {
     /// <inheritdoc />
-    public partial class Inicial : Migration
+    public partial class InicialActualizada : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,8 +33,8 @@ namespace Totaltech.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Apellido = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Contrasena = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Contrasena = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Telefono = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Rol = table.Column<int>(type: "int", nullable: false)
@@ -52,17 +52,41 @@ namespace Totaltech.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     IdUsuario = table.Column<int>(type: "int", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Estado = table.Column<int>(type: "int", nullable: false),
-                    UsuarioIdUsuario = table.Column<int>(type: "int", nullable: true)
+                    Estado = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Carritos", x => x.IdCarrito);
                     table.ForeignKey(
-                        name: "FK_Carritos_Usuarios_UsuarioIdUsuario",
-                        column: x => x.UsuarioIdUsuario,
+                        name: "FK_Carritos_Usuarios_IdUsuario",
+                        column: x => x.IdUsuario,
                         principalTable: "Usuarios",
-                        principalColumn: "IdUsuario");
+                        principalColumn: "IdUsuario",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Consultas",
+                columns: table => new
+                {
+                    IdConsulta = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IdUsuario = table.Column<int>(type: "int", nullable: true),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Mensaje = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FechaConsulta = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Consultas", x => x.IdConsulta);
+                    table.ForeignKey(
+                        name: "FK_Consultas_Usuarios_IdUsuario",
+                        column: x => x.IdUsuario,
+                        principalTable: "Usuarios",
+                        principalColumn: "IdUsuario",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -87,7 +111,8 @@ namespace Totaltech.Migrations
                         name: "FK_Direcciones_Usuarios_IdUsuario",
                         column: x => x.IdUsuario,
                         principalTable: "Usuarios",
-                        principalColumn: "IdUsuario");
+                        principalColumn: "IdUsuario",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -99,17 +124,17 @@ namespace Totaltech.Migrations
                     TipoReporte = table.Column<int>(type: "int", nullable: false),
                     FechaInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaFin = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IdUsuario = table.Column<int>(type: "int", nullable: false),
-                    UsuarioIdUsuario = table.Column<int>(type: "int", nullable: true)
+                    IdUsuario = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Reportes", x => x.IdReporte);
                     table.ForeignKey(
-                        name: "FK_Reportes_Usuarios_UsuarioIdUsuario",
-                        column: x => x.UsuarioIdUsuario,
+                        name: "FK_Reportes_Usuarios_IdUsuario",
+                        column: x => x.IdUsuario,
                         principalTable: "Usuarios",
-                        principalColumn: "IdUsuario");
+                        principalColumn: "IdUsuario",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -119,25 +144,40 @@ namespace Totaltech.Migrations
                     IdPedido = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     IdUsuario = table.Column<int>(type: "int", nullable: true),
+                    IdCarrito = table.Column<int>(type: "int", nullable: true),
                     FechaPedido = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Estado = table.Column<int>(type: "int", nullable: false),
                     IdDireccion = table.Column<int>(type: "int", nullable: false),
-                    UsuarioIdUsuario = table.Column<int>(type: "int", nullable: true),
-                    DireccionIdDireccion = table.Column<int>(type: "int", nullable: true)
+                    Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DireccionCalle = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DireccionNumero = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DireccionCiudad = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DireccionProvincia = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DireccionCodigoPostal = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DireccionPais = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pedidos", x => x.IdPedido);
+                    table.CheckConstraint("CK_Pedidos_Total_NoNegativo", "[Total] >= 0");
                     table.ForeignKey(
-                        name: "FK_Pedidos_Direcciones_DireccionIdDireccion",
-                        column: x => x.DireccionIdDireccion,
+                        name: "FK_Pedidos_Carritos_IdCarrito",
+                        column: x => x.IdCarrito,
+                        principalTable: "Carritos",
+                        principalColumn: "IdCarrito",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Pedidos_Direcciones_IdDireccion",
+                        column: x => x.IdDireccion,
                         principalTable: "Direcciones",
-                        principalColumn: "IdDireccion");
+                        principalColumn: "IdDireccion",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Pedidos_Usuarios_UsuarioIdUsuario",
-                        column: x => x.UsuarioIdUsuario,
+                        name: "FK_Pedidos_Usuarios_IdUsuario",
+                        column: x => x.IdUsuario,
                         principalTable: "Usuarios",
-                        principalColumn: "IdUsuario");
+                        principalColumn: "IdUsuario",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -155,17 +195,17 @@ namespace Totaltech.Migrations
                     PlazoPagoDias = table.Column<int>(type: "int", nullable: false),
                     TiempoEntregaDias = table.Column<int>(type: "int", nullable: false),
                     MonedaPreferida = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
-                    DireccionIdDireccion = table.Column<int>(type: "int", nullable: true)
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Proveedores", x => x.IdProveedor);
                     table.ForeignKey(
-                        name: "FK_Proveedores_Direcciones_DireccionIdDireccion",
-                        column: x => x.DireccionIdDireccion,
+                        name: "FK_Proveedores_Direcciones_IdDireccion",
+                        column: x => x.IdDireccion,
                         principalTable: "Direcciones",
-                        principalColumn: "IdDireccion");
+                        principalColumn: "IdDireccion",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -178,17 +218,17 @@ namespace Totaltech.Migrations
                     FechaPago = table.Column<DateTime>(type: "datetime2", nullable: false),
                     MetodoPago = table.Column<int>(type: "int", nullable: false),
                     Monto = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Estado = table.Column<int>(type: "int", nullable: false),
-                    PedidoIdPedido = table.Column<int>(type: "int", nullable: true)
+                    Estado = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pagos", x => x.IdPago);
                     table.ForeignKey(
-                        name: "FK_Pagos_Pedidos_PedidoIdPedido",
-                        column: x => x.PedidoIdPedido,
+                        name: "FK_Pagos_Pedidos_IdPedido",
+                        column: x => x.IdPedido,
                         principalTable: "Pedidos",
-                        principalColumn: "IdPedido");
+                        principalColumn: "IdPedido",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -200,17 +240,17 @@ namespace Totaltech.Migrations
                     IdProveedor = table.Column<int>(type: "int", nullable: false),
                     FechaCompra = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Estado = table.Column<int>(type: "int", nullable: false),
-                    ProveedorIdProveedor = table.Column<int>(type: "int", nullable: true)
+                    Estado = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Compras", x => x.IdCompra);
                     table.ForeignKey(
-                        name: "FK_Compras_Proveedores_ProveedorIdProveedor",
-                        column: x => x.ProveedorIdProveedor,
+                        name: "FK_Compras_Proveedores_IdProveedor",
+                        column: x => x.IdProveedor,
                         principalTable: "Proveedores",
-                        principalColumn: "IdProveedor");
+                        principalColumn: "IdProveedor",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -224,23 +264,53 @@ namespace Totaltech.Migrations
                     Precio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Stock = table.Column<int>(type: "int", nullable: false),
                     IdCategoria = table.Column<int>(type: "int", nullable: false),
-                    IdProveedor = table.Column<int>(type: "int", nullable: false),
-                    CategoriaIdCategoria = table.Column<int>(type: "int", nullable: true),
-                    ProveedorIdProveedor = table.Column<int>(type: "int", nullable: true)
+                    IdProveedor = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Productos", x => x.IdProducto);
+                    table.CheckConstraint("CK_Productos_Stock_NoNegativo", "[Stock] >= 0");
                     table.ForeignKey(
-                        name: "FK_Productos_Categorias_CategoriaIdCategoria",
-                        column: x => x.CategoriaIdCategoria,
+                        name: "FK_Productos_Categorias_IdCategoria",
+                        column: x => x.IdCategoria,
                         principalTable: "Categorias",
-                        principalColumn: "IdCategoria");
+                        principalColumn: "IdCategoria",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Productos_Proveedores_ProveedorIdProveedor",
-                        column: x => x.ProveedorIdProveedor,
+                        name: "FK_Productos_Proveedores_IdProveedor",
+                        column: x => x.IdProveedor,
                         principalTable: "Proveedores",
-                        principalColumn: "IdProveedor");
+                        principalColumn: "IdProveedor",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DetalleCarritos",
+                columns: table => new
+                {
+                    IdDetalleCarrito = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IdCarrito = table.Column<int>(type: "int", nullable: false),
+                    IdProducto = table.Column<int>(type: "int", nullable: false),
+                    Cantidad = table.Column<int>(type: "int", nullable: false),
+                    PrecioUnitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Subtotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DetalleCarritos", x => x.IdDetalleCarrito);
+                    table.ForeignKey(
+                        name: "FK_DetalleCarritos_Carritos_IdCarrito",
+                        column: x => x.IdCarrito,
+                        principalTable: "Carritos",
+                        principalColumn: "IdCarrito",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DetalleCarritos_Productos_IdProducto",
+                        column: x => x.IdProducto,
+                        principalTable: "Productos",
+                        principalColumn: "IdProducto",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -253,44 +323,60 @@ namespace Totaltech.Migrations
                     IdProducto = table.Column<int>(type: "int", nullable: false),
                     Cantidad = table.Column<int>(type: "int", nullable: false),
                     PrecioUnitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Subtotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    PedidoIdPedido = table.Column<int>(type: "int", nullable: true),
-                    ProductoIdProducto = table.Column<int>(type: "int", nullable: true)
+                    Subtotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DetallePedidos", x => x.IdDetallePedido);
                     table.ForeignKey(
-                        name: "FK_DetallePedidos_Pedidos_PedidoIdPedido",
-                        column: x => x.PedidoIdPedido,
+                        name: "FK_DetallePedidos_Pedidos_IdPedido",
+                        column: x => x.IdPedido,
                         principalTable: "Pedidos",
-                        principalColumn: "IdPedido");
+                        principalColumn: "IdPedido",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_DetallePedidos_Productos_ProductoIdProducto",
-                        column: x => x.ProductoIdProducto,
+                        name: "FK_DetallePedidos_Productos_IdProducto",
+                        column: x => x.IdProducto,
                         principalTable: "Productos",
-                        principalColumn: "IdProducto");
+                        principalColumn: "IdProducto",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Carritos_UsuarioIdUsuario",
+                name: "IX_Carritos_IdUsuario",
                 table: "Carritos",
-                column: "UsuarioIdUsuario");
+                column: "IdUsuario");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Compras_ProveedorIdProveedor",
+                name: "IX_Compras_IdProveedor",
                 table: "Compras",
-                column: "ProveedorIdProveedor");
+                column: "IdProveedor");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DetallePedidos_PedidoIdPedido",
-                table: "DetallePedidos",
-                column: "PedidoIdPedido");
+                name: "IX_Consultas_IdUsuario",
+                table: "Consultas",
+                column: "IdUsuario");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DetallePedidos_ProductoIdProducto",
+                name: "IX_DetalleCarritos_IdCarrito_IdProducto",
+                table: "DetalleCarritos",
+                columns: new[] { "IdCarrito", "IdProducto" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DetalleCarritos_IdProducto",
+                table: "DetalleCarritos",
+                column: "IdProducto");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DetallePedidos_IdPedido",
                 table: "DetallePedidos",
-                column: "ProductoIdProducto");
+                column: "IdPedido");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DetallePedidos_IdProducto",
+                table: "DetallePedidos",
+                column: "IdProducto");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Direcciones_IdUsuario",
@@ -298,49 +384,65 @@ namespace Totaltech.Migrations
                 column: "IdUsuario");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Pagos_PedidoIdPedido",
+                name: "IX_Pagos_IdPedido",
                 table: "Pagos",
-                column: "PedidoIdPedido");
+                column: "IdPedido");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Pedidos_DireccionIdDireccion",
+                name: "IX_Pedidos_IdCarrito",
                 table: "Pedidos",
-                column: "DireccionIdDireccion");
+                column: "IdCarrito",
+                unique: true,
+                filter: "[IdCarrito] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Pedidos_UsuarioIdUsuario",
+                name: "IX_Pedidos_IdDireccion",
                 table: "Pedidos",
-                column: "UsuarioIdUsuario");
+                column: "IdDireccion");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Productos_CategoriaIdCategoria",
+                name: "IX_Pedidos_IdUsuario",
+                table: "Pedidos",
+                column: "IdUsuario");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Productos_IdCategoria",
                 table: "Productos",
-                column: "CategoriaIdCategoria");
+                column: "IdCategoria");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Productos_ProveedorIdProveedor",
+                name: "IX_Productos_IdProveedor",
                 table: "Productos",
-                column: "ProveedorIdProveedor");
+                column: "IdProveedor");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Proveedores_DireccionIdDireccion",
+                name: "IX_Proveedores_IdDireccion",
                 table: "Proveedores",
-                column: "DireccionIdDireccion");
+                column: "IdDireccion");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Reportes_UsuarioIdUsuario",
+                name: "IX_Reportes_IdUsuario",
                 table: "Reportes",
-                column: "UsuarioIdUsuario");
+                column: "IdUsuario");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Usuarios_Email",
+                table: "Usuarios",
+                column: "Email",
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Carritos");
+                name: "Compras");
 
             migrationBuilder.DropTable(
-                name: "Compras");
+                name: "Consultas");
+
+            migrationBuilder.DropTable(
+                name: "DetalleCarritos");
 
             migrationBuilder.DropTable(
                 name: "DetallePedidos");
@@ -362,6 +464,9 @@ namespace Totaltech.Migrations
 
             migrationBuilder.DropTable(
                 name: "Proveedores");
+
+            migrationBuilder.DropTable(
+                name: "Carritos");
 
             migrationBuilder.DropTable(
                 name: "Direcciones");

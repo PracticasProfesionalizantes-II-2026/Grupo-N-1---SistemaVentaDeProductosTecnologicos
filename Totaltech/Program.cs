@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -64,6 +65,25 @@ builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta configurar la cadena de conexión 'DefaultConnection'.");
 
+if (builder.Environment.IsDevelopment())
+{
+    var connectionBuilder = new SqlConnectionStringBuilder(connectionString);
+
+    if (connectionBuilder.DataSource.StartsWith("(localdb)", StringComparison.OrdinalIgnoreCase) &&
+        !string.IsNullOrWhiteSpace(connectionBuilder.InitialCatalog))
+    {
+        var archivoBaseLocal = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            $"{connectionBuilder.InitialCatalog}.mdf");
+
+        if (File.Exists(archivoBaseLocal))
+        {
+            connectionBuilder.AttachDBFilename = archivoBaseLocal;
+            connectionString = connectionBuilder.ConnectionString;
+        }
+    }
+}
+
 builder.Services.AddDbContext<TotaltechDbContext>(options =>
     options.UseSqlServer(
         connectionString,
@@ -99,6 +119,28 @@ builder.Services.AddScoped<IConsultasLogica, ConsultasLogica>();
 
 var app = builder.Build();
 
+var aplicarMigraciones = builder.Configuration.GetValue<bool?>("Database:ApplyMigrations")
+    ?? app.Environment.IsDevelopment();
+
+if (aplicarMigraciones)
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+
+        if (contexto.Database.IsRelational())
+        {
+            await contexto.Database.MigrateAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(ex, "No se pudo crear o actualizar la base de datos.");
+        throw;
+    }
+}
+
 try
 {
     using var scope = app.Services.CreateScope();
@@ -115,6 +157,26 @@ try
 catch (Exception ex)
 {
     app.Logger.LogWarning(ex, "No se pudieron verificar o inicializar las categorías canónicas.");
+}
+
+if (builder.Configuration.GetValue<bool>("DemoData:Enabled"))
+{
+    CatalogoDemostracionIniciales.ValidarDestino(app.Environment, connectionString);
+
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        await CatalogoDemostracionIniciales.InicializarAsync(
+            scope.ServiceProvider.GetRequiredService<ICategoriasLogica>(),
+            scope.ServiceProvider.GetRequiredService<IProveedoresLogica>(),
+            scope.ServiceProvider.GetRequiredService<IProductosLogica>(),
+            app.Logger);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(ex, "No se pudo cargar el catálogo de demostración.");
+        throw;
+    }
 }
 
 if (builder.Configuration.GetValue<bool>("BootstrapAdmin:Enabled"))

@@ -3,4 +3,5 @@
 @* RESPONSABILIDAD: Recibir los datos para crear un proveedor.                 *@
 @* ============================================================================ *@
 @model Frontend.Models.Api.Requests.ProveedorRequest
-<div class="container py-4"><h1>Nuevo proveedor</h1><form asp-action="Crear" method="post">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger"></div><partial name="_Formulario" model="Model"/><button class="btn btn-success">Guardar</button></form></div>
+@{ ViewData["Title"] = "Nuevo proveedor"; }
+<div class="container py-4 admin-module"><div class="admin-module__header"><div><p class="admin-module__eyebrow">Proveedores</p><h1>Nuevo proveedor</h1><p>Registrá los datos comerciales y el domicilio fiscal.</p></div></div><form asp-action="Crear" method="post" class="admin-form admin-panel">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger"></div><partial name="_Formulario" model="Model"/><button class="btn btn-success">Guardar</button></form></div>

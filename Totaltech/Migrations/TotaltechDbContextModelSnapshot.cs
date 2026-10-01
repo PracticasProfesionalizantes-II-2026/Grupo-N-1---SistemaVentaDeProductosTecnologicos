@@ -354,6 +354,10 @@ namespace Totaltech.Migrations
                     b.Property<int>("IdProveedor")
                         .HasColumnType("int");
 
+                    b.Property<string>("ImagenUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

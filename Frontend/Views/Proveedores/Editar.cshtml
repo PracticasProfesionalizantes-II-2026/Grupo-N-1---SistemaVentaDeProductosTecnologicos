@@ -3,4 +3,5 @@
 @* RESPONSABILIDAD: Recibir los datos para editar un proveedor.               *@
 @* ============================================================================ *@
 @model Frontend.Models.Api.Requests.ProveedorRequest
-<div class="container py-4"><h1>Editar proveedor</h1><form asp-action="Editar" asp-route-id="@Context.Request.RouteValues["id"]" method="post">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger"></div><partial name="_Formulario" model="Model"/><button class="btn btn-warning">Guardar cambios</button></form></div>
+@{ ViewData["Title"] = "Editar proveedor"; }
+<div class="container py-4 admin-module"><div class="admin-module__header"><div><p class="admin-module__eyebrow">Proveedores</p><h1>Editar proveedor</h1><p>Actualizá los datos comerciales sin alterar su identidad.</p></div></div><form asp-action="Editar" asp-route-id="@Context.Request.RouteValues["id"]" method="post" class="admin-form admin-panel">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger"></div><partial name="_Formulario" model="Model"/><button class="btn btn-warning">Guardar cambios</button></form></div>

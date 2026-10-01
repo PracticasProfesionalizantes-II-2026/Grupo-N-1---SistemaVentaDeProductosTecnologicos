@@ -11,6 +11,21 @@ namespace Totaltech.Endpoints
         public static void MapProductosEndpoints(this WebApplication app)
         {
             var group = app.MapGroup("/productos").WithTags("Productos");
+            group.MapGet("/catalogo", async (string? texto, int? idCategoria, decimal? precioMin,
+                decimal? precioMax, bool? soloDisponibles, int? pagina, int? tamanoPagina,
+                IProductosLogica logica, CancellationToken cancellationToken) =>
+            {
+                var filtro = new FiltroCatalogoProductos
+                {
+                    Texto = texto, IdCategoria = idCategoria, PrecioMin = precioMin, PrecioMax = precioMax,
+                    SoloDisponibles = soloDisponibles ?? false, Pagina = pagina ?? 1,
+                    TamanoPagina = tamanoPagina ?? 12
+                };
+                var (catalogo, error) = await logica.ObtenerCatalogoAsync(filtro, cancellationToken);
+                return error is null
+                    ? Results.Ok(catalogo)
+                    : Results.BadRequest(new ErrorCatalogoResponse { Mensaje = error });
+            }).AllowAnonymous();
             // obtener todos los productos
             group.MapGet("/", async (IProductosLogica logica) =>
             {
@@ -97,6 +112,10 @@ namespace Totaltech.Endpoints
         {
             producto.Nombre = request.Nombre;
             producto.Descripcion = request.Descripcion;
+            if (request.ImagenUrl is not null)
+            {
+                producto.ImagenUrl = request.ImagenUrl;
+            }
             producto.Precio = request.Precio;
             producto.Stock = request.Stock;
             producto.IdCategoria = request.IdCategoria;

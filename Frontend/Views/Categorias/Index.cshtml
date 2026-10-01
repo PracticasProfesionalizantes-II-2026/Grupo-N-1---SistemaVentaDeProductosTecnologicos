@@ -4,10 +4,20 @@
     ViewData["Title"] = "Categorías";
 }
 
-<div class="container py-4">
+<div class="container py-4 admin-module">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Categorías</h1>
+    <div class="admin-module__header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            @if (User.IsInRole("Admin"))
+            {
+                <p class="admin-module__eyebrow">Organización del catálogo</p>
+            }
+            <h1>Categorías</h1>
+            @if (User.IsInRole("Admin"))
+            {
+                <p>Gestioná la clasificación de los productos.</p>
+            }
+        </div>
 
         @if (User.IsInRole("Admin"))
         {
@@ -37,6 +47,7 @@
     }
     else
     {
+        <div class="admin-table-wrap admin-panel">
         <table class="table table-striped table-bordered align-middle">
 
             <thead>
@@ -99,6 +110,7 @@
             </tbody>
 
         </table>
+        </div>
     }
 
 </div>

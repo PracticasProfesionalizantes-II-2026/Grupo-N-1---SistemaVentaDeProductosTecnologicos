@@ -12,8 +12,8 @@ using Totaltech.Datos;
 namespace Totaltech.Migrations
 {
     [DbContext(typeof(TotaltechDbContext))]
-    [Migration("20260912195750_ProtegerCheckoutEtapa2")]
-    partial class ProtegerCheckoutEtapa2
+    [Migration("20260914231145_InicialActualizada")]
+    partial class InicialActualizada
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

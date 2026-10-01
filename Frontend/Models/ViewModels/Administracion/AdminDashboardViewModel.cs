@@ -1,5 +1,11 @@
-// ============================================================================
-// MÓDULO: PANEL DE ADMINISTRACIÓN
-// RESPONSABILIDAD PREVISTA: Reunir indicadores para la vista administrativa.
-// ESTADO: Estructura reservada; el dashboard aún no requiere un ViewModel propio.
-// ============================================================================
+namespace Frontend.Models.ViewModels.Administracion;
+
+public sealed class AdminDashboardViewModel
+{
+    public int? TotalProductos { get; init; }
+    public int? TotalUsuarios { get; init; }
+    public int? PedidosPendientes { get; init; }
+
+    public bool TieneMetricasNoDisponibles =>
+        TotalProductos is null || TotalUsuarios is null || PedidosPendientes is null;
+}

@@ -76,6 +76,22 @@
 
             </form>
 
+            @if (!isLoginPage)
+            {
+                <div class="header-actions">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        @await Component.InvokeAsync("CarritoBadge")
+                    }
+                    else
+                    {
+                        <a class="cart-link" asp-controller="Home" asp-action="Login" asp-route-returnUrl="/Carrito" aria-label="Iniciar sesión para ver el carrito">
+                            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6m4 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm9 0a1 1 0 1 1-2 0 1 1-2 0Z" /></svg><span class="cart-link__text">Carrito</span>
+                        </a>
+                    }
+                </div>
+            }
+
             @if (isLoginPage)
             {
                 <div class="header-actions">
@@ -120,14 +136,9 @@
                 Productos
             </a>
 
-            <a asp-controller="Categorias"
-               asp-action="Index">
-                Categorías
-            </a>
-
-            <a asp-controller="Productos"
-               asp-action="Disponibles">
-                Disponibles
+            <a asp-controller="Consultas"
+               asp-action="Garantia">
+                Garantía
             </a>
 
             @if (isLoginPage)
@@ -138,8 +149,8 @@
                 </a>
             }
 
-            <a asp-controller="Home"
-               asp-action="Index">
+            <a asp-controller="Consultas"
+               asp-action="Contacto">
                 Contactos
             </a>
 
@@ -162,10 +173,6 @@
         @RenderBody()
 
     </main>
-
-    <footer class="site-footer"
-            aria-label="Pie de página">
-    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 

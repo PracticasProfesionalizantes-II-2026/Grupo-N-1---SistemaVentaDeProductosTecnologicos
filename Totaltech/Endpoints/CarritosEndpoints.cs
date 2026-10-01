@@ -13,6 +13,48 @@ namespace Totaltech.Endpoints
         {
             var group = app.MapGroup("/carritos").WithTags("Carritos");
 
+            group.MapGet("/actual", async (ICarritosLogica logica, ClaimsPrincipal usuarioActual,
+                CancellationToken cancellationToken) =>
+            {
+                var idUsuario = usuarioActual.ObtenerIdUsuario();
+                return !idUsuario.HasValue
+                    ? Results.Unauthorized()
+                    : Results.Ok(await logica.ObtenerResumenActivoAsync(idUsuario.Value, cancellationToken));
+            }).RequireAuthorization();
+
+            group.MapPost("/actual/productos", async (AgregarProductoCarritoDto request,
+                ICarritosLogica logica, ClaimsPrincipal usuarioActual, CancellationToken cancellationToken) =>
+            {
+                var idUsuario = usuarioActual.ObtenerIdUsuario();
+                if (!idUsuario.HasValue) return Results.Unauthorized();
+                var resultado = await logica.AgregarProductoActivoAsync(idUsuario.Value, request, cancellationToken);
+                return resultado.Error is null
+                    ? Results.Ok(resultado.Resumen)
+                    : resultado.Conflicto ? Results.Conflict(resultado.Error) : Results.BadRequest(resultado.Error);
+            }).RequireAuthorization();
+
+            group.MapPatch("/actual/productos/{idProducto:int}", async (int idProducto,
+                ActualizarCantidadCarritoDto request, ICarritosLogica logica,
+                ClaimsPrincipal usuarioActual, CancellationToken cancellationToken) =>
+            {
+                var idUsuario = usuarioActual.ObtenerIdUsuario();
+                if (!idUsuario.HasValue) return Results.Unauthorized();
+                var resultado = await logica.ActualizarCantidadActivaAsync(
+                    idUsuario.Value, idProducto, request.Cantidad, cancellationToken);
+                return resultado.Error is null
+                    ? Results.Ok(resultado.Resumen)
+                    : resultado.Conflicto ? Results.Conflict(resultado.Error) : Results.BadRequest(resultado.Error);
+            }).RequireAuthorization();
+
+            group.MapDelete("/actual/productos/{idProducto:int}", async (int idProducto,
+                ICarritosLogica logica, ClaimsPrincipal usuarioActual, CancellationToken cancellationToken) =>
+            {
+                var idUsuario = usuarioActual.ObtenerIdUsuario();
+                if (!idUsuario.HasValue) return Results.Unauthorized();
+                var resultado = await logica.EliminarProductoActivoAsync(idUsuario.Value, idProducto, cancellationToken);
+                return resultado.Error is null ? Results.Ok(resultado.Resumen) : Results.NotFound(resultado.Error);
+            }).RequireAuthorization();
+
             // obtener todos los carritos
             group.MapGet("/", async (ICarritosLogica logica, ClaimsPrincipal usuarioActual) =>
             {

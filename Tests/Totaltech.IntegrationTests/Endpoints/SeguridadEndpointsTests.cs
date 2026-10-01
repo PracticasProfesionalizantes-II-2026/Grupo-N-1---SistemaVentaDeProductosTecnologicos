@@ -100,6 +100,130 @@ public sealed class SeguridadEndpointsTests
     }
 
     [Fact]
+    public async Task AdminCreaProveedorConDireccionFiscalGeneradaPorLaBase()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var admin = await AutenticarAsync(client, "Admin@admin.com", "Admin123456789");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", admin.Token);
+
+        using var response = await client.PostAsJsonAsync(
+            "/proveedores/",
+            CrearProveedor("alta", "Avenida Siempre Viva", "742"));
+        var json = await LeerJsonAsync(response);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var idProveedor = json.GetProperty("idProveedor").GetInt32();
+        var idDireccion = json.GetProperty("idDireccion").GetInt32();
+        Assert.True(idProveedor > 0);
+        Assert.True(idDireccion > 0);
+        Assert.Equal(idDireccion, json.GetProperty("direccion").GetProperty("idDireccion").GetInt32());
+
+        using var scope = factory.Services.CreateScope();
+        var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+        var proveedor = await contexto.Proveedores
+            .Include(item => item.Direccion)
+            .SingleAsync(item => item.IdProveedor == idProveedor);
+        Assert.Equal(idDireccion, proveedor.Direccion!.IdDireccion);
+        Assert.Null(proveedor.Direccion.IdUsuario);
+        Assert.Equal(TipoDireccion.Fiscal, proveedor.Direccion.Tipo);
+    }
+
+    [Theory]
+    [InlineData("", "123")]
+    [InlineData("Calle válida", "")]
+    public async Task AltaProveedorSinCalleONumero_NoPersisteRegistros(
+        string calle,
+        string numero)
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var admin = await AutenticarAsync(client, "Admin@admin.com", "Admin123456789");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", admin.Token);
+
+        using var response = await client.PostAsJsonAsync(
+            "/proveedores/",
+            CrearProveedor("invalido", calle, numero));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+        Assert.Empty(await contexto.Proveedores.ToListAsync());
+        Assert.Empty(await contexto.Direcciones.ToListAsync());
+    }
+
+    [Fact]
+    public async Task EditarProveedor_ActualizaLaMismaDireccion()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var admin = await AutenticarAsync(client, "Admin@admin.com", "Admin123456789");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", admin.Token);
+
+        using var alta = await client.PostAsJsonAsync(
+            "/proveedores/",
+            CrearProveedor("edicion", "Calle Original", "100"));
+        var proveedorCreado = await LeerJsonAsync(alta);
+        var idProveedor = proveedorCreado.GetProperty("idProveedor").GetInt32();
+        var idDireccion = proveedorCreado.GetProperty("idDireccion").GetInt32();
+
+        using var edicion = await client.PutAsJsonAsync(
+            $"/proveedores/{idProveedor}",
+            CrearProveedor("edicion", "Calle Actualizada", "200"));
+
+        Assert.Equal(HttpStatusCode.OK, edicion.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+        var proveedor = await contexto.Proveedores
+            .Include(item => item.Direccion)
+            .SingleAsync(item => item.IdProveedor == idProveedor);
+        Assert.Equal(idDireccion, proveedor.IdDireccion);
+        Assert.Equal("Calle Actualizada", proveedor.Direccion!.Calle);
+        Assert.Single(await contexto.Direcciones.ToListAsync());
+    }
+
+    [Fact]
+    public async Task EditarProveedorAntiguoSinDireccion_CreaYVinculaUna()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        int idProveedor;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+            var proveedor = new Proveedor
+            {
+                RazonSocial = "Proveedor histórico",
+                Cuit = "20-11111111-1",
+                EmailComercial = "historico@test.local",
+                TelefonoComercial = "1111111111",
+                CondicionIva = "Responsable inscripto",
+                MonedaPreferida = "ARS",
+                Activo = true
+            };
+            contexto.Proveedores.Add(proveedor);
+            await contexto.SaveChangesAsync();
+            idProveedor = proveedor.IdProveedor;
+        }
+
+        var admin = await AutenticarAsync(client, "Admin@admin.com", "Admin123456789");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", admin.Token);
+        using var response = await client.PutAsJsonAsync(
+            $"/proveedores/{idProveedor}",
+            CrearProveedor("historico", "Nueva Dirección", "321"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var verificacionScope = factory.Services.CreateScope();
+        var contextoVerificacion = verificacionScope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+        var actualizado = await contextoVerificacion.Proveedores
+            .Include(item => item.Direccion)
+            .SingleAsync(item => item.IdProveedor == idProveedor);
+        Assert.True(actualizado.IdDireccion > 0);
+        Assert.Equal("Nueva Dirección", actualizado.Direccion!.Calle);
+        Assert.Equal(TipoDireccion.Fiscal, actualizado.Direccion.Tipo);
+    }
+
+    [Fact]
     public async Task AnonimoEnEndpointAdministrativo_DevuelveUnauthorized()
     {
         await using var factory = new TotaltechWebApplicationFactory();
@@ -537,6 +661,31 @@ public sealed class SeguridadEndpointsTests
             codigoPostal = "1000",
             pais = "Argentina",
             tipo = 0
+        };
+    }
+
+    private static object CrearProveedor(string sufijo, string calle, string numero)
+    {
+        return new
+        {
+            razonSocial = $"Proveedor {sufijo}",
+            cuit = $"20-0000000{sufijo.Length}-1",
+            emailComercial = $"proveedor-{sufijo}@test.local",
+            telefonoComercial = "1111111111",
+            condicionIva = "Responsable inscripto",
+            direccion = new
+            {
+                calle,
+                numero,
+                ciudad = "Buenos Aires",
+                provincia = "Buenos Aires",
+                codigoPostal = "1000",
+                pais = "Argentina"
+            },
+            plazoPagoDias = 30,
+            tiempoEntregaDias = 5,
+            monedaPreferida = "ARS",
+            activo = true
         };
     }
 
