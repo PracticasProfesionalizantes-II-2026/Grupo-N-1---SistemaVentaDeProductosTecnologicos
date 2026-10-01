@@ -1,4 +1,25 @@
 ﻿# TotalTech
+## Referencia actual de la API
+
+- [Documentación de API actualizada (PDF)](output/pdf/Documentacion-de-API.pdf)
+- [Referencia editable: rutas, permisos, contratos y ejemplos](Documentacion/API.md)
+
+Edición del 1 de octubre de 2026, contrastada con las 81 operaciones del backend.
+Incluye autenticación JWT, catálogo paginado, imágenes de productos, carrito,
+confirmación de pedidos, pagos y permisos por recurso. El PDF de
+`Documentacion/Documentación de API.pdf` se conserva como documento histórico.
+
+Para regenerar ambos archivos desde esta raíz, usar un intérprete Python con
+`reportlab` disponible:
+
+```powershell
+python Documentacion/tools/generar_api.py
+```
+
+El generador extrae rutas y esquemas del código. Las notas y ejemplos requieren
+revisión cuando cambien las reglas de negocio. No inicia la aplicación ni aplica
+migraciones.
+
 ## Imágenes del catálogo
 
 El administrador puede editar y eliminar productos desde sus tarjetas en **Productos**.
