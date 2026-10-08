@@ -1,0 +1,16 @@
+@model Frontend.Models.ViewModels.Usuarios.UsuarioEdicionViewModel
+@{ ViewData["Title"] = "Editar usuario"; }
+<section class="admin-module py-4">
+    <header class="admin-module__header"><div><p class="admin-module__eyebrow">Usuarios</p><h1>Editar usuario</h1><p>Actualizá sus datos personales y rol.</p></div></header>
+    <form asp-action="Editar" asp-route-id="@Model.IdUsuario" method="post" class="admin-form admin-panel">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <label asp-for="Nombre"></label><input asp-for="Nombre" class="form-control" autocomplete="given-name" /><span asp-validation-for="Nombre" class="text-danger"></span>
+        <label asp-for="Apellido"></label><input asp-for="Apellido" class="form-control" autocomplete="family-name" /><span asp-validation-for="Apellido" class="text-danger"></span>
+        <label asp-for="Email"></label><input asp-for="Email" class="form-control" autocomplete="email" /><span asp-validation-for="Email" class="text-danger"></span>
+        <label asp-for="Telefono"></label><input asp-for="Telefono" class="form-control" autocomplete="tel" /><span asp-validation-for="Telefono" class="text-danger"></span>
+        <label asp-for="Rol"></label><select asp-for="Rol" class="form-select"><option value="0">Cliente</option><option value="1">Administrador</option></select><span asp-validation-for="Rol" class="text-danger"></span>
+        <p class="mt-3">Si cambiás tu propio rol, la sesión finalizará. Siempre debe quedar un administrador activo.</p>
+        <div class="d-flex flex-wrap gap-2 mt-3"><button type="submit" class="btn btn-primary">Guardar cambios</button><a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a></div>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

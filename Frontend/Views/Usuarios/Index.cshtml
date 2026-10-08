@@ -1,0 +1,37 @@
+@model Frontend.Models.ViewModels.Usuarios.UsuariosListadoViewModel
+@{ ViewData["Title"] = "Usuarios"; }
+<section class="admin-module usuarios-list py-4">
+    <header class="admin-module__header"><div><p class="admin-module__eyebrow">Administración</p><h1>Usuarios</h1><p>Modificá datos y roles, desactivá cuentas o volvé a habilitarlas.</p></div></header>
+    @if (TempData["Mensaje"] is not null) { <div class="alert alert-success" role="status">@TempData["Mensaje"]</div> }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error <a asp-action="Index">Reintentar</a></div>
+    }
+    else if (Model.Usuarios.Count == 0)
+    {
+        <p class="admin-panel p-4">Todavía no hay usuarios registrados.</p>
+    }
+    else
+    {
+        <div class="admin-table-wrap admin-panel" role="region" aria-label="Listado de usuarios" tabindex="0">
+            <table class="table align-middle usuarios-table">
+                <caption class="visually-hidden">Usuarios activos e inactivos, ordenados por identificador</caption>
+                <thead><tr><th scope="col">ID</th><th scope="col">Nombre y apellido</th><th scope="col">Contacto</th><th scope="col">Rol</th><th scope="col">Registro (UTC)</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+                <tbody>
+                @foreach (var usuario in Model.Usuarios)
+                {
+                    <tr>
+                        <td data-label="ID">@usuario.IdUsuario</td><td data-label="Nombre">@usuario.Nombre @usuario.Apellido</td><td data-label="Contacto" class="usuarios-contacto"><div>@usuario.Email</div><div>@usuario.Telefono</div></td>
+                        <td data-label="Rol">@(usuario.Rol == 1 ? "Administrador" : "Cliente")</td><td data-label="Registro (UTC)">@usuario.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                        <td data-label="Estado"><span class="badge @(usuario.Activo ? "bg-success" : "bg-secondary")">@(usuario.Activo ? "Activo" : "Inactivo")</span></td>
+                        <td data-label="Acciones"><a asp-action="Editar" asp-route-id="@usuario.IdUsuario" class="btn btn-warning btn-sm">Editar</a>
+                            @if (usuario.Activo) { <a asp-action="DarBaja" asp-route-id="@usuario.IdUsuario" class="btn btn-outline-danger btn-sm">Dar de baja</a> }
+                            else { <a asp-action="Reactivar" asp-route-id="@usuario.IdUsuario" class="btn btn-outline-success btn-sm">Reactivar</a> }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

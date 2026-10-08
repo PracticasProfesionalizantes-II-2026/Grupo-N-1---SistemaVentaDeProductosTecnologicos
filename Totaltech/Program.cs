@@ -40,6 +40,23 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var id = context.Principal?.ObtenerIdUsuario();
+                if (!id.HasValue || !int.TryParse(context.Principal?.FindFirstValue("version_sesion"), out var version))
+                {
+                    context.Fail("La sesión requiere un nuevo inicio de sesión.");
+                    return;
+                }
+                var logica = context.HttpContext.RequestServices.GetRequiredService<IUsuariosLogica>();
+                var usuario = await logica.ObtenerPorIdAsync(id.Value);
+                if (usuario is null || !usuario.Activo || usuario.VersionSesion != version ||
+                    context.Principal!.FindFirstValue(ClaimTypes.Role) != usuario.Rol.ToString())
+                    context.Fail("La sesión ya no es válida.");
+            }
+        };
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

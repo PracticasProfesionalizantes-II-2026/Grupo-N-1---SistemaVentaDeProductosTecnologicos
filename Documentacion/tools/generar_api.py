@@ -59,6 +59,14 @@ def endpoints():
                       'Admin' if admin_group or 'PoliticaAdministrador' in block else 'JWT')
             request = re.search(r'\b(\w+(?:Request|Dto)) request\b', block)
             statuses = sorted({status_map[x] for x in re.findall(r'Results\.(\w+)\(', block) if x in status_map})
+            if key == 'Usuarios':
+                statuses = ([200] if m.group(1) == 'Get' and m.group(2) == '/' else
+                            [200, 404] if m.group(1) == 'Get' else
+                            [204, 404, 409] if m.group(1) == 'Delete' else
+                            [200, 404, 409] if 'reactivar' in m.group(2) else
+                            [200, 400, 404, 409] if m.group(1) == 'Put' else [201, 400, 409])
+            if key == 'Auth' and m.group(2) == '/login':
+                statuses = [200, 401, 403, 404]
             route = re.sub(r':int', '', prefix + ('' if m.group(2) == '/' else m.group(2)))
             rows.append(dict(method=m.group(1).upper(), route=route, access=access,
                              request=request.group(1) if request else '-',
@@ -68,7 +76,7 @@ def endpoints():
 
 NOTES = {
  'Auth': [
-  'POST /auth/login devuelve LoginResponse: datos de UsuarioResponse, accessToken y expiresAtUtc. Email inexistente: 404 con codigo=usuario_no_registrado y mensaje; contraseña incorrecta: 401 sin cuerpo específico.',
+  'POST /auth/login devuelve LoginResponse: datos de UsuarioResponse, accessToken y expiresAtUtc. Email inexistente: 404 con codigo=usuario_no_registrado y mensaje; contraseña incorrecta: 401 sin cuerpo específico. Cuenta inactiva con credenciales válidas: 403 con codigo=usuario_inactivo y mensaje.',
   'POST /auth/registro devuelve UsuarioResponse y Location=/usuarios/{idUsuario}. El servidor fuerza rol=0 (Cliente) y fechaRegistro UTC. Nombre, apellido, email válido y teléfono son obligatorios; contraseña de al menos 8 caracteres; email duplicado: 409.',
   'POST /auth/recuperar-contrasena recibe email y devuelve {mensaje}. La implementación solo consulta si existe el usuario; no registra una solicitud persistente, no envía correo y no emite un token de recuperación.',
  ],
@@ -112,9 +120,12 @@ NOTES = {
   'No existen POST, PUT ni DELETE /detallecarritos. Agregar, cambiar cantidad y eliminar productos mediante /carritos/actual/productos o las rutas por carrito.',
  ],
  'Usuarios': [
-  'GET / y POST / requieren administrador. GET, PUT y DELETE /{id} permiten al propietario o administrador. Todas las respuestas con cuerpo usan UsuarioResponse, sin contraseña ni hash.',
-  'POST crea con UsuarioRequest y devuelve 201; PUT devuelve UsuarioResponse (200). Para clientes, PUT conserva el rol y fecha de registro existentes. En actualización, contraseña vacía conserva la vigente; si se cambia, debe tener al menos 8 caracteres.',
-  'El identificador es idUsuario; no existe direccionID en UsuarioRequest. Las direcciones se relacionan desde Direccion.idUsuario. Email duplicado: 409; validación: 400.',
+  'GET / y POST / requieren administrador. GET y PUT /{id} permiten propietario o administrador. DELETE /{id} y POST /{id}/reactivar son administrativos. Todas las respuestas usan UsuarioResponse con activo, sin contraseña, hash ni versionSesion. El listado incluye activos e inactivos ordenados por idUsuario.',
+  'PUT recibe UsuarioActualizacionRequest: nombre, apellido, email, telefono y rol. Conserva contraseña, fechaRegistro y estado. El cliente no puede cambiar su rol; el administrador sí. Email duplicado: 409; campos inválidos: 400.',
+  'DELETE realiza baja lógica (204), preserva relaciones e historial. POST /{id}/reactivar devuelve el usuario (200). Repetir el estado actual es exitoso y no duplica auditoría. El email de una cuenta inactiva sigue reservado.',
+  'Baja y degradación del último administrador activo devuelven 409. La validación y auditoría se guardan en una transacción serializable SQL Server. El administrador puede operar sobre su cuenta si queda otro administrador activo; la UI cierra su sesión.',
+  'El cambio de rol o estado incrementa la versión de sesión: JWT anteriores quedan inválidos, incluso después de reactivar. La API verifica estado y versión en cada solicitud autenticada.',
+  'AuditoriaUsuarios registra actor, usuario, acción, fecha UTC y nombres de campos modificados. Valores anteriores/nuevos sólo para rol y activo. No existe pantalla o endpoint de bitácora ni reset administrativo de contraseña.',
  ],
  'Direcciones': [
   'GET / devuelve Direccion[]: las propias para clientes y todas para administradores. GET/PUT/DELETE por ID exigen propietario o administrador. POST y PUT devuelven Direccion.',
@@ -192,7 +203,7 @@ def build_markdown(rows, schemas):
       'Los puertos pertenecen a Properties/launchSettings.json y pueden cambiar por configuración del entorno. No hay un host de producción documentado. OpenAPI y Scalar se mapean solo en Development y, al no tener AllowAnonymous explícito, quedan sujetos a la política de autenticación predeterminada.', '',
       'El backend necesita ConnectionStrings:DefaultConnection y Authentication:Issuer, Audience y SigningKey. La clave debe tener al menos 32 bytes UTF-8; usar variables de entorno o User Secrets. Este documento no contiene credenciales. Database:ApplyMigrations controla las migraciones de inicio (por defecto habilitadas en Development); DemoData y BootstrapAdmin son opciones separadas. No se aplicaron migraciones durante esta revisión.', '',
       '## 03. Seguridad y respuestas HTTP', '',
-      'Iniciar sesión mediante POST /auth/login y enviar Authorization: Bearer <accessToken> en rutas protegidas. expiresAtUtc indica el vencimiento. El token usa HS256; se verifican firma, emisor, audiencia y vigencia. ExpirationMinutes tiene valor por defecto 480 y rango 1-1440. No hay endpoint de refresh ni logout en la API.', '',
+      'Iniciar sesión mediante POST /auth/login y enviar Authorization: Bearer <accessToken> en rutas protegidas. expiresAtUtc indica el vencimiento. El token usa HS256; se verifican firma, emisor, audiencia, vigencia, usuario activo, rol vigente y versión de sesión. Tokens anteriores sin version_sesion requieren nuevo login. ExpirationMinutes tiene valor por defecto 480 y rango 1-1440. No hay endpoint de refresh ni logout en la API.', '',
       '| Etiqueta | Requisito |', '| --- | --- |',
       '| Público | AllowAnonymous; no requiere JWT |',
       '| JWT | Usuario autenticado; verificar propiedad según las notas del módulo |',
@@ -229,11 +240,11 @@ def build_markdown(rows, schemas):
       'Los requests siguientes son JSON válido. Sustituir ID por recursos existentes. Las respuestas muestran valores ilustrativos y no son resultados obtenidos por HTTP.', '',
       '### Registro público', '', 'POST /auth/registro', '', '```json',
       json.dumps(dict(nombre='Ana',apellido='Pérez',email='ana@example.com',contrasena='<contraseña de al menos 8 caracteres>',telefono='3493000000'), ensure_ascii=False, indent=2), '```', '',
-      'Respuesta 201: UsuarioResponse (idUsuario, nombre, apellido, email, telefono, fechaRegistro, rol=0); el registro no emite un token. Ejecutar login a continuación.', '',
+      'Respuesta 201: UsuarioResponse (idUsuario, nombre, apellido, email, telefono, fechaRegistro, rol=0, activo=true); el registro no emite un token. Ejecutar login a continuación.', '',
       '### Inicio de sesión', '', 'POST /auth/login', '', '```json',
       json.dumps(dict(email='ana@example.com',contrasena='<contraseña elegida>'), ensure_ascii=False,indent=2), '```', '',
       'Respuesta 200 ilustrativa:', '', '```json',
-      json.dumps(dict(idUsuario=7,nombre='Ana',apellido='Pérez',email='ana@example.com',telefono='3493000000',fechaRegistro='2026-10-01T12:00:00Z',rol=0,accessToken='<JWT emitido por el servidor>',expiresAtUtc='2026-10-01T20:00:00Z'),ensure_ascii=False,indent=2), '```', '',
+      json.dumps(dict(idUsuario=7,nombre='Ana',apellido='Pérez',email='ana@example.com',telefono='3493000000',fechaRegistro='2026-10-01T12:00:00Z',rol=0,activo=True,accessToken='<JWT emitido por el servidor>',expiresAtUtc='2026-10-01T20:00:00Z'),ensure_ascii=False,indent=2), '```', '',
       '### Producto y stock (administrador)', '', 'POST /productos o PUT /productos/{id}', '', '```json',
       json.dumps(dict(nombre='Notebook de ejemplo',descripcion='Equipo para oficina',imagenUrl=None,precio=850000,stock=10,idCategoria=1,idProveedor=1),ensure_ascii=False,indent=2),'```', '',
       'PATCH /productos/{id}/stock recibe {"stock": 8} y devuelve 204. En PUT, imagenUrl=null conserva la imagen existente.', '',

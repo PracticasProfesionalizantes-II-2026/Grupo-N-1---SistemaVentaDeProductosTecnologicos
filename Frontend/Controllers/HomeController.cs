@@ -72,6 +72,12 @@ public class HomeController : Controller
                 return View(model);
             }
 
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                ModelState.AddModelError(string.Empty, "Tu cuenta está desactivada. Contactá al administrador.");
+                return View(model);
+            }
+
             if (!response.IsSuccessStatusCode)
             {
                 ModelState.AddModelError(string.Empty, await LeerErrorApiAsync(response, cancellationToken));

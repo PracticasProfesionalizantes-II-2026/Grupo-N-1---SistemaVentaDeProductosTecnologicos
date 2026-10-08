@@ -16,8 +16,9 @@ namespace Totaltech.Logica
         Task AsegurarAdministradorAsync(string email, string contrasena);
         Task<string?> CrearAsync(Usuario usuario);
         Task<string?> RegistrarAsync(Usuario usuario);
-        Task<string?> ActualizarAsync(int id, Usuario usuario);
-        Task<bool> EliminarAsync(int id);
+        Task<Usuario?> AutenticarAsync(LoginDto dto);
+        Task<ResultadoUsuario> ActualizarAsync(int id, UsuarioActualizacionRequest request, int idActor, bool esAdministrador);
+        Task<ResultadoUsuario> CambiarEstadoAsync(int id, bool activo, int idActor);
         Task<bool> RecuperarContrasenaAsync(RecuperarContrasenaDto dto);
     }
 
@@ -54,6 +55,12 @@ namespace Totaltech.Logica
 
         public async Task<Usuario?> LoginAsync(LoginDto dto)
         {
+            var usuario = await AutenticarAsync(dto);
+            return usuario is { Activo: true } ? usuario : null;
+        }
+
+        public async Task<Usuario?> AutenticarAsync(LoginDto dto)
+        {
             var usuario = await _repositorio.ObtenerPorEmailAsync(NormalizarEmail(dto.Email));
             if (usuario is null)
             {
@@ -73,7 +80,7 @@ namespace Totaltech.Logica
             if (resultadoHash == PasswordVerificationResult.SuccessRehashNeeded)
             {
                 usuario.Contrasena = _passwordHasher.HashPassword(usuario, dto.Contrasena);
-                await _repositorio.ActualizarAsync(usuario);
+                await _repositorio.ActualizarContrasenaAsync(usuario);
                 return usuario;
             }
 
@@ -116,34 +123,14 @@ namespace Totaltech.Logica
                         "La cuenta administrativa no pudo recuperarse después de una creación concurrente.");
             }
 
-            var requiereActualizacion = false;
-
-            if (!string.Equals(administrador.Email, emailNormalizado, StringComparison.Ordinal))
-            {
-                administrador.Email = emailNormalizado;
-                requiereActualizacion = true;
-            }
-
-            if (administrador.Rol != RolUsuario.Administrador)
-            {
-                administrador.Rol = RolUsuario.Administrador;
-                requiereActualizacion = true;
-            }
-
-            if (!ContrasenaCoincide(administrador, contrasena))
-            {
-                administrador.Contrasena = _passwordHasher.HashPassword(administrador, contrasena);
-                requiereActualizacion = true;
-            }
-
-            if (requiereActualizacion)
-            {
-                await _repositorio.ActualizarAsync(administrador);
-            }
+            // El bootstrap sólo crea cuentas. Una cuenta existente conserva las
+            // decisiones administrativas, incluso cuando está desactivada.
         }
 
         public Task<string?> RegistrarAsync(Usuario usuario)
         {
+            usuario.Activo = true;
+            usuario.VersionSesion = 1;
             usuario.Rol = RolUsuario.Cliente;
             usuario.FechaRegistro = DateTime.UtcNow;
             return CrearAsync(usuario);
@@ -189,55 +176,104 @@ namespace Totaltech.Logica
             return null;
         }
 
-        public async Task<string?> ActualizarAsync(int id, Usuario usuario)
+        public Task<ResultadoUsuario> ActualizarAsync(
+            int id, UsuarioActualizacionRequest request, int idActor, bool esAdministrador) =>
+            EjecutarCambioAsync(async () =>
+            {
+                var existente = await _repositorio.ObtenerPorIdAsync(id);
+                if (existente is null || (!esAdministrador && idActor != id))
+                    return new(EstadoOperacionUsuario.NoEncontrado);
+
+                var nuevo = new Usuario
+                {
+                    Nombre = request.Nombre?.Trim() ?? string.Empty,
+                    Apellido = request.Apellido?.Trim() ?? string.Empty,
+                    Email = NormalizarEmail(request.Email),
+                    Telefono = request.Telefono?.Trim() ?? string.Empty,
+                    Rol = esAdministrador ? request.Rol : existente.Rol
+                };
+                var error = ValidarUsuario(nuevo, necesitaContrasena: false);
+                if (error is not null) return new(EstadoOperacionUsuario.Invalido, error);
+
+                var duplicado = await _repositorio.ObtenerPorEmailAsync(nuevo.Email);
+                if (duplicado is not null && duplicado.IdUsuario != id)
+                    return new(EstadoOperacionUsuario.Conflicto, ErrorEmailDuplicado);
+
+                if (existente.Activo && existente.Rol == RolUsuario.Administrador &&
+                    nuevo.Rol != RolUsuario.Administrador &&
+                    await _repositorio.ContarAdministradoresActivosAsync() <= 1)
+                    return UltimoAdministrador();
+
+                var campos = new List<string>();
+                if (existente.Nombre != nuevo.Nombre) campos.Add("nombre");
+                if (existente.Apellido != nuevo.Apellido) campos.Add("apellido");
+                if (existente.Email != nuevo.Email) campos.Add("email");
+                if (existente.Telefono != nuevo.Telefono) campos.Add("telefono");
+                if (existente.Rol != nuevo.Rol) campos.Add("rol");
+                if (campos.Count == 0) return new(EstadoOperacionUsuario.Exito, Usuario: existente);
+
+                var auditoria = CrearAuditoria(idActor, id, "Modificacion", campos);
+                if (existente.Rol != nuevo.Rol)
+                {
+                    auditoria.RolAnterior = existente.Rol;
+                    auditoria.RolNuevo = nuevo.Rol;
+                    existente.VersionSesion++;
+                }
+                existente.Nombre = nuevo.Nombre;
+                existente.Apellido = nuevo.Apellido;
+                existente.Email = nuevo.Email;
+                existente.Telefono = nuevo.Telefono;
+                existente.Rol = nuevo.Rol;
+                await _repositorio.GuardarCambioAsync(existente, auditoria);
+                return new(EstadoOperacionUsuario.Exito, Usuario: existente);
+            });
+
+        public Task<ResultadoUsuario> CambiarEstadoAsync(int id, bool activo, int idActor) =>
+            EjecutarCambioAsync(async () =>
+            {
+                var usuario = await _repositorio.ObtenerPorIdAsync(id);
+                if (usuario is null) return new(EstadoOperacionUsuario.NoEncontrado);
+                if (usuario.Activo == activo) return new(EstadoOperacionUsuario.Exito, Usuario: usuario);
+                if (!activo && usuario.Rol == RolUsuario.Administrador &&
+                    await _repositorio.ContarAdministradoresActivosAsync() <= 1)
+                    return UltimoAdministrador();
+
+                var auditoria = CrearAuditoria(idActor, id, activo ? "Reactivacion" : "Baja", ["activo"]);
+                auditoria.ActivoAnterior = usuario.Activo;
+                auditoria.ActivoNuevo = activo;
+                usuario.Activo = activo;
+                usuario.VersionSesion++;
+                await _repositorio.GuardarCambioAsync(usuario, auditoria);
+                return new(EstadoOperacionUsuario.Exito, Usuario: usuario);
+            });
+
+        private async Task<ResultadoUsuario> EjecutarCambioAsync(Func<Task<ResultadoUsuario>> operacion)
         {
-            var existente = await _repositorio.ObtenerPorIdAsync(id);
-            if (existente is null)
+            try
             {
-                return "El usuario indicado no existe.";
+                return await _repositorio.EjecutarTransaccionAsync(operacion);
             }
-
-            usuario.Email = NormalizarEmail(usuario.Email);
-
-            var error = ValidarUsuario(usuario, necesitaContrasena: false);
-            if (error is not null)
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sql &&
+                                              sql.Number is 2601 or 2627)
             {
-                return error;
+                return new(EstadoOperacionUsuario.Conflicto, ErrorEmailDuplicado);
             }
-
-            var usuarioConEmail = await _repositorio.ObtenerPorEmailAsync(usuario.Email);
-            if (usuarioConEmail is not null && usuarioConEmail.IdUsuario != id)
+            catch (Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException ex)
+                when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sql && sql.Number is 1205 or 3960)
             {
-                return "Ya existe otro usuario registrado con ese email.";
+                return new(EstadoOperacionUsuario.Conflicto, "La operación encontró un conflicto concurrente. Volvé a intentarlo.");
             }
-
-            existente.Nombre = usuario.Nombre;
-            existente.Apellido = usuario.Apellido;
-            existente.Email = usuario.Email;
-            existente.Telefono = usuario.Telefono;
-            existente.Rol = usuario.Rol;
-            existente.FechaRegistro = usuario.FechaRegistro == default ? existente.FechaRegistro : usuario.FechaRegistro;
-
-            if (!string.IsNullOrWhiteSpace(usuario.Contrasena))
-            {
-                existente.Contrasena = _passwordHasher.HashPassword(existente, usuario.Contrasena);
-            }
-
-            await _repositorio.ActualizarAsync(existente);
-            return null;
         }
 
-        public async Task<bool> EliminarAsync(int id)
-        {
-            var usuario = await _repositorio.ObtenerPorIdAsync(id);
-            if (usuario is null)
-            {
-                return false;
-            }
+        private static ResultadoUsuario UltimoAdministrador() =>
+            new(EstadoOperacionUsuario.Conflicto, "Debe permanecer al menos un administrador activo.");
 
-            await _repositorio.EliminarAsync(usuario);
-            return true;
-        }
+        private static AuditoriaUsuario CrearAuditoria(int actor, int usuario, string accion, List<string> campos) =>
+            new()
+            {
+                IdActor = actor, IdUsuario = usuario, Accion = accion,
+                FechaUtc = DateTime.UtcNow, CamposModificados = string.Join(",", campos)
+            };
 
         public async Task<bool> RecuperarContrasenaAsync(RecuperarContrasenaDto dto)
         {
@@ -247,20 +283,7 @@ namespace Totaltech.Logica
 
         private static string NormalizarEmail(string email)
         {
-            return email.Trim();
-        }
-
-        private bool ContrasenaCoincide(Usuario usuario, string contrasena)
-        {
-            try
-            {
-                return _passwordHasher.VerifyHashedPassword(usuario, usuario.Contrasena, contrasena)
-                    is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
-            }
-            catch (FormatException)
-            {
-                return false;
-            }
+            return email?.Trim() ?? string.Empty;
         }
 
         private static string? ValidarUsuario(Usuario usuario, bool necesitaContrasena)
@@ -280,7 +303,7 @@ namespace Totaltech.Logica
                 return "El email es obligatorio.";
             }
 
-            if (!new EmailAddressAttribute().IsValid(usuario.Email))
+            if (usuario.Email.Length > 256 || !new EmailAddressAttribute().IsValid(usuario.Email))
             {
                 return "El formato del email no es valido.";
             }

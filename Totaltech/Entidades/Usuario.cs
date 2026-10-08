@@ -20,6 +20,10 @@ namespace Totaltech.Entidades
         [DataType(DataType.DateTime)]
         public DateTime FechaRegistro { get; set; }
 
+        public bool Activo { get; set; } = true;
+
+        public int VersionSesion { get; set; } = 1;
+
         public RolUsuario Rol { get; set; } = RolUsuario.Cliente;
     }
 

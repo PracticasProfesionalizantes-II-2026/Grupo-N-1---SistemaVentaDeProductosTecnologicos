@@ -23,10 +23,15 @@ namespace Totaltech.Endpoints
                     });
                 }
 
-                var usuario = await logica.LoginAsync(request);
+                var usuario = await logica.AutenticarAsync(request);
                 if (usuario is null)
                 {
                     return Results.Unauthorized();
+                }
+
+                if (!usuario.Activo)
+                {
+                    return Results.Json(new { codigo = "usuario_inactivo", mensaje = "Tu cuenta está desactivada. Contactá al administrador." }, statusCode: 403);
                 }
 
                 var token = tokens.Crear(usuario);
@@ -40,6 +45,7 @@ namespace Totaltech.Endpoints
                     Telefono = respuesta.Telefono,
                     FechaRegistro = respuesta.FechaRegistro,
                     Rol = respuesta.Rol,
+                    Activo = respuesta.Activo,
                     AccessToken = token.AccessToken,
                     ExpiresAtUtc = token.ExpiresAtUtc
                 });
@@ -76,7 +82,8 @@ namespace Totaltech.Endpoints
                 Email = usuario.Email,
                 Telefono = usuario.Telefono,
                 FechaRegistro = usuario.FechaRegistro,
-                Rol = usuario.Rol
+                Rol = usuario.Rol,
+                Activo = usuario.Activo
             };
         }
     }

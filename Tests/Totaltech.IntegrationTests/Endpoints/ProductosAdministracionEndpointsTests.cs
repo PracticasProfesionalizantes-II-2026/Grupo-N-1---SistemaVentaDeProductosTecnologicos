@@ -152,10 +152,12 @@ public sealed class ProductosAdministracionEndpointsTests
 
     private static void Autenticar(TotaltechWebApplicationFactory factory, HttpClient client, RolUsuario rol)
     {
-        var token = factory.Services.GetRequiredService<IJwtTokenService>().Crear(new Usuario
-        {
-            IdUsuario = 100, Nombre = "Prueba", Email = "imagen@test.local", Rol = rol
-        });
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+        var usuario = new Usuario { Nombre = "Prueba", Email = $"imagen-{Guid.NewGuid():N}@test.local", Rol = rol };
+        db.Usuarios.Add(usuario);
+        db.SaveChanges();
+        var token = factory.Services.GetRequiredService<IJwtTokenService>().Crear(usuario);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
     }
 

@@ -47,6 +47,12 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
         return (email, contrasena);
     }
 
+    public async Task<Entidades.Usuario> ObtenerUsuarioAsync(string email)
+    {
+        await using var db = _database.CreateContext();
+        return await db.Usuarios.AsNoTracking().SingleAsync(u => u.Email == email);
+    }
+
     public async Task<Entidades.Producto> CrearProductoAsync(string nombre, string? descripcion = null)
     {
         await using var db = _database.CreateContext();
@@ -147,7 +153,13 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
 
     private Process Iniciar(string raiz, string proyecto, Dictionary<string, string> entorno)
     {
-        var info = new ProcessStartInfo("dotnet", $"run --no-build --no-launch-profile --configuration Release --project {proyecto}")
+        // Ejecutar la misma configuración que el ensamblado de pruebas.
+#if DEBUG
+        const string configuracion = "Debug";
+#else
+        const string configuracion = "Release";
+#endif
+        var info = new ProcessStartInfo("dotnet", $"run --no-build --no-launch-profile --configuration {configuracion} --project {proyecto}")
         { WorkingDirectory = raiz, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var item in entorno) info.Environment[item.Key] = item.Value;
         var proceso = Process.Start(info) ?? throw new InvalidOperationException($"No se pudo iniciar {proyecto}.");

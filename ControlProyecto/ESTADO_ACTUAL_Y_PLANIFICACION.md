@@ -1,5 +1,7 @@
 # TotalTech - Estado actual y planificación hasta el 25 de octubre de 2026
 
+Actualización puntual **08/10/2026 — Gestión administrativa de usuarios**: implementados listado MVC, edición de datos/rol, baja lógica y reactivación; JWT/cookie revocados por cambios de rol/estado; último administrador protegido con transacción serializable; auditoría persistente de usuarios. UC-24 sigue parcial por reset de credenciales pendiente. UC-32 tiene registro de usuarios, sin consulta general de bitácora. El corte histórico y sus porcentajes no se recalculan con esta actualización.
+
 Fecha de corte: **17 de septiembre de 2026**
 
 Rama y revisión analizadas: `Rama--Facu` en `d6afef3`
@@ -96,7 +98,7 @@ Cuando la documentación contradice el repositorio, el código probado en `d6afe
 | UC-21 ABM de promociones | N | Sin implementación. | Módulo completo. |
 | UC-22 Gestionar pedidos | P | Listado, detalle y transiciones válidas en Backend. | Pantallas Admin, datos de envío, feedback y E2E de transiciones. |
 | UC-23 Emitir reembolso | N | Sin implementación. | Política, integración de pago, autorización e idempotencia. |
-| UC-24 Gestionar usuarios | P | CRUD y autorización Backend. | Pantalla Admin, bloqueo/desbloqueo, reset administrativo y auditoría. |
+| UC-24 Gestionar usuarios | P | MVC/API de edición, baja lógica/reactivación, roles, revocación de sesiones y auditoría de usuarios (08/10). | Reset administrativo de credenciales y UAT final. |
 | UC-25 Gestionar proveedores | C* | CRUD MVC/API Admin y condiciones comerciales. | Baja lógica coherente, errores/timeouts y E2E. |
 | UC-26 Asociar productos a proveedor | P | Cada producto referencia un proveedor. | Múltiples/preferente/costo o exclusión formal del alcance ampliado. |
 | UC-27 Ajuste de stock | P | Edición y endpoint Admin de stock. | Caso dedicado, motivo, historial de movimientos y pruebas de concurrencia. |
@@ -104,7 +106,7 @@ Cuando la documentación contradice el repositorio, el código probado en `d6afe
 | UC-29 Reportes operativos | P | Agregados Backend de ventas, ingresos y más vendidos. | Períodos, conciliación SQL, estados/promociones y UI Admin. |
 | UC-30 Zonas y costos de envío | N | Sin implementación. | Reglas y UI de administración. |
 | UC-31 Configurar medios de pago | N | Sin implementación. | Configuración segura por ambiente y sin exponer secretos. |
-| UC-32 Auditoría del sistema | N | Sin bitácora funcional. | Eventos, actor, fecha, datos mínimos y consulta protegida. |
+| UC-32 Auditoría del sistema | P | Registro persistente de acciones sobre usuarios (08/10). | Extensión a otros módulos y consulta protegida de bitácora. |
 | UC-33 Gestionar reseñas | N | Reseñas no implementadas. | Depende de UC-16. |
 
 ### Proveedor: UC-34 a UC-36

@@ -21,6 +21,14 @@ builder.Services.AddScoped<CategoriasApiService>();
 builder.Services.AddScoped<ProductosApiService>();
 builder.Services.AddScoped<ProveedoresApiService>();
 builder.Services.AddScoped<AdministracionApiService>();
+builder.Services.AddScoped<IUsuariosApiService, UsuariosApiService>();
+builder.Services.AddScoped<ValidacionSesionEvents>();
+builder.Services.AddHttpClient("TotaltechSessionApi", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]
+        ?? throw new InvalidOperationException("Falta configurar ApiBaseUrl."));
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddScoped<ICarritosApiService, CarritosApiService>();
 builder.Services.AddSingleton<ProductoImagenResolver>();
 builder.Services.AddSingleton<ProductoImagenStorage>();
@@ -29,6 +37,7 @@ builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
+        options.EventsType = typeof(ValidacionSesionEvents);
         options.LoginPath = "/Home/Login";
         options.AccessDeniedPath = "/Home/Login";
         options.Cookie.Name = "Totaltech.Auth";
@@ -51,6 +60,19 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    var protegido = context.GetEndpoint()?.Metadata.GetOrderedMetadata<Microsoft.AspNetCore.Authorization.IAuthorizeData>().Count > 0;
+    var anonimo = context.GetEndpoint()?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.IAllowAnonymous>() is not null;
+    if (context.Items.ContainsKey(ValidacionSesionEvents.ServicioNoDisponible) && protegido && !anonimo)
+    {
+        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        await context.Response.WriteAsync("No pudimos verificar tu sesión. El servicio no está disponible. Volvé a intentarlo en unos minutos.");
+        return;
+    }
+    await next();
+});
 app.UseAuthorization();
 
 app.MapStaticAssets();

@@ -9,6 +9,8 @@ namespace Totaltech.Datos
         {
         }
 
+        public DbSet<AuditoriaUsuario> AuditoriaUsuarios { get; set; }
+
         public DbSet<Usuario> Usuarios { get; set; }
 
         public DbSet<Direccion> Direcciones { get; set; }
@@ -38,6 +40,15 @@ namespace Totaltech.Datos
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Usuario>().Property(u => u.Activo).HasDefaultValue(true);
+            modelBuilder.Entity<Usuario>().Property(u => u.VersionSesion).HasDefaultValue(1);
+            modelBuilder.Entity<AuditoriaUsuario>().Property(a => a.Accion).HasMaxLength(32);
+            modelBuilder.Entity<AuditoriaUsuario>().Property(a => a.CamposModificados).HasMaxLength(256);
+            modelBuilder.Entity<AuditoriaUsuario>().HasOne<Usuario>().WithMany()
+                .HasForeignKey(a => a.IdActor).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<AuditoriaUsuario>().HasOne<Usuario>().WithMany()
+                .HasForeignKey(a => a.IdUsuario).OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Usuario>()
                 .Property(usuario => usuario.Email)

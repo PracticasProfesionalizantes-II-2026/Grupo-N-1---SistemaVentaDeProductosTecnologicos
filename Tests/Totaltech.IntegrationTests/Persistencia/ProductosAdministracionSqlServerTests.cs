@@ -133,10 +133,12 @@ public sealed class ProductosAdministracionSqlServerTests : IClassFixture<SqlSer
 
         await using var factory = new ProductosSqlFactory(_database.ConnectionString);
         using var client = factory.CreateClient();
-        var token = factory.Services.GetRequiredService<IJwtTokenService>().Crear(new Usuario
-        {
-            IdUsuario = 100, Nombre = "Prueba", Email = "admin@test.local", Rol = RolUsuario.Administrador
-        });
+        await using var authDb = _database.CreateContext();
+        var usuarioAdmin = new Usuario
+        { Nombre = "Prueba", Email = $"admin-{Guid.NewGuid():N}@test.local", Rol = RolUsuario.Administrador };
+        authDb.Usuarios.Add(usuarioAdmin);
+        await authDb.SaveChangesAsync();
+        var token = factory.Services.GetRequiredService<IJwtTokenService>().Crear(usuarioAdmin);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
         using var respuesta = await client.DeleteAsync($"/productos/{id}");
         Assert.Equal(HttpStatusCode.Conflict, respuesta.StatusCode);
