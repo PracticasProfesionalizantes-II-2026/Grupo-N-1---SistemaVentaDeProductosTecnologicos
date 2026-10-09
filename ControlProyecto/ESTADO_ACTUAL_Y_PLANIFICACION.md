@@ -4,6 +4,8 @@ Actualización puntual **08/10/2026 — Gestión administrativa de usuarios**: i
 
 Fecha de corte: **17 de septiembre de 2026**
 
+Actualización puntual **09/10/2026 — Observabilidad con Prometheus**: métricas HTTP/runtime en API y MVC, clientes HTTP, comandos SQL/disponibilidad y resultados de autenticación/checkout/usuarios; `/metrics` protegido por loopback; configuración local, consultas, cuatro alertas y pruebas sintéticas con `promtool`. **UC-46 pasa a parcial (P)** por notificaciones externas y operación en producción pendientes. Evidencia y arranque: `Documentacion/Observabilidad.md`. No requiere migraciones. La medición y los porcentajes del corte histórico 17/09 no se recalculan con esta actualización.
+
 Rama y revisión analizadas: `Rama--Facu` en `d6afef3`
 
 Alcance de esta actualización: auditoría del código y la documentación, medición del estado y planificación. No se modificó código funcional, esquema ni datos.
@@ -135,11 +137,11 @@ Cuando la documentación contradice el repositorio, el código probado en `d6afe
 | UC-43 Autorización por rol | C* | Cliente/Admin protegidos en API y MVC; tests 401/403. | Matriz completa de recorridos; rol Proveedor sólo si entra en alcance. |
 | UC-44 Sesiones y tokens | P | JWT con expiración, cookie MVC y handler Bearer. | Logout, renovación o decisión de no renovarla, expiración E2E. |
 | UC-45 Backup/restore | N | Sin procedimiento probado. | Política, automatización y prueba de restauración. |
-| UC-46 Monitoreo y alertas | N | Sin observabilidad acreditada. | Logs, métricas, salud y alertas mínimas. |
+| UC-46 Monitoreo y alertas | P | Métricas Prometheus en API/MVC, salud SQL, consultas y cuatro alertas locales con pruebas sintéticas (09/10). | Notificaciones externas, operación en producción y validación de umbrales en carga real. |
 
-### Resumen cuantitativo del inventario
+### Resumen cuantitativo del inventario histórico (17/09)
 
-| Clasificación actual | Cantidad | UC |
+| Clasificación histórica | Cantidad | UC |
 |---|---:|---|
 | Núcleo construido (C*) | 8 | 01, 02, 07, 09, 19, 20, 25, 43 |
 | Parcial (P) | 15 | 04, 05, 06, 08, 10, 11, 13, 14, 18, 22, 24, 26, 27, 29, 44 |
@@ -444,6 +446,8 @@ El hito se considera logrado sólo cuando exista evidencia de todos estos puntos
 - [ ] Documentación, API y matriz UC coinciden con el producto entregado.
 
 ## 13. Registro de avances ya ejecutados
+
+- **09/10 — Observabilidad local:** métricas técnicas y resultados de negocio mediante Prometheus, extracción loopback, consultas, reglas y job CI con checksum oficial. UC-46 parcial; no se acredita operación productiva ni notificación externa. Compilación Release sin advertencias; 202 pruebas aprobadas, incluidas SQL desechable y navegador. `promtool check config`, `check rules` y cuatro escenarios de `test rules` correctos con 3.15.0. Tres targets `UP`; caída real de API con alerta `firing` y recuperación comprobadas. Evidencia completa y limitación local de Scalar: `Documentacion/Observabilidad.md`.
 
 - **Wave 1:** CI .NET 10, configuración segura, pruebas rápidas/SQL aisladas y tratamiento de credenciales.
 - **Wave 2:** checkout Backend idempotente y transaccional, total/dirección históricos, stock, pagos manuales contenidos y DTO explícitos.

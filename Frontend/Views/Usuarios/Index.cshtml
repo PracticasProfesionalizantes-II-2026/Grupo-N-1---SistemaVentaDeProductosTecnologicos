@@ -24,10 +24,10 @@
                         <td data-label="ID">@usuario.IdUsuario</td><td data-label="Nombre">@usuario.Nombre @usuario.Apellido</td><td data-label="Contacto" class="usuarios-contacto"><div>@usuario.Email</div><div>@usuario.Telefono</div></td>
                         <td data-label="Rol">@(usuario.Rol == 1 ? "Administrador" : "Cliente")</td><td data-label="Registro (UTC)">@usuario.FechaRegistro.ToString("dd/MM/yyyy")</td>
                         <td data-label="Estado"><span class="badge @(usuario.Activo ? "bg-success" : "bg-secondary")">@(usuario.Activo ? "Activo" : "Inactivo")</span></td>
-                        <td data-label="Acciones"><a asp-action="Editar" asp-route-id="@usuario.IdUsuario" class="btn btn-warning btn-sm">Editar</a>
+                        <td data-label="Acciones"><div class="usuarios-acciones"><a asp-action="Editar" asp-route-id="@usuario.IdUsuario" class="btn btn-warning btn-sm">Editar</a>
                             @if (usuario.Activo) { <a asp-action="DarBaja" asp-route-id="@usuario.IdUsuario" class="btn btn-outline-danger btn-sm">Dar de baja</a> }
                             else { <a asp-action="Reactivar" asp-route-id="@usuario.IdUsuario" class="btn btn-outline-success btn-sm">Reactivar</a> }
-                        </td>
+                        </div></td>
                     </tr>
                 }
                 </tbody>

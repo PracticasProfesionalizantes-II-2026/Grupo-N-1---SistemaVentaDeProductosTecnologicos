@@ -14,6 +14,8 @@ El PDF original se conserva como referencia histórica. Esta edición y su fuent
 
 ## 02. Conexión y convenciones
 
+Actualización 09/10/2026: API y frontend exponen `GET /metrics` en sus puertos HTTP locales para Prometheus. Es una ruta operacional independiente de las 82 operaciones de negocio documentadas. Exporta texto Prometheus antes de HTTPS y autenticación, sin consultar dependencias; admite conexiones loopback IPv4/IPv6, ignora cabeceras reenviadas para conceder acceso, devuelve `403` a otros orígenes y `405` a métodos distintos de GET. `Observability:Enabled` es `false` en base y `true` en Development; deshabilitado responde `404`. No recibe DTO ni requiere JWT/cookie. Configuración, métricas y consultas: [Observabilidad.md](Observabilidad.md).
+
 | Elemento | Valor actual |
 | --- | --- |
 | Backend HTTP local | http://localhost:5070 |

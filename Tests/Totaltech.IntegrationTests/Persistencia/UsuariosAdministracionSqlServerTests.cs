@@ -2,11 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Configuration;
+using Prometheus;
+using System.Text;
 using Totaltech.Datos;
 using Totaltech.Entidades;
 using Totaltech.IntegrationTests.Infrastructure;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Observabilidad;
 using Totaltech.Repositorios;
 
 namespace Totaltech.IntegrationTests.Persistencia;
@@ -20,6 +24,7 @@ public sealed class UsuariosAdministracionSqlServerTests
     public async Task OperacionesConcurrentes_PreservanUnAdministradorActivo(bool degradar)
     {
         var database = new SqlServerTestDatabase();
+        var (registry, metricas) = CrearMetricas();
         try
         {
             await database.InitializeAsync();
@@ -35,7 +40,7 @@ public sealed class UsuariosAdministracionSqlServerTests
             async Task<ResultadoUsuario> CambiarAsync(int id)
             {
                 await using var db = database.CreateContext();
-                var logica = new UsuariosLogica(new UsuariosRepositorio(db));
+                var logica = new UsuariosLogica(new UsuariosRepositorio(db), metricas);
                 await inicio.Task;
                 return degradar
                     ? await logica.ActualizarAsync(id, new()
@@ -51,6 +56,10 @@ public sealed class UsuariosAdministracionSqlServerTests
             await using var verificacion = database.CreateContext();
             Assert.Equal(1, await verificacion.Usuarios.CountAsync(u => u.Activo && u.Rol == RolUsuario.Administrador));
             Assert.Equal(1, await verificacion.AuditoriaUsuarios.CountAsync());
+            var texto = await ExportarAsync(registry);
+            var operacion = degradar ? "update" : "deactivate";
+            Assert.Contains($"totaltech_user_operations_total{{operation=\"{operacion}\",result=\"success\"}} 1", texto);
+            Assert.Contains($"totaltech_user_operations_total{{operation=\"{operacion}\",result=\"conflict\"}} 1", texto);
         }
         finally { await database.DisposeAsync(); }
     }
@@ -116,6 +125,7 @@ public sealed class UsuariosAdministracionSqlServerTests
     public async Task FalloDespuesDeGuardar_RevierteUsuarioYAuditoria()
     {
         var database = new SqlServerTestDatabase();
+        var (registry, metricas) = CrearMetricas();
         try
         {
             await database.InitializeAsync();
@@ -130,12 +140,15 @@ public sealed class UsuariosAdministracionSqlServerTests
                 .AddInterceptors(new FalloDespuesDeGuardar()).Options;
             await using (var db = new TotaltechDbContext(options))
             {
-                var logica = new UsuariosLogica(new UsuariosRepositorio(db));
+                var logica = new UsuariosLogica(new UsuariosRepositorio(db), metricas);
                 await Assert.ThrowsAsync<InvalidOperationException>(() => logica.CambiarEstadoAsync(id, false, id));
             }
             await using var verificacion = database.CreateContext();
             Assert.True((await verificacion.Usuarios.SingleAsync()).Activo);
             Assert.Empty(await verificacion.AuditoriaUsuarios.ToListAsync());
+            var texto = await ExportarAsync(registry);
+            Assert.Contains("totaltech_user_operations_total{operation=\"deactivate\",result=\"error\"} 1", texto);
+            Assert.DoesNotContain("result=\"success\"", texto);
         }
         finally { await database.DisposeAsync(); }
     }
@@ -172,6 +185,21 @@ public sealed class UsuariosAdministracionSqlServerTests
         Nombre = "Admin", Apellido = "Prueba", Email = $"{nombre}@test.local",
         Contrasena = "hash-prueba", Telefono = "111", FechaRegistro = DateTime.UtcNow, Rol = RolUsuario.Administrador
     };
+
+    private static (CollectorRegistry Registry, MetricasNegocio Metricas) CrearMetricas()
+    {
+        var registry = Metrics.NewCustomRegistry();
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        { ["Observability:Enabled"] = "true" }).Build();
+        return (registry, new MetricasNegocio(Metrics.WithCustomRegistry(registry), config));
+    }
+
+    private static async Task<string> ExportarAsync(CollectorRegistry registry)
+    {
+        await using var stream = new MemoryStream();
+        await registry.CollectAndExportAsTextAsync(stream);
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
     private sealed class FalloDespuesDeGuardar : SaveChangesInterceptor
     {
         public override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result,

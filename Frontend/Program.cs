@@ -1,9 +1,13 @@
 using Frontend.Services;
 using Frontend.Services.Interfaces;
+using Frontend.Observabilidad;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Prometheus;
+using Totaltech.Observabilidad;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddTotaltechObservability(builder.Configuration);
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<ApiBearerTokenHandler>();
@@ -15,7 +19,9 @@ builder.Services.AddHttpClient("TotaltechApi", client =>
 
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
-}).AddHttpMessageHandler<ApiBearerTokenHandler>();
+}).AddHttpMessageHandler(services => new ApiClientMetricsHandler(
+    services.GetRequiredService<IMetricFactory>(), "TotaltechApi", builder.Configuration.GetValue<bool>("Observability:Enabled")))
+  .AddHttpMessageHandler<ApiBearerTokenHandler>();
 
 builder.Services.AddScoped<CategoriasApiService>();
 builder.Services.AddScoped<ProductosApiService>();
@@ -28,7 +34,8 @@ builder.Services.AddHttpClient("TotaltechSessionApi", client =>
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]
         ?? throw new InvalidOperationException("Falta configurar ApiBaseUrl."));
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler(services => new ApiClientMetricsHandler(
+    services.GetRequiredService<IMetricFactory>(), "TotaltechSessionApi", builder.Configuration.GetValue<bool>("Observability:Enabled")));
 builder.Services.AddScoped<ICarritosApiService, CarritosApiService>();
 builder.Services.AddSingleton<ProductoImagenResolver>();
 builder.Services.AddSingleton<ProductoImagenStorage>();
@@ -49,6 +56,9 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseTotaltechMetricsEndpoint();
+app.UseTotaltechHttpMetrics();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -58,6 +68,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.CaptureTotaltechMetricRoute();
 
 app.UseAuthentication();
 app.Use(async (context, next) =>

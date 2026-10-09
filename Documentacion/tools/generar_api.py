@@ -189,6 +189,7 @@ def build_markdown(rows, schemas):
       'Validación realizada: revisión estática de contratos y cobertura de rutas, generación del PDF y revisión visual. No se ejecutaron llamadas HTTP ni pruebas contra una base de datos. La presencia de un endpoint no demuestra que exista una pantalla MVC completa para ese flujo.', '',
       'El PDF original se conserva como referencia histórica. Esta edición y su fuente editable API.md constituyen la referencia vigente. El generador vuelve a extraer rutas y esquemas; las notas y ejemplos se deben revisar cuando cambie la lógica de negocio.', '',
       '## 02. Conexión y convenciones', '',
+      'Actualización 09/10/2026: API y frontend exponen GET /metrics en sus puertos HTTP locales para Prometheus. Es una ruta operacional independiente de las operaciones de negocio documentadas. Exporta texto Prometheus antes de HTTPS y autenticación, sin consultar dependencias; admite conexiones loopback IPv4/IPv6, ignora cabeceras reenviadas para conceder acceso, devuelve 403 a otros orígenes y 405 a métodos distintos de GET. Observability:Enabled es false en base y true en Development; deshabilitado responde 404. No recibe DTO ni requiere JWT/cookie. Configuración, métricas y consultas: Documentacion/Observabilidad.md.', '',
       '| Elemento | Valor actual |', '| --- | --- |',
       '| Backend HTTP local | http://localhost:5070 |',
       '| Backend HTTPS local | https://localhost:7038 |',

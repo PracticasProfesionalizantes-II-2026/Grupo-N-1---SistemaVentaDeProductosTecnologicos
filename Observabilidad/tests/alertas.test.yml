@@ -1,0 +1,132 @@
+rule_files:
+  - ../alertas.yml
+evaluation_interval: 1m
+
+tests:
+  - name: caida_y_recuperacion_de_servicios_y_sql
+    interval: 1m
+    input_series:
+      - series: 'up{job="totaltech_api",instance="localhost:5070"}'
+        values: '0 0 1 1'
+      - series: 'up{job="totaltech_frontend",instance="localhost:5087"}'
+        values: '1 1 1 1'
+      - series: 'totaltech_dependency_up{job="totaltech_api",instance="localhost:5070",dependency="sqlserver"}'
+        values: '0 0 1 1'
+    alert_rule_test:
+      - eval_time: 0m
+        alertname: TotaltechServicioCaido
+        exp_alerts: []
+      - eval_time: 1m
+        alertname: TotaltechServicioCaido
+        exp_alerts:
+          - exp_labels:
+              job: totaltech_api
+              instance: localhost:5070
+              severity: critical
+            exp_annotations:
+              summary: Servicio totaltech_api no disponible
+              description: Prometheus no puede extraer métricas desde hace un minuto. Revisar proceso, puerto y configuración local.
+      - eval_time: 2m
+        alertname: TotaltechServicioCaido
+        exp_alerts: []
+      - eval_time: 0m
+        alertname: TotaltechSqlNoDisponible
+        exp_alerts: []
+      - eval_time: 1m
+        alertname: TotaltechSqlNoDisponible
+        exp_alerts:
+          - exp_labels:
+              job: totaltech_api
+              instance: localhost:5070
+              dependency: sqlserver
+              severity: critical
+            exp_annotations:
+              summary: SQL Server no disponible
+              description: La comprobación de conexión SQL del backend falla desde hace un minuto.
+      - eval_time: 2m
+        alertname: TotaltechSqlNoDisponible
+        exp_alerts: []
+
+  - name: errores_duracion_y_recuperacion
+    interval: 1m
+    input_series:
+      - series: 'totaltech_http_requests_total{job="totaltech_api",http_method="GET",route="/productos/catalogo",code="200"}'
+        values: '0+9x15'
+      - series: 'totaltech_http_requests_total{job="totaltech_api",http_method="GET",route="/productos/catalogo",code="500"}'
+        values: '0+1x7 7x8'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: TotaltechErroresElevados
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: TotaltechErroresElevados
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: TotaltechErroresElevados
+        exp_alerts:
+          - exp_labels:
+              job: totaltech_api
+              severity: warning
+            exp_annotations:
+              summary: Respuestas 5xx elevadas en totaltech_api
+              description: Más del 5 % de solicitudes fallan, con al menos 20 solicitudes en cinco minutos. Condición sostenida cinco minutos.
+      - eval_time: 12m
+        alertname: TotaltechErroresElevados
+        exp_alerts: []
+
+  - name: latencia_duracion_y_recuperacion
+    interval: 1m
+    input_series:
+      - series: 'totaltech_http_requests_total{job="totaltech_frontend",http_method="GET",route="Home/Index",code="200"}'
+        values: '0+10x20'
+      - series: 'totaltech_http_request_duration_seconds_bucket{job="totaltech_frontend",http_method="GET",route="Home/Index",code="200",le="0.5"}'
+        values: '0x8 10+10x12'
+      - series: 'totaltech_http_request_duration_seconds_bucket{job="totaltech_frontend",http_method="GET",route="Home/Index",code="200",le="1"}'
+        values: '0x8 10+10x12'
+      - series: 'totaltech_http_request_duration_seconds_bucket{job="totaltech_frontend",http_method="GET",route="Home/Index",code="200",le="2.5"}'
+        values: '0+10x20'
+      - series: 'totaltech_http_request_duration_seconds_bucket{job="totaltech_frontend",http_method="GET",route="Home/Index",code="200",le="+Inf"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: TotaltechLatenciaElevada
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: TotaltechLatenciaElevada
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: TotaltechLatenciaElevada
+        exp_alerts:
+          - exp_labels:
+              job: totaltech_frontend
+              severity: warning
+            exp_annotations:
+              summary: Latencia elevada en totaltech_frontend
+              description: La latencia p95 supera un segundo, con al menos 20 solicitudes en cinco minutos. Condición sostenida cinco minutos.
+      - eval_time: 14m
+        alertname: TotaltechLatenciaElevada
+        exp_alerts: []
+
+  - name: trafico_minimo_y_servicios_ajenos_no_alertan
+    interval: 1m
+    input_series:
+      - series: 'up{job="prometheus",instance="127.0.0.1:9090"}'
+        values: '0x20'
+      - series: 'totaltech_http_requests_total{job="totaltech_api",http_method="GET",route="/productos/catalogo",code="500"}'
+        values: '0+1x20'
+      - series: 'totaltech_http_request_duration_seconds_bucket{job="totaltech_api",http_method="GET",route="/productos/catalogo",code="500",le="1"}'
+        values: '0x20'
+      - series: 'totaltech_http_request_duration_seconds_bucket{job="totaltech_api",http_method="GET",route="/productos/catalogo",code="500",le="2.5"}'
+        values: '0+1x20'
+      - series: 'totaltech_http_request_duration_seconds_bucket{job="totaltech_api",http_method="GET",route="/productos/catalogo",code="500",le="+Inf"}'
+        values: '0+1x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: TotaltechServicioCaido
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: TotaltechErroresElevados
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: TotaltechLatenciaElevada
+        exp_alerts: []

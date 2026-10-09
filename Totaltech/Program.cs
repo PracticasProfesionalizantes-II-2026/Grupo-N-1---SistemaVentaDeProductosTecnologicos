@@ -2,20 +2,25 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
+using Totaltech.Configuracion;
 using Totaltech.Datos;
 using Totaltech.Endpoints;
 using Totaltech.Entidades;
 using Totaltech.Logica;
+using Totaltech.Observabilidad;
 using Totaltech.Repositorios;
 using Totaltech.Seguridad;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddTotaltechObservability(builder.Configuration);
+builder.Services.AddSingleton<MetricasNegocio>();
+builder.Services.AddSingleton<MetricasSqlInterceptor>();
+if (builder.Configuration.GetValue<bool>("Observability:Enabled"))
+    builder.Services.AddHostedService<SqlDependencyWorker>();
 
 builder.Services
     .AddOptions<JwtOptions>()
@@ -82,29 +87,14 @@ builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta configurar la cadena de conexión 'DefaultConnection'.");
 
-if (builder.Environment.IsDevelopment())
+builder.Services.AddDbContext<TotaltechDbContext>((services, options) =>
 {
-    var connectionBuilder = new SqlConnectionStringBuilder(connectionString);
-
-    if (connectionBuilder.DataSource.StartsWith("(localdb)", StringComparison.OrdinalIgnoreCase) &&
-        !string.IsNullOrWhiteSpace(connectionBuilder.InitialCatalog))
-    {
-        var archivoBaseLocal = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            $"{connectionBuilder.InitialCatalog}.mdf");
-
-        if (File.Exists(archivoBaseLocal))
-        {
-            connectionBuilder.AttachDBFilename = archivoBaseLocal;
-            connectionString = connectionBuilder.ConnectionString;
-        }
-    }
-}
-
-builder.Services.AddDbContext<TotaltechDbContext>(options =>
     options.UseSqlServer(
         connectionString,
-        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()));
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure());
+    if (builder.Configuration.GetValue<bool>("Observability:Enabled"))
+        options.AddInterceptors(services.GetRequiredService<MetricasSqlInterceptor>());
+});
 
 builder.Services.AddScoped<IUsuariosRepositorio, UsuariosRepositorio>();
 builder.Services.AddScoped<IDireccionesRepositorio, DireccionesRepositorio>();
@@ -135,6 +125,9 @@ builder.Services.AddScoped<IReportesLogica, ReportesLogica>();
 builder.Services.AddScoped<IConsultasLogica, ConsultasLogica>();
 
 var app = builder.Build();
+
+app.UseTotaltechMetricsEndpoint();
+app.UseTotaltechHttpMetrics();
 
 var aplicarMigraciones = builder.Configuration.GetValue<bool?>("Database:ApplyMigrations")
     ?? app.Environment.IsDevelopment();
@@ -227,9 +220,13 @@ if (builder.Configuration.GetValue<bool>("BootstrapAdmin:Enabled"))
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    if (builder.Configuration.GetValue<bool?>("ApiReference:Enabled") != false)
+        app.MapDevelopmentApiReference();
 }
 
+app.UseRouting();
+app.CaptureTotaltechMetricRoute();
+app.UseAuthOperationMetrics();
 app.UseAuthentication();
 app.UseAuthorization();
 

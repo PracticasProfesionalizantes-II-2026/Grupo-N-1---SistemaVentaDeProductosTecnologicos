@@ -396,11 +396,14 @@
   max-width: 16rem;
   overflow-wrap: anywhere;
 }
-.admin-shell .usuarios-list .usuarios-table td:last-child .btn {
-  display: block;
-  width: max-content;
-  max-width: 100%;
-  white-space: normal;
+.admin-shell .usuarios-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.admin-shell .usuarios-acciones .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 @media (max-width: 767px) {
   .admin-shell .usuarios-list .usuarios-table,

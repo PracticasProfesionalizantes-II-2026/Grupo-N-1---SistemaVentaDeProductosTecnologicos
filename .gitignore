@@ -82,3 +82,10 @@ Desktop.ini
 
 # Contenido generado por usuarios en tiempo de ejecución
 **/wwwroot/uploads/
+
+# Distribución y almacenamiento local de Prometheus; conservar configuración versionada.
+/ControlProyecto/prometheus-*.windows-amd64.zip
+/ControlProyecto/prometheus-*.windows-amd64/
+**/prometheus.exe
+**/promtool.exe
+/Observabilidad/data/

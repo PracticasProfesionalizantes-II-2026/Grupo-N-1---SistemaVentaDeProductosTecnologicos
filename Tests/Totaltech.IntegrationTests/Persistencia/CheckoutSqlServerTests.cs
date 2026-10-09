@@ -1,10 +1,14 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Prometheus;
+using System.Text;
 using Totaltech.Datos;
 using Totaltech.Entidades;
 using Totaltech.IntegrationTests.Infrastructure;
 using Totaltech.Logica;
 using Totaltech.Logica.DTOs;
+using Totaltech.Observabilidad;
 using Totaltech.Repositorios;
 
 namespace Totaltech.IntegrationTests.Persistencia;
@@ -23,10 +27,11 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
     public async Task RespuestaPerdidaRepiteElMismoPedidoYSnapshot()
     {
         var datos = await CrearEscenarioAsync(stock: 5, cantidad: 2, precio: 50m);
+        var (registry, metricas) = CrearMetricas();
 
         await using (var context = _database.CreateContext())
         {
-            var resultado = await CrearCarritosLogica(context).ConfirmarAsync(
+            var resultado = await CrearCarritosLogica(context, metricas: metricas).ConfirmarAsync(
                 datos.IdCarrito,
                 new ConfirmarCarritoDto { IdDireccion = datos.IdDireccion });
 
@@ -46,7 +51,7 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
 
         await using (var context = _database.CreateContext())
         {
-            var resultado = await CrearCarritosLogica(context).ConfirmarAsync(
+            var resultado = await CrearCarritosLogica(context, metricas: metricas).ConfirmarAsync(
                 datos.IdCarrito,
                 new ConfirmarCarritoDto { IdDireccion = datos.IdDireccion });
 
@@ -56,6 +61,11 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
             Assert.Single(await context.Pedidos.Where(pedido => pedido.IdCarrito == datos.IdCarrito).ToListAsync());
             Assert.Equal(3, (await context.Productos.FindAsync(datos.IdProducto))!.Stock);
         }
+        var texto = await ExportarAsync(registry);
+        Assert.Contains("totaltech_checkout_operations_total{result=\"created\"} 1", texto);
+        Assert.Contains("totaltech_checkout_operations_total{result=\"repeated\"} 1", texto);
+        Assert.Contains("totaltech_checkout_duration_seconds_count{result=\"created\"} 1", texto);
+        Assert.Contains("totaltech_checkout_duration_seconds_count{result=\"repeated\"} 1", texto);
     }
 
     [Fact]
@@ -97,14 +107,15 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
     public async Task DosConfirmacionesConcurrentesCreanUnSoloPedido()
     {
         var datos = await CrearEscenarioAsync(stock: 4, cantidad: 1);
+        var (registry, metricas) = CrearMetricas();
         await using var context1 = _database.CreateContext();
         await using var context2 = _database.CreateContext();
 
         var resultados = await Task.WhenAll(
-            CrearCarritosLogica(context1).ConfirmarAsync(
+            CrearCarritosLogica(context1, metricas: metricas).ConfirmarAsync(
                 datos.IdCarrito,
                 new ConfirmarCarritoDto { IdDireccion = datos.IdDireccion }),
-            CrearCarritosLogica(context2).ConfirmarAsync(
+            CrearCarritosLogica(context2, metricas: metricas).ConfirmarAsync(
                 datos.IdCarrito,
                 new ConfirmarCarritoDto { IdDireccion = datos.IdDireccion }));
 
@@ -116,6 +127,9 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
         await using var verificacion = _database.CreateContext();
         Assert.Equal(1, await verificacion.Pedidos.CountAsync(pedido => pedido.IdCarrito == datos.IdCarrito));
         Assert.Equal(3, (await verificacion.Productos.FindAsync(datos.IdProducto))!.Stock);
+        var texto = await ExportarAsync(registry);
+        Assert.Contains("totaltech_checkout_operations_total{result=\"created\"} 1", texto);
+        Assert.Contains("totaltech_checkout_operations_total{result=\"repeated\"} 1", texto);
     }
 
     [Fact]
@@ -171,6 +185,7 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
     public async Task FallaIntermediaRevierteStockPedidoYCarrito()
     {
         var datos = await CrearEscenarioAsync(stock: 5, cantidad: 1);
+        var (registry, metricas) = CrearMetricas();
         int segundoProducto;
 
         await using (var context = _database.CreateContext())
@@ -202,7 +217,7 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
         await using (var context = _database.CreateContext())
         {
             var repositorio = new FallarSegundoDescuentoRepositorio(new ProductosRepositorio(context));
-            var resultado = await CrearCarritosLogica(context, repositorio).ConfirmarAsync(
+            var resultado = await CrearCarritosLogica(context, repositorio, metricas).ConfirmarAsync(
                 datos.IdCarrito,
                 new ConfirmarCarritoDto { IdDireccion = datos.IdDireccion });
             Assert.Equal(EstadoConfirmacionCarrito.Conflicto, resultado.Estado);
@@ -213,6 +228,9 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
         Assert.Equal(5, (await verificacion.Productos.FindAsync(segundoProducto))!.Stock);
         Assert.False(await verificacion.Pedidos.AnyAsync(pedido => pedido.IdCarrito == datos.IdCarrito));
         Assert.Equal(EstadoCarrito.Activo, (await verificacion.Carritos.FindAsync(datos.IdCarrito))!.Estado);
+        var texto = await ExportarAsync(registry);
+        Assert.Contains("totaltech_checkout_operations_total{result=\"conflict\"} 1", texto);
+        Assert.DoesNotContain("result=\"created\"", texto);
     }
 
     [Fact]
@@ -523,11 +541,28 @@ public sealed class CheckoutSqlServerTests : IClassFixture<SqlServerTestDatabase
 
     private static CarritosLogica CrearCarritosLogica(
         TotaltechDbContext context,
-        IProductosRepositorio? productosRepositorio = null) => new(
+        IProductosRepositorio? productosRepositorio = null,
+        MetricasNegocio? metricas = null) => new(
         context,
         new CarritosRepositorio(context),
         productosRepositorio ?? new ProductosRepositorio(context),
-        new UsuariosRepositorio(context));
+        new UsuariosRepositorio(context),
+        metricas);
+
+    private static (CollectorRegistry Registry, MetricasNegocio Metricas) CrearMetricas()
+    {
+        var registry = Metrics.NewCustomRegistry();
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        { ["Observability:Enabled"] = "true" }).Build();
+        return (registry, new MetricasNegocio(Metrics.WithCustomRegistry(registry), config));
+    }
+
+    private static async Task<string> ExportarAsync(CollectorRegistry registry)
+    {
+        await using var stream = new MemoryStream();
+        await registry.CollectAndExportAsTextAsync(stream);
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
 
     private static PedidosLogica CrearPedidosLogica(TotaltechDbContext context) => new(
         context,

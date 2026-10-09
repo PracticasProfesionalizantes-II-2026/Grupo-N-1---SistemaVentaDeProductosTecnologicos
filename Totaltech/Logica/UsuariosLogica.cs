@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using Totaltech.Entidades;
 using Totaltech.Logica.DTOs;
+using Totaltech.Observabilidad;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
@@ -26,11 +27,13 @@ namespace Totaltech.Logica
     {
         private const string ErrorEmailDuplicado = "Ya existe un usuario registrado con ese email.";
         private readonly IUsuariosRepositorio _repositorio;
+        private readonly MetricasNegocio? _metricas;
         private readonly PasswordHasher<Usuario> _passwordHasher = new();
 
-        public UsuariosLogica(IUsuariosRepositorio repositorio)
+        public UsuariosLogica(IUsuariosRepositorio repositorio, MetricasNegocio? metricas = null)
         {
             _repositorio = repositorio;
+            _metricas = metricas;
         }
 
         public Task<List<Usuario>> ObtenerTodosAsync()
@@ -178,7 +181,7 @@ namespace Totaltech.Logica
 
         public Task<ResultadoUsuario> ActualizarAsync(
             int id, UsuarioActualizacionRequest request, int idActor, bool esAdministrador) =>
-            EjecutarCambioAsync(async () =>
+            MedirCambioAsync("update", () => EjecutarCambioAsync(async () =>
             {
                 var existente = await _repositorio.ObtenerPorIdAsync(id);
                 if (existente is null || (!esAdministrador && idActor != id))
@@ -226,10 +229,10 @@ namespace Totaltech.Logica
                 existente.Rol = nuevo.Rol;
                 await _repositorio.GuardarCambioAsync(existente, auditoria);
                 return new(EstadoOperacionUsuario.Exito, Usuario: existente);
-            });
+            }));
 
         public Task<ResultadoUsuario> CambiarEstadoAsync(int id, bool activo, int idActor) =>
-            EjecutarCambioAsync(async () =>
+            MedirCambioAsync(activo ? "reactivate" : "deactivate", () => EjecutarCambioAsync(async () =>
             {
                 var usuario = await _repositorio.ObtenerPorIdAsync(id);
                 if (usuario is null) return new(EstadoOperacionUsuario.NoEncontrado);
@@ -245,7 +248,10 @@ namespace Totaltech.Logica
                 usuario.VersionSesion++;
                 await _repositorio.GuardarCambioAsync(usuario, auditoria);
                 return new(EstadoOperacionUsuario.Exito, Usuario: usuario);
-            });
+            }));
+
+        private Task<ResultadoUsuario> MedirCambioAsync(string operacion, Func<Task<ResultadoUsuario>> ejecutar) =>
+            _metricas is null ? ejecutar() : _metricas.MedirUsuarioAsync(operacion, ejecutar);
 
         private async Task<ResultadoUsuario> EjecutarCambioAsync(Func<Task<ResultadoUsuario>> operacion)
         {

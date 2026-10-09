@@ -7,4 +7,9 @@
     <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    <Compile Include="../Observabilidad/Instrumentacion/*.cs" Link="Observabilidad/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>
