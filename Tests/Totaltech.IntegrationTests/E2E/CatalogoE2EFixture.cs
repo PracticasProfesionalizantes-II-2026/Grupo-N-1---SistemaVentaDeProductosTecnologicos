@@ -75,6 +75,23 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
         return await db.Productos.AsNoTracking().SingleOrDefaultAsync(producto => producto.IdProducto == id);
     }
 
+    public async Task<string> ObtenerEstadoCompraAsync(string email, int idProducto)
+    {
+        await using var db = _database.CreateContext();
+        var usuario = await db.Usuarios.AsNoTracking().SingleAsync(u => u.Email == email);
+        var carritos = await db.Carritos.AsNoTracking().Where(c => c.IdUsuario == usuario.IdUsuario)
+            .OrderBy(c => c.IdCarrito).Select(c => new { c.IdCarrito, c.Estado, c.FechaCreacion }).ToListAsync();
+        var ids = carritos.Select(c => c.IdCarrito).ToArray();
+        var detalles = await db.DetalleCarritos.AsNoTracking().Where(d => ids.Contains(d.IdCarrito))
+            .OrderBy(d => d.IdDetalleCarrito).Select(d => new { d.IdDetalleCarrito, d.IdCarrito, d.IdProducto, d.Cantidad, d.PrecioUnitario, d.Subtotal }).ToListAsync();
+        var stock = await db.Productos.Where(p => p.IdProducto == idProducto).Select(p => p.Stock).SingleAsync();
+        var pedidos = await db.Pedidos.AsNoTracking().Where(p => p.IdUsuario == usuario.IdUsuario)
+            .OrderBy(p => p.IdPedido).Select(p => new { p.IdPedido, p.Estado, p.Total }).ToListAsync();
+        var pagos = await db.Pagos.AsNoTracking().Where(p => p.Pedido!.IdUsuario == usuario.IdUsuario)
+            .OrderBy(p => p.IdPago).Select(p => new { p.IdPago, p.IdPedido, p.Estado, p.Monto }).ToListAsync();
+        return System.Text.Json.JsonSerializer.Serialize(new { carritos, detalles, stock, pedidos, pagos });
+    }
+
     public async Task AsociarCarritoAsync(int idProducto)
     {
         var (email, _) = await CrearClienteAsync();
@@ -119,18 +136,19 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
     }
 
-    public async Task ReiniciarFrontendAsync()
+    public async Task ReiniciarFrontendAsync(bool compraDemo = true)
     {
         if (_frontend is not null) await DetenerAsync(_frontend);
-        await IniciarFrontendAsync();
+        await IniciarFrontendAsync(compraDemo);
     }
 
-    private async Task IniciarFrontendAsync()
+    private async Task IniciarFrontendAsync(bool compraDemo = true)
     {
         _frontend = Iniciar(_raiz, "Frontend/Frontend.csproj", new()
         {
             ["ASPNETCORE_ENVIRONMENT"] = "Development", ["ASPNETCORE_URLS"] = FrontendUrl,
-            ["ASPNETCORE_WEBROOT"] = _webRoot, ["ApiBaseUrl"] = _backendUrl
+            ["ASPNETCORE_WEBROOT"] = _webRoot, ["ApiBaseUrl"] = _backendUrl,
+            ["CompraDemo__Enabled"] = compraDemo.ToString()
         });
         _procesos.Add(_frontend);
         await EsperarAsync($"{FrontendUrl}/Productos", _frontend);

@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     var isLoginPage = ViewData["IsLoginPage"] as bool? ?? false;
     var isRegisterPage = ViewData["IsRegisterPage"] as bool? ?? false;
@@ -162,6 +163,10 @@
                 </a>
             }
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin")) { <a asp-controller="Administracion" asp-action="Index">Administración</a><span class="badge bg-success">Modo Administrador Activo</span> }
+            @if (User.Identity?.IsAuthenticated == true && Configuration.GetValue<bool>("CompraDemo:Enabled"))
+            {
+                <a asp-controller="Pedidos" asp-action="Index">Mis pedidos demo</a>
+            }
 
         </nav>
 
