@@ -81,7 +81,7 @@
 
             @if (!isLoginPage)
             {
-                <div class="header-actions">
+                <div class="header-actions @(User.Identity?.IsAuthenticated == true ? "header-actions--authenticated" : null)">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         @await Component.InvokeAsync("CarritoBadge")

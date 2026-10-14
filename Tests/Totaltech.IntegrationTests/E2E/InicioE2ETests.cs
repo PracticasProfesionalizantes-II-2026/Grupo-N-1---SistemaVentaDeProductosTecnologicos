@@ -17,16 +17,21 @@ public sealed class InicioE2ETests(CatalogoE2EFixture fixture)
         await page.GotoAsync(fixture.FrontendUrl + "/");
         await Assertions.Expect(page.Locator("[data-inicio-productos] article")).ToHaveCountAsync(total);
         await Assertions.Expect(page.Locator(".inicio__destacados article")).ToHaveCountAsync(6);
+        Assert.True(await page.Locator("[data-inicio-categorias] > a").CountAsync() > 0);
+        Assert.True(await page.Locator("[data-inicio-categorias] > a").EvaluateAllAsync<bool>(
+            "links => links.every(a => new URL(a.href).searchParams.get('idCategoria') === a.dataset.categoriaId)"));
         await Assertions.Expect(page.Locator(".inicio__destacados .inicio-producto__disponibilidad--agotado")).ToHaveCountAsync(0);
         await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Iniciar sesión", Exact = true })).ToBeVisibleAsync();
         var tarjeta = page.Locator("[data-inicio-productos] article[data-producto-id='" + producto.IdProducto + "']");
         await Assertions.Expect(tarjeta.GetByText("Imagen no disponible")).ToBeVisibleAsync();
-        foreach (var ancho in new[] { 320, 375, 425, 768, 1024, 1280 })
+        foreach (var ancho in new[] { 320, 375, 425, 576, 768, 1024, 1280 })
         {
             await page.SetViewportSizeAsync(ancho, 900);
             Assert.True(await page.Locator("body").EvaluateAsync<bool>("el => el.scrollWidth <= el.clientWidth"), "Overflow en " + ancho);
             var columnas = ancho >= 1280 ? 4 : ancho >= 1024 ? 3 : ancho >= 768 ? 2 : 1;
             Assert.Equal(columnas, await page.Locator("[data-inicio-productos]").EvaluateAsync<int>("el => getComputedStyle(el).gridTemplateColumns.split(' ').length"));
+            var categorias = ancho >= 1280 ? 4 : ancho >= 1024 ? 3 : ancho >= 576 ? 2 : 1;
+            Assert.Equal(categorias, await page.Locator("[data-inicio-categorias]").EvaluateAsync<int>("el => getComputedStyle(el).gridTemplateColumns.split(' ').length"));
         }
         await page.GetByRole(AriaRole.Link, new() { Name = "Explorar productos" }).FocusAsync();
         await page.Keyboard.PressAsync("Tab");
@@ -56,6 +61,8 @@ public sealed class InicioE2ETests(CatalogoE2EFixture fixture)
         var historial = await page.EvaluateAsync<string>("JSON.stringify(localStorage)");
         await page.GotoAsync(fixture.FrontendUrl + "/");
         await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Iniciar sesión", Exact = true })).ToHaveCountAsync(0);
+        await Assertions.Expect(page.Locator(".header-actions .header-logout button")).ToHaveCountAsync(1);
+        await Assertions.Expect(page.Locator(".main-navigation button")).ToHaveCountAsync(0);
         await page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión", Exact = true }).ClickAsync();
         await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Iniciar sesión", Exact = true })).ToBeVisibleAsync();
         await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión", Exact = true })).ToHaveCountAsync(0);
