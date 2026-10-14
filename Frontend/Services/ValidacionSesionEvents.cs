@@ -3,8 +3,10 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Frontend.Models.Api.Responses;
+using Frontend.Controllers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Frontend.Services;
 
@@ -14,6 +16,15 @@ public sealed class ValidacionSesionEvents(IHttpClientFactory factory) : CookieA
 
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
+        var accion = context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>();
+        if (HttpMethods.IsPost(context.Request.Method) &&
+            accion?.ControllerTypeInfo.AsType() == typeof(HomeController) &&
+            accion.MethodInfo.Name == nameof(HomeController.Logout))
+        {
+            // Mantener el principal para validar antiforgery y borrar la cookie incluso sin API.
+            return;
+        }
+
         var token = context.Properties.GetTokenValue("access_token");
         var id = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(token) || !int.TryParse(id, out var idUsuario))

@@ -28,6 +28,8 @@ dotnet run --project Totaltech/Totaltech.csproj --launch-profile TotaltechLocalD
 dotnet run --project Frontend/Frontend.csproj --launch-profile http
 ```
 
+En Windows, ambos proyectos tienen `UseAppHost=false`: `dotnet run` los inicia mediante `dotnet` y su DLL. Así no depende de los ejecutables nativos generados (`Totaltech.exe` o `Frontend.exe`), que Control de aplicaciones puede bloquear. Después de actualizar esta configuración, ejecutar los comandos sin `--no-build` para recompilar. No es necesario desactivar Control de aplicaciones.
+
 La API escucha en `5070` y el frontend en `5087`. Detener cada proceso con **Ctrl+C** antes de iniciar otra copia. Para usar el perfil de solución **TotalTech completo**, seleccionar también **TotaltechLocalDb** como perfil de arranque del proyecto API: el perfil de solución inicia ambos proyectos, pero por sí solo no fija la conexión SQL. Elegir ese modo o las dos terminales. Una instancia previa en segundo plano también ocupa los mismos puertos.
 
 Usar una sola instancia SQL para esos archivos: no iniciar a la vez otra copia de la API que seleccione la instancia personalizada mediante User Secrets. Si aparece `The specified LocalDB instance does not exist`, comprobar `sqllocaldb info` desde la misma terminal y seleccionar una instancia que allí exista. El perfil local fija la conexión para evitar que una variable heredada o User Secrets elijan el otro servidor.

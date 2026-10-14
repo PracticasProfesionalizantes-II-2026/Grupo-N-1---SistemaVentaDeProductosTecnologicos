@@ -68,12 +68,12 @@ public class ProductosApiService
 		return CrearCliente().DeleteAsync($"/productos/{id}");
 	}
 
-	public async Task<List<ProductoResponse>> ObtenerTodosAsync()
+	public async Task<List<ProductoResponse>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
 	{
 		var cliente = CrearCliente();
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
-			"/productos/");
+			"/productos/", cancellationToken);
 
 		return AplicarImagenes(productos);
 	}

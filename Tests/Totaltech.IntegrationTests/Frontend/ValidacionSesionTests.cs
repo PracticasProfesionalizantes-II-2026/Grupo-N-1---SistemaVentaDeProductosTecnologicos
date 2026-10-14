@@ -2,12 +2,15 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Reflection;
+using Frontend.Controllers;
 using Frontend.Models.Api.Responses;
 using Frontend.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Totaltech.IntegrationTests.Frontend;
@@ -58,6 +61,29 @@ public sealed class ValidacionSesionTests
         Assert.True(context.Principal?.IsInRole("Admin"));
         Assert.True(context.ShouldRenew);
         Assert.Equal("token-prueba", context.Properties.GetTokenValue("access_token"));
+    }
+
+    [Theory]
+    [InlineData("POST", "Logout", true)]
+    [InlineData("GET", "Logout", false)]
+    [InlineData("POST", "Index", false)]
+    public async Task SoloLogoutPostEvitaLaApiParaConservarAntiforgery(string metodo, string accion, bool omitir)
+    {
+        using var servicios = Servicios();
+        var context = Contexto(servicios);
+        var descriptor = new ControllerActionDescriptor
+        {
+            ControllerTypeInfo = typeof(HomeController).GetTypeInfo(),
+            MethodInfo = typeof(HomeController).GetMethod(accion)!
+        };
+        context.HttpContext.Request.Method = metodo;
+        context.HttpContext.SetEndpoint(new Endpoint(null, new EndpointMetadataCollection(descriptor), "Accion"));
+        var handler = new Respuesta(HttpStatusCode.ServiceUnavailable);
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("https://api.test") };
+        await new ValidacionSesionEvents(new Factory(client)).ValidatePrincipal(context);
+        Assert.Equal(omitir, context.Principal is not null);
+        Assert.Equal(omitir, handler.Autorizacion is null);
+        Assert.False(context.Response.Headers.ContainsKey("Set-Cookie"));
     }
 
     private static ServiceProvider Servicios()

@@ -32,9 +32,11 @@
           href="~/Frontend.styles.css"
           asp-append-version="true" />
 
+    <link rel="stylesheet" href="~/css/storefront.css" asp-append-version="true" />
+
 </head>
 
-<body class="@(isLoginPage ? "login-body" : null)">
+<body class="storefront @(isLoginPage ? "login-body" : null)">
 
     <header class="site-header">
 
@@ -83,6 +85,10 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         @await Component.InvokeAsync("CarritoBadge")
+                        <form asp-controller="Home" asp-action="Logout" method="post" class="header-logout">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5v16h4M14 8l4 4-4 4M9 12h9" /></svg><span>Cerrar sesión</span></button>
+                        </form>
                     }
                     else
                     {
@@ -155,12 +161,9 @@
                 Contactos
             </a>
 
-            @if (!isLoginPage)
+            @if (!isLoginPage && User.Identity?.IsAuthenticated != true)
             {
-                <a asp-controller="Home"
-                   asp-action="Login">
-                    Iniciar sesión
-                </a>
+                <a asp-controller="Home" asp-action="Login" class="navigation-login">Iniciar sesión</a>
             }
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin")) { <a asp-controller="Administracion" asp-action="Index">Administración</a><span class="badge bg-success">Modo Administrador Activo</span> }
             @if (User.Identity?.IsAuthenticated == true && Configuration.GetValue<bool>("CompraDemo:Enabled"))
