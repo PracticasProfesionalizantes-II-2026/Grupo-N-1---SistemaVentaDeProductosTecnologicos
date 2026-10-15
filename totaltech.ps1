@@ -107,12 +107,55 @@ function Wait-ComponenteTotaltech($Componente, $Proceso) {
     throw "$($Componente.Nombre) no respondio correctamente. Revisar Desarrollo/logs."
 }
 
+function Test-BaseTotaltech {
+    $conexion = New-Object System.Data.SqlClient.SqlConnection(
+        'Server=(localdb)\MSSQLLocalDB;Database=TotaltechDev;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=5;Pooling=False')
+    try {
+        $conexion.Open()
+        $consulta = $conexion.CreateCommand()
+        try {
+            $consulta.CommandText = 'SELECT DB_NAME()'
+            $consulta.CommandTimeout = 5
+            if ($consulta.ExecuteScalar() -ne 'TotaltechDev') { throw 'El catalogo SQL no es TotaltechDev.' }
+        } finally { $consulta.Dispose() }
+    } finally { $conexion.Dispose() }
+}
+
+function Start-BaseTotaltech {
+    $rutaLogsSql = Join-Path $raizTotaltech 'Desarrollo/logs'
+    New-Item -ItemType Directory -Path $rutaLogsSql -Force | Out-Null
+    $marcaSql = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
+    $rutaDiagnosticoSql = Join-Path $rutaLogsSql "SQL-$marcaSql.log"
+    $utilidadSql = (Get-Command SqlLocalDB.exe -CommandType Application -ErrorAction Stop).Source
+    for ($intentoSql = 1; $intentoSql -le 3; $intentoSql++) {
+        try {
+            Test-BaseTotaltech
+            Write-Host 'SQL disponible: MSSQLLocalDB / TotaltechDev.'
+            return
+        } catch {
+            "Intento $intentoSql - $($_.Exception.Message)" | Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+        }
+        if ($intentoSql -eq 3) { break }
+        # Capturar por separado el diagnostico del arranque nativo.
+        # El exito se decide por una consulta SQL, no solo por ExitCode de SqlLocalDB.
+        $salidaSql = Join-Path $rutaLogsSql "SQL-$marcaSql-$intentoSql.stdout.log"
+        $errorSql = Join-Path $rutaLogsSql "SQL-$marcaSql-$intentoSql.stderr.log"
+        $procesoSql = Start-Process -FilePath $utilidadSql -ArgumentList @('start', 'MSSQLLocalDB') `
+            -WindowStyle Hidden -PassThru -Wait -RedirectStandardOutput $salidaSql -RedirectStandardError $errorSql
+        try {
+            "SqlLocalDB ExitCode: $($procesoSql.ExitCode)" | Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+        } finally { $procesoSql.Dispose() }
+        Start-Sleep -Milliseconds 500
+    }
+    $rutaErrorLocalDb = Join-Path $env:LOCALAPPDATA 'Microsoft/Microsoft SQL Server Local DB/Instances/MSSQLLocalDB/error.log'
+    throw "SQL no esta disponible en MSSQLLocalDB / TotaltechDev. No se iniciaron aplicaciones nuevas. Diagnostico: $rutaDiagnosticoSql. Registro de LocalDB: $rutaErrorLocalDb."
+}
+
 function Start-ComponentesTotaltech {
     Assert-PuertosTotaltech
     $faltantes = @($componentesTotaltech | Where-Object { @(Get-ProcesosTotaltech $_).Count -eq 0 })
     if ($faltantes.Count -eq 0) {
-        & sqllocaldb start MSSQLLocalDB
-        if ($LASTEXITCODE -ne 0) { throw 'No inicio MSSQLLocalDB. Consultar Documentacion/DesarrolloLocal.md.' }
+        Start-BaseTotaltech
         foreach ($componente in $componentesTotaltech) { Wait-ComponenteTotaltech $componente $null }
         Write-Host 'TotalTech ya esta ejecutandose. Para aplicar cambios usar .\totaltech.ps1 reiniciar.'
         Show-EstadoTotaltech
@@ -129,8 +172,7 @@ function Start-ComponentesTotaltech {
         }
     }
     # El perfil local usa una sola instancia; no adjunta archivos ni modifica el esquema.
-    & sqllocaldb start MSSQLLocalDB
-    if ($LASTEXITCODE -ne 0) { throw 'No inicio MSSQLLocalDB. Revisar su error.log; no borrar ni recrear la base.' }
+    Start-BaseTotaltech
 
     $rutaLogsTotaltech = Join-Path $raizTotaltech 'Desarrollo/logs'
     New-Item -ItemType Directory -Path $rutaLogsTotaltech -Force | Out-Null

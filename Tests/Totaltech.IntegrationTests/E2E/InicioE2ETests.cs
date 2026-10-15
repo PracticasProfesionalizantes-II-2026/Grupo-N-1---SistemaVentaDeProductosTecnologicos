@@ -130,6 +130,61 @@ public sealed class InicioE2ETests(CatalogoE2EFixture fixture)
         Assert.Contains("/Home/Login", page.Url);
     }
 
+    [Theory]
+    [InlineData("Usuario")]
+    [InlineData("María Alejandra de los Ángeles Fernández de la Cruz")]
+    public async Task BienvenidaCompactaJuntoAlCarritoEsResponsiveYApareceUnaVez(string nombre)
+    {
+        await using var context = await fixture.Browser.NewContextAsync(new() { ReducedMotion = ReducedMotion.Reduce });
+        var page = await context.NewPageAsync();
+        var cliente = await fixture.CrearClienteAsync(nombre);
+        await LoginAsync(page, cliente.Email, cliente.Contrasena);
+        var bienvenida = page.Locator(".header-actions [data-auth-welcome]");
+        await Assertions.Expect(bienvenida).ToHaveTextAsync($"¡Bienvenido, {nombre}!");
+        await Assertions.Expect(bienvenida).ToHaveAttributeAsync("title", $"¡Bienvenido, {nombre}!");
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(1);
+        await Assertions.Expect(page.Locator("main [data-auth-welcome]")).ToHaveCountAsync(0);
+        await Assertions.Expect(bienvenida.GetByRole(AriaRole.Img)).ToHaveCountAsync(0);
+
+        foreach (var ancho in new[] { 320, 375, 425, 768, 1024, 1280 })
+        {
+            await page.SetViewportSizeAsync(ancho, 900);
+            await Assertions.Expect(bienvenida).ToBeVisibleAsync();
+            var carrito = page.Locator(".header-actions .cart-link");
+            var cerrarSesion = page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión", Exact = true });
+            await Assertions.Expect(carrito).ToBeVisibleAsync();
+            await Assertions.Expect(cerrarSesion).ToBeVisibleAsync();
+            Assert.True(await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= innerWidth"), $"Overflow a {ancho}px");
+            var saludoRect = (await bienvenida.BoundingBoxAsync())!;
+            var carritoRect = (await carrito.BoundingBoxAsync())!;
+            var logoutRect = (await cerrarSesion.BoundingBoxAsync())!;
+            if (ancho is 320 or 375 or 1280)
+                await CapturarAsync(page, $"bienvenida-{(nombre == "Usuario" ? "corta" : "larga")}-{ancho}.png", paginaCompleta: false);
+            if (ancho <= 991)
+            {
+                Assert.True(saludoRect.Y + saludoRect.Height <= carritoRect.Y, $"El saludo debe estar encima del carrito a {ancho}px");
+                Assert.InRange(Math.Abs(saludoRect.X + saludoRect.Width - logoutRect.X - logoutRect.Width), 0, 1);
+            }
+            else
+            {
+                Assert.True(saludoRect.X + saludoRect.Width <= carritoRect.X, $"El saludo debe preceder al carrito a {ancho}px");
+            }
+            Assert.True(await bienvenida.Locator(".header-welcome__text").EvaluateAsync<bool>(
+                "el => getComputedStyle(el).whiteSpace === 'nowrap' && getComputedStyle(el).textOverflow === 'ellipsis'"));
+            await cerrarSesion.FocusAsync();
+            await Assertions.Expect(cerrarSesion).ToBeFocusedAsync();
+        }
+
+        await page.GotoAsync(fixture.FrontendUrl + "/Productos");
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(0);
+        await LoginAsync(page, cliente.Email, cliente.Contrasena);
+        await Assertions.Expect(bienvenida).ToBeVisibleAsync();
+        await page.ReloadAsync();
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(0);
+        await page.GotoAsync(fixture.FrontendUrl + "/Home/Login");
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(0);
+    }
+
     private async Task LoginAsync(IPage page, string email, string password)
     {
         await page.GotoAsync(fixture.FrontendUrl + "/Home/Login");
@@ -139,10 +194,10 @@ public sealed class InicioE2ETests(CatalogoE2EFixture fixture)
         await page.WaitForURLAsync(url => !url.Contains("/Home/Login"));
     }
 
-    private static async Task CapturarAsync(IPage page, string nombre)
+    private static async Task CapturarAsync(IPage page, string nombre, bool paginaCompleta = true)
     {
         var dir = Path.Combine(AppContext.BaseDirectory, "TestResults");
         Directory.CreateDirectory(dir);
-        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, nombre), FullPage = true, Animations = ScreenshotAnimations.Disabled });
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, nombre), FullPage = paginaCompleta, Animations = ScreenshotAnimations.Disabled });
     }
 }

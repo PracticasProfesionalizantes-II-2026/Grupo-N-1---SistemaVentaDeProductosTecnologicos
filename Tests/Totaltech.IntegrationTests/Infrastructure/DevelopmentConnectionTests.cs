@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
@@ -11,6 +12,28 @@ namespace Totaltech.IntegrationTests.Infrastructure;
 
 public sealed class DevelopmentConnectionTests
 {
+    [Theory]
+    [InlineData("http")]
+    [InlineData("https")]
+    [InlineData("TotaltechLocalDb")]
+    public void PerfilesLocalesSeleccionanMssqlLocalDbSinMigracionesAutomaticas(string perfil)
+    {
+        var raiz = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        using var documento = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(raiz, "Totaltech", "Properties", "launchSettings.json")));
+        var variables = documento.RootElement.GetProperty("profiles").GetProperty(perfil)
+            .GetProperty("environmentVariables");
+        var conexion = new SqlConnectionStringBuilder(
+            variables.GetProperty("ConnectionStrings__DefaultConnection").GetString());
+
+        Assert.Equal("Development", variables.GetProperty("ASPNETCORE_ENVIRONMENT").GetString());
+        Assert.Equal(@"(localdb)\MSSQLLocalDB", conexion.DataSource);
+        Assert.Equal("TotaltechDev", conexion.InitialCatalog);
+        Assert.True(conexion.IntegratedSecurity);
+        Assert.Empty(conexion.AttachDBFilename);
+        Assert.Equal("false", variables.GetProperty("Database__ApplyMigrations").GetString());
+    }
+
     [Theory]
     [InlineData(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=TotaltechDev;Integrated Security=True;TrustServerCertificate=True")]
     [InlineData(@"Data Source=(localdb)\TotaltechLocalDb;Initial Catalog=TotaltechDev;Integrated Security=True;TrustServerCertificate=True")]

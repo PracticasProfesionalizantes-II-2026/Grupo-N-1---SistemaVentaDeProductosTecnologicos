@@ -4,6 +4,7 @@
 @{
     var isLoginPage = ViewData["IsLoginPage"] as bool? ?? false;
     var isRegisterPage = ViewData["IsRegisterPage"] as bool? ?? false;
+    ViewData["AuthWelcomeCompact"] = true;
 }
 
 <html lang="es">
@@ -84,6 +85,7 @@
                 <div class="header-actions @(User.Identity?.IsAuthenticated == true ? "header-actions--authenticated" : null)">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        <partial name="_AuthWelcome" />
                         @await Component.InvokeAsync("CarritoBadge")
                         <form asp-controller="Home" asp-action="Logout" method="post" class="header-logout">
                             @Html.AntiForgeryToken()
@@ -178,7 +180,6 @@
     <main role="main"
           class="site-main">
 
-        <partial name="_AuthWelcome" />
         @RenderBody()
 
     </main>

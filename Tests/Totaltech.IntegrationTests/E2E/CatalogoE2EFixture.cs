@@ -26,13 +26,13 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
     public string FrontendUrl { get; private set; } = string.Empty;
     public IBrowser Browser => _browser ?? throw new InvalidOperationException("El navegador no está iniciado.");
 
-    public async Task<(string Email, string Contrasena)> CrearClienteAsync()
-        => await CrearUsuarioAsync(Entidades.RolUsuario.Cliente);
+    public async Task<(string Email, string Contrasena)> CrearClienteAsync(string nombre = "Usuario")
+        => await CrearUsuarioAsync(Entidades.RolUsuario.Cliente, nombre);
 
     public async Task<(string Email, string Contrasena)> CrearAdministradorAsync()
         => await CrearUsuarioAsync(Entidades.RolUsuario.Administrador);
 
-    private async Task<(string Email, string Contrasena)> CrearUsuarioAsync(Entidades.RolUsuario rol)
+    private async Task<(string Email, string Contrasena)> CrearUsuarioAsync(Entidades.RolUsuario rol, string nombre = "Usuario")
     {
         var email = $"catalogo-{Guid.NewGuid():N}@test.local";
         const string contrasena = "Catalogo123456";
@@ -40,7 +40,7 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
         var logica = new UsuariosLogica(new UsuariosRepositorio(db));
         var error = await logica.CrearAsync(new Entidades.Usuario
         {
-            Nombre = "Usuario", Apellido = "E2E", Email = email, Contrasena = contrasena,
+            Nombre = nombre, Apellido = "E2E", Email = email, Contrasena = contrasena,
             Telefono = "1111111111", FechaRegistro = DateTime.UtcNow, Rol = rol
         });
         if (error is not null) throw new InvalidOperationException(error);

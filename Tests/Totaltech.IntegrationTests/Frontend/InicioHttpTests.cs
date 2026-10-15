@@ -95,6 +95,19 @@ public sealed class InicioHttpTests
         var html = await client.GetStringAsync(destino);
         Assert.Single(Regex.Matches(html, "data-auth-welcome"));
         Assert.Contains("¡Bienvenido,", WebUtility.HtmlDecode(html));
+        if (!administrador)
+        {
+            var cabecera = Regex.Match(html, "<header[\\s\\S]*?</header>").Value;
+            Assert.Contains("data-auth-welcome", cabecera);
+            Assert.True(cabecera.IndexOf("data-auth-welcome", StringComparison.Ordinal) <
+                cabecera.IndexOf("class=\"cart-link\"", StringComparison.Ordinal));
+            Assert.DoesNotContain("data-auth-welcome", Regex.Match(html, "<main[\\s\\S]*?</main>").Value);
+            Assert.DoesNotContain("alert-success", cabecera);
+        }
+        else
+        {
+            Assert.Contains("class=\"alert alert-success m-3\"", html);
+        }
         Assert.DoesNotContain("Modo Administrador Activo", html);
         Assert.DoesNotContain("data-auth-welcome", await client.GetStringAsync(destino));
         using var login = await client.GetAsync("/Home/Login");

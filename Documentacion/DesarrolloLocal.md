@@ -74,6 +74,10 @@ Los nombres de logs incluyen fecha y hora. Los archivos quedan ignorados por Git
 
 Si SQL falla, comprobar que no este activa otra instancia usando los mismos archivos de `TotaltechDev`. No borrar ni volver a adjuntar la base para resolver un bloqueo. `detener` no cierra LocalDB, porque puede estar siendo utilizada por otras herramientas. No usar `taskkill /IM dotnet.exe /F`: cerraria aplicaciones ajenas.
 
+El gestor comprueba una consulta real a `TotaltechDev` antes de abrir aplicaciones. Si falla, solicita el arranque de LocalDB en un proceso separado de la terminal y vuelve a comprobarlo, hasta tres consultas en total. Los intentos se guardan en `Desarrollo/logs/SQL-*.log`; un codigo de salida exitoso de `SqlLocalDB.exe` por si solo no alcanza. Si no se logra conectar, el gestor se detiene con el diagnostico de SQL y no continua hasta el error generico de la API.
+
+Si dos terminales informan distintos identificadores `LOCALDB#...` o fechas de ultimo inicio para `MSSQLLocalDB`, contrastar sus registros de instancia y los directorios de datos. Pueden estar intentando abrir los mismos archivos con registros distintos. Detener las aplicaciones de prueba y comprobar que no queden otras conexiones antes de cerrar la instancia que mantiene los archivos abiertos. Despues iniciar el gestor desde la terminal de trabajo del usuario. No recrear instancias, adjuntar de nuevo la base ni modificar el registro de Windows para resolver este conflicto.
+
 Si un log muestra `0x800711C7` o `Una directiva de Control de aplicaciones bloqueo este archivo`, es un bloqueo de Windows sobre una DLL o ejecutable, distinto del conflicto de puertos. Consultar los eventos antes de cambiar la configuracion; el gestor no modifica ni desactiva esa proteccion. Microsoft explica el control de archivos sin firma o reputacion en [Smart App Control](https://learn.microsoft.com/windows/apps/develop/smart-app-control/overview).
 
 ```powershell
@@ -113,3 +117,5 @@ dotnet run --project .\Frontend\Frontend.csproj --launch-profile http
 ```
 
 Detener cada uno con **Ctrl+C** en su terminal. Antes de recompilar o abrirlos con Visual Studio, verificar `totaltech.ps1 estado`. El nombre de perfil `TotaltechLocalDb` selecciona la instancia **MSSQLLocalDB**, no una instancia llamada `TotaltechLocalDb`.
+
+Los perfiles locales de la API (`http`, `https` y `TotaltechLocalDb`) fijan la conexion a `MSSQLLocalDB` y la base existente `TotaltechDev`, con migraciones automaticas deshabilitadas. Esto evita que una conexion antigua de User Secrets seleccione otra instancia al ejecutar `dotnet run` o iniciar desde Visual Studio. Las claves de autenticacion de User Secrets se conservan. Si se usa `--no-launch-profile`, los perfiles no se aplican: configurar la conexion explicitamente o utilizar el gestor recomendado.
