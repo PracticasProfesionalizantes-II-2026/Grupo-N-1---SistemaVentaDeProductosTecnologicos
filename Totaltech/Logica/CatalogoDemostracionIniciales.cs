@@ -94,7 +94,13 @@ public static class CatalogoDemostracionIniciales
         new("Disco rígido Western Digital Blue 1 TB (WD10EZEX)", "Disco rígido mecánico de 3,5 pulgadas con interfaz SATA de 6 Gb/s, velocidad de 7.200 RPM y caché de 64 MB. Una alternativa de almacenamiento para documentos, videos, fotografías y archivos de gran tamaño en PC de escritorio.", 80000m, 10, "Almacenamiento", "pixelware"),
         new("Disco externo Seagate Expansion Portable 2 TB (STKM2000400)", "Disco rígido externo portátil con conexión USB 3.0 y capacidad de 2 TB. Diseñado para ampliar el almacenamiento, transportar archivos y realizar copias de seguridad sin necesidad de instalar una unidad interna.", 130000m, 10, "Almacenamiento", "pixelware"),
         new("Pendrive SanDisk Ultra Flair 128 GB (SDCZ73-128G-G46)", "Pendrive USB 3.0 con carcasa metálica y velocidades de lectura de hasta 150 MB/s. Su diseño compacto permite transportar documentos, fotografías y archivos entre computadoras de manera práctica.", 18000m, 10, "Almacenamiento", "pixelware"),
-        new("SanDisk Ultra microSDXC 128 GB (SDSQUAB-128G-GN6MA)", "Tarjeta de memoria microSDXC UHS-I con clasificación A1 y velocidades de lectura de hasta 140 MB/s. Permite ampliar el almacenamiento de fotografías, videos Full HD y aplicaciones en dispositivos compatibles.", 20000m, 10, "Almacenamiento", "pixelware")
+        new("SanDisk Ultra microSDXC 128 GB (SDSQUAB-128G-GN6MA)", "Tarjeta de memoria microSDXC UHS-I con clasificación A1 y velocidades de lectura de hasta 140 MB/s. Permite ampliar el almacenamiento de fotografías, videos Full HD y aplicaciones en dispositivos compatibles.", 20000m, 10, "Almacenamiento", "pixelware"),
+        new("MSI GeForce RTX 4060 VENTUS 2X BLACK OC", "8 GB GDDR6 · PCIe 4.0 · 128 bits. Placa gráfica con doble ventilador TORX Fan 4.0, arquitectura NVIDIA Ada Lovelace, ray tracing y DLSS 3. Diseñada para videojuegos en Full HD, edición multimedia y tareas de creación de contenido.", 550000m, 10, "Placas de Video", "pixelware"),
+        new("Gigabyte GeForce RTX 5060 Ti WINDFORCE OC", "16 GB GDDR7 · PCIe 5.0 · 128 bits. Tarjeta gráfica con 4.608 núcleos CUDA, sistema de refrigeración WINDFORCE y compatibilidad con DLSS 4. Ideal para videojuegos modernos, aplicaciones de diseño 3D y creación de contenido.", 850000m, 10, "Placas de Video", "pixelware"),
+        new("ASUS PRIME GeForce RTX 5070", "12 GB GDDR7 · PCIe 5.0 · 192 bits. Placa gráfica con 6.144 núcleos CUDA, sistema de triple ventilador y soporte para ray tracing y DLSS 4. Orientada a videojuegos exigentes, renderizado 3D y creación de contenido de alta resolución.", 1200000m, 10, "Placas de Video", "pixelware"),
+        new("XFX Speedster SWFT 210 Radeon RX 7600 Core Edition", "8 GB GDDR6 · PCIe 4.0 · 128 bits. Placa de video con arquitectura AMD RDNA 3, 2.048 procesadores stream y refrigeración de doble ventilador. Adecuada para videojuegos en 1080p, streaming y tareas multimedia, con soporte para AMD FSR.", 450000m, 10, "Placas de Video", "pixelware"),
+        new("Sapphire PULSE Radeon RX 9060 XT OC", "16 GB GDDR6 · PCIe 5.0 · 128 bits. Tarjeta gráfica con arquitectura AMD RDNA 4, 2.048 procesadores stream y refrigeración Dual-X. Sus 16 GB de memoria permiten ejecutar videojuegos exigentes en Full HD y 1440p, además de aplicaciones gráficas compatibles con AMD FSR 4.", 700000m, 10, "Placas de Video", "pixelware"),
+        new("Intel Arc B580 Limited Edition", "12 GB GDDR6 · PCIe 4.0 · 192 bits. Placa gráfica basada en arquitectura Intel Xe2, con 20 núcleos Xe, ray tracing y tecnología Intel XeSS 2. Orientada a videojuegos en 1080p y 1440p, creación de contenido y edición de video con aceleración AV1.", 500000m, 10, "Placas de Video", "pixelware")
     ];
 
     public static void ValidarDestino(IHostEnvironment environment, string connectionString)
@@ -123,7 +129,7 @@ public static class CatalogoDemostracionIniciales
         var categorias = (await categoriasLogica.ObtenerTodosAsync())
             .ToDictionary(categoria => Normalizar(categoria.Nombre), StringComparer.Ordinal);
 
-        foreach (var categoriaRequerida in new[] { "Notebooks", "Periféricos", "Celulares", "Almacenamiento" })
+        foreach (var categoriaRequerida in new[] { "Notebooks", "Periféricos", "Celulares", "Almacenamiento", "Placas de Video" })
         {
             if (!categorias.ContainsKey(Normalizar(categoriaRequerida)))
             {

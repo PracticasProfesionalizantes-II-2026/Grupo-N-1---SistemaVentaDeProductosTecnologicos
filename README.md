@@ -1,8 +1,23 @@
 ﻿# TotalTech
 
+## Inicio local recomendado
+
+Desde esta raiz (la que contiene `AGENTS.md`, `Frontend/` y `Totaltech/`):
+
+```powershell
+.\totaltech.ps1 iniciar
+.\totaltech.ps1 estado
+.\totaltech.ps1 reiniciar
+.\totaltech.ps1 detener
+```
+
+`iniciar` compila e inicia API (`5070`) y frontend (`5087`) en segundo plano. Si ya estan iniciados, los conserva. `reiniciar` los detiene antes de recompilar; `detener` libera sus puertos. El gestor solo reconoce las DLL de esta copia del repositorio y rechaza puertos ocupados por otras aplicaciones. Usa `MSSQLLocalDB/TotaltechDev`, sin aplicar migraciones ni cargar datos automaticamente.
+
+No combinar este modo con otra ejecucion en Visual Studio o con `dotnet run`. El gestor detecta puertos ocupados antes de compilar o conectar a SQL, sin iniciar otra instancia. La [guia de desarrollo local y comandos utiles](Documentacion/DesarrolloLocal.md) incluye logs, diagnostico y el modo manual de dos terminales.
+
 ## Métricas locales con Prometheus
 
-Iniciar la API con el perfil **TotaltechLocalDb** y el frontend con **http** (comandos debajo) y ejecutar desde esta raíz:
+Con el sistema iniciado, ejecutar desde esta raíz:
 
 ```powershell
 .\Observabilidad\iniciar-prometheus.ps1
@@ -13,6 +28,8 @@ Abrir [Prometheus](http://127.0.0.1:9090), comprobar ambos servicios en [Targets
 La [guía de observabilidad](Documentacion/Observabilidad.md) incluye instalación, configuración, seguridad, consultas y diagnóstico. `/metrics` está habilitado en Development y restringido a loopback.
 
 ## Conexión SQL Server en Development
+
+Los comandos manuales de esta seccion son una alternativa al gestor. Antes de usarlos, ejecutar `totaltech.ps1 detener`; no mezclar los dos modos de inicio.
 
 La API utiliza `ConnectionStrings:DefaultConnection` tal como esté configurada. User Secrets y variables de entorno pueden sobrescribir `appsettings.Development.json`. Para una base ya registrada, configurar el servidor y el catálogo (`Database`); el arranque no añade `AttachDBFilename` ni busca archivos `.mdf` en el perfil del usuario. Una adjunción indicada explícitamente en la configuración se conserva.
 

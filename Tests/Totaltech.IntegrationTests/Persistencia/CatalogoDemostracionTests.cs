@@ -4,6 +4,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Totaltech.Datos;
+using Totaltech.IntegrationTests.Infrastructure;
 using Totaltech.Logica;
 using Totaltech.Repositorios;
 
@@ -15,6 +16,28 @@ public sealed class CatalogoDemostracionTests
     public async Task CargaDosVecesSinDuplicarNiSobrescribirCambiosManuales()
     {
         await using var contexto = CrearContexto();
+        await VerificarCargaIdempotenteAsync(contexto);
+    }
+
+    [Fact]
+    [Trait("Category", "SqlServer")]
+    public async Task CargaDosVecesEnSqlAisladoSinDuplicarNiSobrescribirCambiosManuales()
+    {
+        var database = new SqlServerTestDatabase();
+        try
+        {
+            await database.InitializeAsync();
+            await using var contexto = database.CreateContext();
+            await VerificarCargaIdempotenteAsync(contexto);
+        }
+        finally
+        {
+            await database.DisposeAsync();
+        }
+    }
+
+    private static async Task VerificarCargaIdempotenteAsync(TotaltechDbContext contexto)
+    {
         var categoriasRepositorio = new CategoriasRepositorio(contexto);
         var proveedoresRepositorio = new ProveedoresRepositorio(contexto);
         var productosRepositorio = new ProductosRepositorio(contexto);
@@ -34,7 +57,7 @@ public sealed class CatalogoDemostracionTests
             NullLogger.Instance);
 
         Assert.Equal(3, primeraCarga.ProveedoresCreados);
-        Assert.Equal(32, primeraCarga.ProductosCreados);
+        Assert.Equal(38, primeraCarga.ProductosCreados);
 
         var celularesEsperados = new (string Nombre, decimal Precio)[]
         {
@@ -84,6 +107,49 @@ public sealed class CatalogoDemostracionTests
             Assert.DoesNotContain("&#", unidad.Descripcion);
         }
 
+        var placasEsperadas = new (string Nombre, decimal Precio, string Descripcion, string Imagen)[]
+        {
+            ("MSI GeForce RTX 4060 VENTUS 2X BLACK OC", 550000m,
+                "8 GB GDDR6 · PCIe 4.0 · 128 bits. Placa gráfica con doble ventilador TORX Fan 4.0, arquitectura NVIDIA Ada Lovelace, ray tracing y DLSS 3. Diseñada para videojuegos en Full HD, edición multimedia y tareas de creación de contenido.",
+                "msi-geforce-rtx-4060-ventus-2x-black-oc.png"),
+            ("Gigabyte GeForce RTX 5060 Ti WINDFORCE OC", 850000m,
+                "16 GB GDDR7 · PCIe 5.0 · 128 bits. Tarjeta gráfica con 4.608 núcleos CUDA, sistema de refrigeración WINDFORCE y compatibilidad con DLSS 4. Ideal para videojuegos modernos, aplicaciones de diseño 3D y creación de contenido.",
+                "gigabyte-geforce-rtx-5060-ti-windforce-oc.png"),
+            ("ASUS PRIME GeForce RTX 5070", 1200000m,
+                "12 GB GDDR7 · PCIe 5.0 · 192 bits. Placa gráfica con 6.144 núcleos CUDA, sistema de triple ventilador y soporte para ray tracing y DLSS 4. Orientada a videojuegos exigentes, renderizado 3D y creación de contenido de alta resolución.",
+                "asus-prime-geforce-rtx-5070.png"),
+            ("XFX Speedster SWFT 210 Radeon RX 7600 Core Edition", 450000m,
+                "8 GB GDDR6 · PCIe 4.0 · 128 bits. Placa de video con arquitectura AMD RDNA 3, 2.048 procesadores stream y refrigeración de doble ventilador. Adecuada para videojuegos en 1080p, streaming y tareas multimedia, con soporte para AMD FSR.",
+                "xfx-speedster-swft-210-radeon-rx-7600-core-edition.png"),
+            ("Sapphire PULSE Radeon RX 9060 XT OC", 700000m,
+                "16 GB GDDR6 · PCIe 5.0 · 128 bits. Tarjeta gráfica con arquitectura AMD RDNA 4, 2.048 procesadores stream y refrigeración Dual-X. Sus 16 GB de memoria permiten ejecutar videojuegos exigentes en Full HD y 1440p, además de aplicaciones gráficas compatibles con AMD FSR 4.",
+                "sapphire-pulse-radeon-rx-9060-xt-oc.png"),
+            ("Intel Arc B580 Limited Edition", 500000m,
+                "12 GB GDDR6 · PCIe 4.0 · 192 bits. Placa gráfica basada en arquitectura Intel Xe2, con 20 núcleos Xe, ray tracing y tecnología Intel XeSS 2. Orientada a videojuegos en 1080p y 1440p, creación de contenido y edición de video con aceleración AV1.",
+                "intel-arc-b580-limited-edition.png")
+        };
+        foreach (var esperado in placasEsperadas)
+        {
+            var placa = await contexto.Productos.Include(producto => producto.Categoria)
+                .Include(producto => producto.Proveedor)
+                .SingleAsync(producto => producto.Nombre == esperado.Nombre);
+            Assert.Equal(esperado.Precio, placa.Precio);
+            Assert.Equal(10, placa.Stock);
+            Assert.Equal(esperado.Descripcion, placa.Descripcion);
+            Assert.Equal("Placas de Video", placa.Categoria!.Nombre);
+            Assert.Equal("PixelWare Distribuidora Demo", placa.Proveedor!.RazonSocial);
+            Assert.Equal("DEMO-30-00000003-0", placa.Proveedor.Cuit);
+            Assert.Equal($"/images/categorias/Placas de Video/{esperado.Imagen}",
+                new ProductoImagenResolver().Resolver(placa.Nombre));
+        }
+
+        var placaEditada = await contexto.Productos
+            .SingleAsync(producto => producto.Nombre == "Intel Arc B580 Limited Edition");
+        placaEditada.Precio = 510000m;
+        placaEditada.Stock = 2;
+        placaEditada.Descripcion = "Placa editada manualmente";
+        placaEditada.ImagenUrl = "/uploads/productos/cccccccccccccccccccccccccccccccc.png";
+
         var unidadEditada = await contexto.Productos
             .SingleAsync(producto => producto.Nombre == "SSD Kingston NV3 1 TB (SNV3S/1000G)");
         Assert.Contains("6.000 MB/s de lectura y 4.000 MB/s de escritura", unidadEditada.Descripcion);
@@ -107,6 +173,7 @@ public sealed class CatalogoDemostracionTests
             .SingleAsync(proveedor => proveedor.Cuit == "DEMO-30-00000001-0");
         proveedorEditado.RazonSocial = "Nombre modificado manualmente";
         await contexto.SaveChangesAsync();
+        contexto.ChangeTracker.Clear();
 
         var segundaCarga = await CatalogoDemostracionIniciales.InicializarAsync(
             categoriasLogica,
@@ -117,7 +184,16 @@ public sealed class CatalogoDemostracionTests
         Assert.Equal(0, segundaCarga.ProveedoresCreados);
         Assert.Equal(0, segundaCarga.ProductosCreados);
         Assert.Equal(3, await contexto.Proveedores.CountAsync());
-        Assert.Equal(32, await contexto.Productos.CountAsync());
+        Assert.Equal(38, await contexto.Productos.CountAsync());
+        productoEditado = await contexto.Productos.SingleAsync(producto => producto.IdProducto == productoEditado.IdProducto);
+        unidadEditada = await contexto.Productos.SingleAsync(producto => producto.IdProducto == unidadEditada.IdProducto);
+        celularEditado = await contexto.Productos.SingleAsync(producto => producto.IdProducto == celularEditado.IdProducto);
+        placaEditada = await contexto.Productos.SingleAsync(producto => producto.IdProducto == placaEditada.IdProducto);
+        proveedorEditado = await contexto.Proveedores.SingleAsync(proveedor => proveedor.IdProveedor == proveedorEditado.IdProveedor);
+        Assert.Equal(510000m, placaEditada.Precio);
+        Assert.Equal(2, placaEditada.Stock);
+        Assert.Equal("Placa editada manualmente", placaEditada.Descripcion);
+        Assert.Equal("/uploads/productos/cccccccccccccccccccccccccccccccc.png", placaEditada.ImagenUrl);
         Assert.Equal(99, productoEditado.Stock);
         Assert.Equal(99000m, unidadEditada.Precio);
         Assert.Equal(4, unidadEditada.Stock);
@@ -139,6 +215,7 @@ public sealed class CatalogoDemostracionTests
         Assert.Equal(12, await ProductosDeCategoriaAsync(contexto, "Periféricos"));
         Assert.Equal(6, await ProductosDeCategoriaAsync(contexto, "Celulares"));
         Assert.Equal(6, await ProductosDeCategoriaAsync(contexto, "Almacenamiento"));
+        Assert.Equal(6, await ProductosDeCategoriaAsync(contexto, "Placas de Video"));
         Assert.Single(await contexto.Productos.Where(producto => producto.Stock == 0).ToListAsync());
     }
 
@@ -167,7 +244,7 @@ public sealed class CatalogoDemostracionTests
     }
 
     [Fact]
-    public void ResolverAsociaLosTreintaYDosProductosAArchivosPublicosExistentes()
+    public void ResolverAsociaLosTreintaYOchoProductosAArchivosPublicosExistentes()
     {
         var nombres = new[]
         {
@@ -202,7 +279,13 @@ public sealed class CatalogoDemostracionTests
             "Disco rígido Western Digital Blue 1 TB (WD10EZEX)",
             "Disco externo Seagate Expansion Portable 2 TB (STKM2000400)",
             "Pendrive SanDisk Ultra Flair 128 GB (SDCZ73-128G-G46)",
-            "SanDisk Ultra microSDXC 128 GB (SDSQUAB-128G-GN6MA)"
+            "SanDisk Ultra microSDXC 128 GB (SDSQUAB-128G-GN6MA)",
+            "MSI GeForce RTX 4060 VENTUS 2X BLACK OC",
+            "Gigabyte GeForce RTX 5060 Ti WINDFORCE OC",
+            "ASUS PRIME GeForce RTX 5070",
+            "XFX Speedster SWFT 210 Radeon RX 7600 Core Edition",
+            "Sapphire PULSE Radeon RX 9060 XT OC",
+            "Intel Arc B580 Limited Edition"
         };
         var resolver = new ProductoImagenResolver();
         var raizRepositorio = Path.GetFullPath(
@@ -223,7 +306,7 @@ public sealed class CatalogoDemostracionTests
             Assert.True(File.Exists(rutaFisica), $"No existe la imagen pública {rutaPublica}.");
         }
 
-        Assert.Equal(32, rutas.Count);
+        Assert.Equal(38, rutas.Count);
         Assert.Null(resolver.Resolver("Producto agregado manualmente"));
     }
 
