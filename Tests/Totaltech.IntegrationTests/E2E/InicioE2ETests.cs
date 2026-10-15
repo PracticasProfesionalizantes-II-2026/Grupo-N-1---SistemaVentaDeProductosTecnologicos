@@ -76,7 +76,7 @@ public sealed class InicioE2ETests(CatalogoE2EFixture fixture)
     }
 
     [Fact]
-    public async Task AdministradorPuedeCerrarSesionDesdeTiendaSinCambiarPanel()
+    public async Task AdministradorPuedeCerrarSesionDesdeTiendaYVolverALogin()
     {
         await using var context = await fixture.Browser.NewContextAsync();
         var page = await context.NewPageAsync();
@@ -86,7 +86,48 @@ public sealed class InicioE2ETests(CatalogoE2EFixture fixture)
         await page.GotoAsync(fixture.FrontendUrl + "/");
         await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Administración", Exact = true })).ToBeVisibleAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión", Exact = true }).ClickAsync();
-        await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Iniciar sesión", Exact = true })).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Iniciar sesión", Exact = true })).ToBeVisibleAsync();
+        Assert.Equal(fixture.FrontendUrl + "/Home/Login", page.Url);
+    }
+
+    [Fact]
+    public async Task AdministradorRecibeBienvenidaUnaVezYCierraSesionDesdePanel()
+    {
+        await using var context = await fixture.Browser.NewContextAsync();
+        var page = await context.NewPageAsync();
+        var administrador = await fixture.CrearAdministradorAsync();
+        await LoginAsync(page, administrador.Email, administrador.Contrasena);
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(1);
+        await CapturarAsync(page, "admin-bienvenida.png");
+        await page.ReloadAsync();
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(0);
+        await page.GotoAsync(fixture.FrontendUrl + "/Home/Login");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Iniciar sesión", Exact = true })).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(0);
+        await page.GotoAsync(fixture.FrontendUrl + "/Administracion");
+
+        foreach (var ancho in new[] { 320, 375, 425, 768, 1024, 1280 })
+        {
+            await page.SetViewportSizeAsync(ancho, 900);
+            await page.ReloadAsync();
+            if (ancho <= 768)
+                await page.GetByRole(AriaRole.Button, new() { Name = "Abrir menú de administración", Exact = true }).ClickAsync();
+            var cerrarSesion = page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión", Exact = true });
+            await Assertions.Expect(cerrarSesion).ToBeVisibleAsync();
+            await cerrarSesion.FocusAsync();
+            await Assertions.Expect(cerrarSesion).ToBeFocusedAsync();
+            Assert.True(await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= innerWidth"));
+            Assert.DoesNotContain("Modo Administrador Activo", await page.ContentAsync());
+            if (ancho is 320 or 1280) await CapturarAsync(page, $"admin-sesion-{ancho}.png");
+        }
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión", Exact = true }).PressAsync("Enter");
+        await Assertions.Expect(page).ToHaveURLAsync(fixture.FrontendUrl + "/Home/Login");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Iniciar sesión", Exact = true })).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("[data-auth-welcome]")).ToHaveCountAsync(0);
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión", Exact = true })).ToHaveCountAsync(0);
+        await page.GotoAsync(fixture.FrontendUrl + "/Administracion");
+        Assert.Contains("/Home/Login", page.Url);
     }
 
     private async Task LoginAsync(IPage page, string email, string password)

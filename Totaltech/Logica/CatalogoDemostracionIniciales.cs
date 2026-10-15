@@ -82,7 +82,19 @@ public static class CatalogoDemostracionIniciales
         new("Teclado Logitech G213", "Teclado Logitech de formato completo con iluminación.", 95000m, 15, "Periféricos", "pixelware"),
         new("Teclado mecánico Redragon", "Teclado mecánico Redragon compacto con teclado numérico.", 140000m, 20, "Periféricos", "pixelware"),
         new("Teclado mecánico Razer", "Teclado mecánico Razer con iluminación.", 200000m, 10, "Periféricos", "pixelware"),
-        new("Teclado mecánico ASUS", "Teclado mecánico ASUS para demostración académica.", 250000m, 5, "Periféricos", "pixelware")
+        new("Teclado mecánico ASUS", "Teclado mecánico ASUS para demostración académica.", 250000m, 5, "Periféricos", "pixelware"),
+        new("Celular Honor Magic 7 Lite 5G 12 GB 512 GB Titanium Black", "Celular Honor Magic 7 Lite 5G con 12 GB de RAM y 512 GB de almacenamiento, color Titanium Black.", 650000m, 10, "Celulares", "conecta"),
+        new("Celular iPhone 16 128 GB Black", "Celular iPhone 16 con 128 GB de almacenamiento, color Black.", 1400000m, 10, "Celulares", "conecta"),
+        new("Celular Samsung A57 5G", "Celular Samsung A57 con conectividad 5G.", 750000m, 10, "Celulares", "conecta"),
+        new("Celular Samsung S26 Ultra 12 GB 256 GB Cobalt Violet", "Celular Samsung S26 Ultra con 12 GB de RAM y 256 GB de almacenamiento, color Cobalt Violet.", 2300000m, 10, "Celulares", "conecta"),
+        new("Celular Xiaomi 17 12 GB 512 GB Black", "Celular Xiaomi 17 con 12 GB de RAM y 512 GB de almacenamiento, color Black.", 1600000m, 10, "Celulares", "conecta"),
+        new("Celular Xiaomi Redmi Note 14 Pro 8 GB 256 GB Midnight Black con cargador", "Celular Xiaomi Redmi Note 14 Pro con 8 GB de RAM y 256 GB de almacenamiento, color Midnight Black. Incluye cargador.", 550000m, 10, "Celulares", "conecta"),
+        new("SSD Kingston NV3 1 TB (SNV3S/1000G)", "SSD interno M.2 2280 con tecnología NVMe PCIe 4.0. Ofrece velocidades de hasta 6.000 MB/s de lectura y 4.000 MB/s de escritura. Ideal para acelerar el inicio de Windows, ejecutar programas y almacenar juegos en equipos compatibles.", 95000m, 10, "Almacenamiento", "pixelware"),
+        new("SSD Samsung 870 EVO 500 GB (MZ-77E500B)", "SSD interno SATA III de 2,5 pulgadas, con velocidades de hasta 560 MB/s de lectura y 530 MB/s de escritura. Excelente para modernizar computadoras y notebooks compatibles con SATA, mejorando la respuesta general del sistema.", 85000m, 10, "Almacenamiento", "pixelware"),
+        new("Disco rígido Western Digital Blue 1 TB (WD10EZEX)", "Disco rígido mecánico de 3,5 pulgadas con interfaz SATA de 6 Gb/s, velocidad de 7.200 RPM y caché de 64 MB. Una alternativa de almacenamiento para documentos, videos, fotografías y archivos de gran tamaño en PC de escritorio.", 80000m, 10, "Almacenamiento", "pixelware"),
+        new("Disco externo Seagate Expansion Portable 2 TB (STKM2000400)", "Disco rígido externo portátil con conexión USB 3.0 y capacidad de 2 TB. Diseñado para ampliar el almacenamiento, transportar archivos y realizar copias de seguridad sin necesidad de instalar una unidad interna.", 130000m, 10, "Almacenamiento", "pixelware"),
+        new("Pendrive SanDisk Ultra Flair 128 GB (SDCZ73-128G-G46)", "Pendrive USB 3.0 con carcasa metálica y velocidades de lectura de hasta 150 MB/s. Su diseño compacto permite transportar documentos, fotografías y archivos entre computadoras de manera práctica.", 18000m, 10, "Almacenamiento", "pixelware"),
+        new("SanDisk Ultra microSDXC 128 GB (SDSQUAB-128G-GN6MA)", "Tarjeta de memoria microSDXC UHS-I con clasificación A1 y velocidades de lectura de hasta 140 MB/s. Permite ampliar el almacenamiento de fotografías, videos Full HD y aplicaciones en dispositivos compatibles.", 20000m, 10, "Almacenamiento", "pixelware")
     ];
 
     public static void ValidarDestino(IHostEnvironment environment, string connectionString)
@@ -111,7 +123,7 @@ public static class CatalogoDemostracionIniciales
         var categorias = (await categoriasLogica.ObtenerTodosAsync())
             .ToDictionary(categoria => Normalizar(categoria.Nombre), StringComparer.Ordinal);
 
-        foreach (var categoriaRequerida in new[] { "Notebooks", "Periféricos" })
+        foreach (var categoriaRequerida in new[] { "Notebooks", "Periféricos", "Celulares", "Almacenamiento" })
         {
             if (!categorias.ContainsKey(Normalizar(categoriaRequerida)))
             {

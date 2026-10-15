@@ -165,7 +165,7 @@
             {
                 <a asp-controller="Home" asp-action="Login" class="navigation-login">Iniciar sesión</a>
             }
-            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin")) { <a asp-controller="Administracion" asp-action="Index">Administración</a><span class="badge bg-success">Modo Administrador Activo</span> }
+            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin")) { <a asp-controller="Administracion" asp-action="Index">Administración</a> }
             @if (User.Identity?.IsAuthenticated == true && Configuration.GetValue<bool>("CompraDemo:Enabled"))
             {
                 <a asp-controller="Pedidos" asp-action="Index">Mis pedidos demo</a>
@@ -178,6 +178,7 @@
     <main role="main"
           class="site-main">
 
+        <partial name="_AuthWelcome" />
         @RenderBody()
 
     </main>

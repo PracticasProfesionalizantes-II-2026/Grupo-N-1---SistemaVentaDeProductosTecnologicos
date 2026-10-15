@@ -70,9 +70,11 @@ public class HomeController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        var esAdministrador = User.IsInRole("Admin");
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData.Remove("AuthWelcome");
         TempData["AuthSuccess"] = "Sesión cerrada correctamente.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(esAdministrador ? nameof(Login) : nameof(Index));
     }
 
     public IActionResult Privacy()
@@ -162,7 +164,8 @@ public class HomeController : Controller
                 new ClaimsPrincipal(identity),
                 propiedades);
 
-            TempData["AuthSuccess"] = $"¡Bienvenido, {usuario.Nombre}!";
+            TempData.Remove("AuthSuccess");
+            TempData["AuthWelcome"] = $"¡Bienvenido, {usuario.Nombre}!";
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return LocalRedirect(model.ReturnUrl);
             return usuario.Rol == 1 ? RedirectToAction("Index", "Administracion") : RedirectToAction(nameof(Index));

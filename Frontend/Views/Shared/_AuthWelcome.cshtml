@@ -1,0 +1,4 @@
+@if (User.Identity?.IsAuthenticated == true && ViewData["IsLoginPage"] is not true && TempData["AuthWelcome"] is string bienvenida)
+{
+    <div class="alert alert-success m-3" role="status" data-auth-welcome>@bienvenida</div>
+}

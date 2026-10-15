@@ -79,6 +79,62 @@ public sealed class InicioHttpTests
     }
 
     [Theory]
+    [InlineData(false, null)]
+    [InlineData(true, null)]
+    [InlineData(false, "/Productos")]
+    [InlineData(true, "/Productos")]
+    public async Task BienvenidaSoloApareceUnaVezDespuesDeLogin(bool administrador, string? returnUrl)
+    {
+        await using var factory = Factory(new ApiPrueba { Administrador = administrador });
+        using var client = factory.CreateClient(new() { BaseAddress = new Uri("https://frontend.test"), AllowAutoRedirect = false });
+        var destino = await LoginAsync(client, returnUrl);
+        if (returnUrl is not null) Assert.Equal(returnUrl, destino);
+        var loginAntesDeLaBienvenida = await client.GetStringAsync("/Home/Login");
+        Assert.DoesNotContain("Bienvenido", loginAntesDeLaBienvenida);
+        Assert.DoesNotContain("Modo Administrador Activo", loginAntesDeLaBienvenida);
+        var html = await client.GetStringAsync(destino);
+        Assert.Single(Regex.Matches(html, "data-auth-welcome"));
+        Assert.Contains("¡Bienvenido,", WebUtility.HtmlDecode(html));
+        Assert.DoesNotContain("Modo Administrador Activo", html);
+        Assert.DoesNotContain("data-auth-welcome", await client.GetStringAsync(destino));
+        using var login = await client.GetAsync("/Home/Login");
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var formulario = await login.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Bienvenido", formulario);
+        Assert.DoesNotContain("Modo Administrador Activo", formulario);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AdministradorCierraSesionDesdePanelYVuelveALoginInclusoSinApi(bool sinApi)
+    {
+        var api = new ApiPrueba { Administrador = true };
+        await using var factory = Factory(api);
+        using var client = factory.CreateClient(new() { BaseAddress = new Uri("https://frontend.test"), AllowAutoRedirect = false });
+        var destino = await LoginAsync(client);
+        var html = await client.GetStringAsync(destino);
+        Assert.Contains("class=\"admin-logout\"", html);
+        Assert.Contains("Cerrar sesión", html);
+        using var sinToken = await client.PostAsync("/Home/Logout", Form());
+        Assert.Equal(HttpStatusCode.BadRequest, sinToken.StatusCode);
+        var llamadasAntes = api.Llamadas;
+        api.SinApi = sinApi;
+        using var logout = await client.PostAsync("/Home/Logout", Form(("__RequestVerificationToken", Token(html))));
+        Assert.Equal(llamadasAntes, api.Llamadas);
+        Assert.Equal(HttpStatusCode.Redirect, logout.StatusCode);
+        Assert.Equal("/Home/Login", logout.Headers.Location!.OriginalString);
+        Assert.Contains("expires=", logout.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("Totaltech.Auth=")));
+        var login = await client.GetStringAsync("/Home/Login");
+        Assert.Contains("Sesión cerrada correctamente.", WebUtility.HtmlDecode(login));
+        Assert.DoesNotContain("Bienvenido", login);
+        Assert.DoesNotContain("Cerrar sesión", login);
+        using var panel = await client.GetAsync("/Administracion");
+        Assert.Equal(HttpStatusCode.Redirect, panel.StatusCode);
+        Assert.Contains("/Home/Login", panel.Headers.Location!.OriginalString);
+    }
+
+    [Theory]
     [InlineData("vacio")]
     [InlineData("error")]
     public async Task InicioVacioOApiNoDisponibleConservaCabecera(string modo)
@@ -133,12 +189,14 @@ public sealed class InicioHttpTests
             builder.ConfigureServices(services => services.AddSingleton<IHttpClientFactory>(api));
         });
 
-    private static async Task LoginAsync(HttpClient client)
+    private static async Task<string> LoginAsync(HttpClient client, string? returnUrl = null)
     {
         var html = await client.GetStringAsync("/Home/Login");
+        Assert.DoesNotContain("Bienvenido", html);
         using var response = await client.PostAsync("/Home/Login", Form(
-            ("__RequestVerificationToken", Token(html)), ("Email", "cliente@test.local"), ("Contrasena", "ClaveDePrueba123")));
+            ("__RequestVerificationToken", Token(html)), ("Email", "cliente@test.local"), ("Contrasena", "ClaveDePrueba123"), ("ReturnUrl", returnUrl ?? string.Empty)));
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        return response.Headers.Location!.OriginalString;
     }
 
     private static string Token(string html)
@@ -157,6 +215,7 @@ public sealed class InicioHttpTests
         public int ProductosLeidos { get; private set; }
         public int CategoriasLeidas { get; private set; }
         public bool SinApi { get; set; }
+        public bool Administrador { get; init; }
         public bool Vacio { get; init; }
         public bool CategoriasVacias { get; init; }
         public bool ErrorCategorias { get; init; }
@@ -168,8 +227,11 @@ public sealed class InicioHttpTests
             if (SinApi) throw new HttpRequestException("API de prueba no disponible.");
             object contenido = request.RequestUri!.AbsolutePath.TrimEnd('/') switch
             {
-                "/auth/login" => new { IdUsuario = 7, Nombre = "Cliente", Apellido = "Prueba", Email = "cliente@test.local", Rol = 0, AccessToken = "token-ficticio", ExpiresAtUtc = DateTimeOffset.UtcNow.AddHours(1) },
-                "/usuarios/7" => new UsuarioResponse { IdUsuario = 7, Nombre = "Cliente", Apellido = "Prueba", Email = "cliente@test.local", Rol = 0, Activo = true },
+                "/auth/login" => new { IdUsuario = 7, Nombre = "Cliente", Apellido = "Prueba", Email = "cliente@test.local", Rol = Administrador ? 1 : 0, AccessToken = "token-ficticio", ExpiresAtUtc = DateTimeOffset.UtcNow.AddHours(1) },
+                "/usuarios/7" => new UsuarioResponse { IdUsuario = 7, Nombre = "Cliente", Apellido = "Prueba", Email = "cliente@test.local", Rol = Administrador ? 1 : 0, Activo = true },
+                "/usuarios" => Array.Empty<UsuarioResumenResponse>(),
+                "/pedidos/estado/Pendiente" => Array.Empty<PedidoResumenResponse>(),
+                "/productos/catalogo" => new CatalogoProductosResponse { TotalItems = 2 },
                 "/carritos/actual" => new CarritoResumenResponse(),
                 "/productos" => Productos(),
                 "/categorias" => Categorias(),
