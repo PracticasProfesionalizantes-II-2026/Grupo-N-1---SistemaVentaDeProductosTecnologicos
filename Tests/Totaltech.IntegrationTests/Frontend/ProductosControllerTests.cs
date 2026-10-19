@@ -40,11 +40,29 @@ public sealed class ProductosControllerTests : IDisposable
 
         using var payload = JsonDocument.Parse(Assert.Single(_api.Actualizaciones));
         Assert.Equal("Notebook renombrada", payload.RootElement.GetProperty("nombre").GetString());
+        Assert.Equal(_api.Producto.Stock, payload.RootElement.GetProperty("stockOriginal").GetInt32());
         Assert.Equal(new ProductoImagenResolver().Resolver(_api.Producto.Nombre), payload.RootElement.GetProperty("imagenUrl").GetString());
         Assert.False(payload.RootElement.TryGetProperty("imagenArchivo", out _));
         Assert.Equal(modelo.ReturnUrl, resultado.Url);
         Assert.Equal("Producto actualizado correctamente.", controller.TempData["Mensaje"]);
         Assert.False(Directory.Exists(_raiz));
+    }
+
+    [Fact]
+    public async Task ConflictoDeStockConservaElValorOriginalYSolicitaRecargar()
+    {
+        _api.EstadoActualizar = HttpStatusCode.Conflict;
+        var controller = CrearController();
+        var formulario = Assert.IsType<ViewResult>(await controller.Editar(7, (string?)null));
+        var modelo = Assert.IsType<ProductoEdicionViewModel>(formulario.Model);
+        Assert.Equal(_api.Producto.Stock, modelo.StockOriginal);
+
+        modelo.Descripcion = "Edición con stock anterior";
+        var resultado = Assert.IsType<ViewResult>(await controller.Editar(7, modelo));
+        using var payload = JsonDocument.Parse(Assert.Single(_api.Actualizaciones));
+        Assert.Equal(_api.Producto.Stock, payload.RootElement.GetProperty("stockOriginal").GetInt32());
+        Assert.Same(modelo, resultado.Model);
+        Assert.Contains(Errores(controller), mensaje => mensaje.Contains("stock cambió") && mensaje.Contains("Recargá"));
     }
 
     [Theory]
@@ -191,6 +209,7 @@ public sealed class ProductosControllerTests : IDisposable
     private static ProductoEdicionViewModel CrearEdicion() => new()
     {
         Nombre = "Nombre modificado", Descripcion = "Descripción modificada", Precio = 200, Stock = 4,
+        StockOriginal = 2,
         IdCategoria = 1, IdProveedor = 1, ReturnUrl = "/Productos"
     };
 

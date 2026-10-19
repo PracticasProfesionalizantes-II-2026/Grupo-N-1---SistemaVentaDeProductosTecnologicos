@@ -107,6 +107,7 @@ namespace Totaltech.Logica.DTOs
         public string? ImagenUrl { get; set; }
         public decimal Precio { get; set; }
         public int Stock { get; set; }
+        public int? StockOriginal { get; set; }
         public int IdCategoria { get; set; }
         public int IdProveedor { get; set; }
 
@@ -253,6 +254,7 @@ namespace Totaltech.Logica.DTOs
     public class ActualizarStockRequest
     {
         public int Stock { get; set; }
+        public int? StockOriginal { get; set; }
     }
 
     public class ActualizarEstadoPedidoRequest

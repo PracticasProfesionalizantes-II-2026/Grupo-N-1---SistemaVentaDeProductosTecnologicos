@@ -47,6 +47,7 @@ public class ProductosApiService
 		string descripcion,
 		decimal precio,
 		int stock,
+		int stockOriginal,
 		int idCategoria,
 		int idProveedor,
 		string? imagenUrl = null)
@@ -57,6 +58,7 @@ public class ProductosApiService
 			descripcion,
 			precio,
 			stock,
+			stockOriginal,
 			idCategoria,
 			idProveedor,
 			imagenUrl

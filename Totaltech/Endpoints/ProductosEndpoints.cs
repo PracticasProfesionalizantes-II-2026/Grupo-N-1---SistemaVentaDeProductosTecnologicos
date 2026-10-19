@@ -8,6 +8,8 @@ namespace Totaltech.Endpoints
 {
     public static class ProductosEndpoints
     {
+        private const string MensajeConflictoStock = "El stock cambió. Recargá el producto antes de guardar los cambios.";
+
         public static void MapProductosEndpoints(this WebApplication app)
         {
             var group = app.MapGroup("/productos").WithTags("Productos");
@@ -53,15 +55,32 @@ namespace Totaltech.Endpoints
             // actualizar un producto existente
             group.MapPut("/{id:int}", async (int id, ProductoRequest request, IProductosLogica logica) =>
             {
+                if (request.StockOriginal is null or < 0)
+                {
+                    return Results.BadRequest("El stock original es obligatorio y no puede ser negativo.");
+                }
+
                 var producto = await logica.ObtenerPorIdAsync(id);
                 if (producto is null)
                 {
                     return Results.NotFound();
                 }
 
+                if (producto.Stock != request.StockOriginal.Value)
+                {
+                    return Results.Conflict(MensajeConflictoStock);
+                }
+
                 AplicarCambios(producto, request);
-                var error = await logica.ActualizarAsync(producto);
-                return error is null ? Results.Ok(producto) : Results.BadRequest(error);
+                try
+                {
+                    var error = await logica.ActualizarAsync(producto);
+                    return error is null ? Results.Ok(producto) : Results.BadRequest(error);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return Results.Conflict(MensajeConflictoStock);
+                }
             }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
             // eliminar un producto
             group.MapDelete("/{id:int}", async (int id, IProductosLogica logica) =>
@@ -98,13 +117,18 @@ namespace Totaltech.Endpoints
             // actualizar stock de un producto
             group.MapPatch("/{id:int}/stock", async (int id, ActualizarStockRequest request, IProductosLogica logica) =>
             {
-                if (request.Stock < 0)
+                if (request.Stock < 0 || request.StockOriginal is null or < 0)
                 {
-                    return Results.BadRequest("El stock no puede ser negativo.");
+                    return Results.BadRequest("El stock y el stock original deben estar presentes y no pueden ser negativos.");
                 }
 
-                var actualizado = await logica.ActualizarStockAsync(id, request.Stock);
-                return actualizado ? Results.NoContent() : Results.NotFound();
+                var resultado = await logica.ActualizarStockAsync(id, request.Stock, request.StockOriginal.Value);
+                return resultado switch
+                {
+                    ResultadoActualizacionStock.Actualizado => Results.NoContent(),
+                    ResultadoActualizacionStock.NoEncontrado => Results.NotFound(),
+                    _ => Results.Conflict(MensajeConflictoStock)
+                };
             }).RequireAuthorization(Autorizacion.PoliticaAdministrador);
         }
 

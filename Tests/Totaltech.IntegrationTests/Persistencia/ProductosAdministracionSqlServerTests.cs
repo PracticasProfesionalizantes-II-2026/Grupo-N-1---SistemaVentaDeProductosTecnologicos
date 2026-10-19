@@ -25,6 +25,33 @@ public sealed class ProductosAdministracionSqlServerTests : IClassFixture<SqlSer
     public ProductosAdministracionSqlServerTests(SqlServerTestDatabase database) => _database = database;
 
     [Fact]
+    public async Task DescuentoEntreLecturaYGuardado_ImpideReponerStockConEdicionAdministrativa()
+    {
+        int idProducto;
+        await using (var inicial = _database.CreateContext())
+        {
+            var producto = CrearProducto();
+            inicial.Productos.Add(producto);
+            await inicial.SaveChangesAsync();
+            idProducto = producto.IdProducto;
+        }
+
+        await using var edicion = _database.CreateContext();
+        await using var venta = _database.CreateContext();
+        var productoEditado = (await edicion.Productos.FindAsync(idProducto))!;
+        productoEditado.Descripcion = "Edición posterior a la venta";
+
+        Assert.True(await new ProductosRepositorio(venta).DescontarStockAsync(idProducto, 1));
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() =>
+            new ProductosRepositorio(edicion).ActualizarAsync(productoEditado));
+
+        await using var verificacion = _database.CreateContext();
+        var actual = (await verificacion.Productos.FindAsync(idProducto))!;
+        Assert.Equal(2, actual.Stock);
+        Assert.Equal("Prueba aislada", actual.Descripcion);
+    }
+
+    [Fact]
     public async Task Migracion_AgregaColumnaNullableSinCambiarProductosExistentes()
     {
         var database = new SqlServerTestDatabase();

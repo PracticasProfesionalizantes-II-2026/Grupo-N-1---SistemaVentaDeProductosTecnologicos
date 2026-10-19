@@ -19,6 +19,7 @@
     <form asp-action="Editar" asp-route-id="@Model.IdProducto" method="post" enctype="multipart/form-data" class="admin-form admin-panel">
         @Html.AntiForgeryToken()
         <input asp-for="ReturnUrl" type="hidden" />
+        <input asp-for="StockOriginal" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <label asp-for="Nombre"></label>
         <input asp-for="Nombre" class="form-control" />

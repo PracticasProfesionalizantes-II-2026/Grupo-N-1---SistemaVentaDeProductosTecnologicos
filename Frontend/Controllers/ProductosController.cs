@@ -139,7 +139,7 @@ public class ProductosController : Controller
             return View(new ProductoEdicionViewModel
             {
                 IdProducto = id, Nombre = producto.Nombre, Descripcion = producto.Descripcion,
-                Precio = producto.Precio, Stock = producto.Stock, IdCategoria = producto.IdCategoria,
+                Precio = producto.Precio, Stock = producto.Stock, StockOriginal = producto.Stock, IdCategoria = producto.IdCategoria,
                 IdProveedor = producto.IdProveedor, ImagenActualUrl = producto.ImagenUrl, ReturnUrl = regreso
             });
         }
@@ -177,7 +177,7 @@ public class ProductosController : Controller
             if (ModelState.IsValid)
             {
                 using var response = await _productosApiService.ActualizarAsync(id, request.Nombre,
-                    request.Descripcion, request.Precio, request.Stock, request.IdCategoria,
+                    request.Descripcion, request.Precio, request.Stock, request.StockOriginal!.Value, request.IdCategoria,
                     request.IdProveedor, imagenNueva ?? producto.ImagenUrl);
                 if (response.IsSuccessStatusCode)
                 {
@@ -282,6 +282,7 @@ public class ProductosController : Controller
         return response.StatusCode switch
         {
             HttpStatusCode.NotFound => "El producto ya no existe. Volvé al catálogo.",
+            HttpStatusCode.Conflict => "El stock cambió mientras editabas. Recargá el producto y revisá la cantidad antes de guardar.",
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => "Tu sesión no permite editar productos. Volvé a iniciar sesión como administrador.",
             _ => "No pudimos confirmar el guardado. Revisá el producto en el catálogo antes de reintentar."
         };

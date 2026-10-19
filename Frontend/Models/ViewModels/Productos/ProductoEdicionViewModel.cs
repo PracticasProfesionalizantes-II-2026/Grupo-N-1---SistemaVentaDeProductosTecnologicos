@@ -9,6 +9,9 @@ public sealed class ProductoEdicionViewModel : ProductoRequest
     [BindNever] public int IdProducto { get; set; }
     [BindNever] public string? ImagenActualUrl { get; set; }
 
+    [Required, Range(0, int.MaxValue)]
+    public int? StockOriginal { get; set; }
+
     [Display(Name = "Imagen de referencia")]
     public IFormFile? ImagenArchivo { get; set; }
 

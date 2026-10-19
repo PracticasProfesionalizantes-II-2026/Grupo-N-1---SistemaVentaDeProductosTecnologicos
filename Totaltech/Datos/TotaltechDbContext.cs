@@ -157,6 +157,10 @@ namespace Totaltech.Datos
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Producto>()
+                .Property(producto => producto.Stock)
+                .IsConcurrencyToken();
+
+            modelBuilder.Entity<Producto>()
                 .ToTable(tabla => tabla.HasCheckConstraint(
                     "CK_Productos_Stock_NoNegativo",
                     "[Stock] >= 0"));
