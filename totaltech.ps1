@@ -121,34 +121,119 @@ function Test-BaseTotaltech {
     } finally { $conexion.Dispose() }
 }
 
+function Get-ContextoLocalDb {
+    $usuarioWindows = 'No disponible'
+    try { $usuarioWindows = [Security.Principal.WindowsIdentity]::GetCurrent().Name } catch { }
+    $carpetaWindows = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
+    $referenciaPerfil = if ($env:USERPROFILE) { Join-Path $env:USERPROFILE 'AppData/Local' } else { '' }
+    $posibleRedireccion = $false
+    foreach ($referencia in @($carpetaWindows, $referenciaPerfil)) {
+        if ($env:LOCALAPPDATA -and $referencia -and -not [string]::Equals(
+            $env:LOCALAPPDATA.Replace('/', '\').TrimEnd([char[]]'\/'),
+            $referencia.Replace('/', '\').TrimEnd([char[]]'\/'),
+            [StringComparison]::OrdinalIgnoreCase)) {
+            $posibleRedireccion = $true
+        }
+    }
+    [pscustomobject]@{
+        Windows = [Environment]::OSVersion.VersionString
+        Usuario = $usuarioWindows
+        PerfilUsuario = $env:USERPROFILE
+        LocalAppDataEfectivo = $env:LOCALAPPDATA
+        LocalAppDataWindows = $carpetaWindows
+        ReferenciaPerfil = $referenciaPerfil
+        RegistroLocalDbEfectivo = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Microsoft/Microsoft SQL Server Local DB/Instances/MSSQLLocalDB/error.log' } else { 'No disponible' }
+        PosibleRedireccion = $posibleRedireccion
+    }
+}
+
+function Invoke-UtilidadLocalDb([string] $RutaUtilidad, [string] $Argumentos) {
+    $proceso = New-Object System.Diagnostics.Process
+    $proceso.StartInfo.FileName = $RutaUtilidad
+    $proceso.StartInfo.Arguments = $Argumentos
+    $proceso.StartInfo.UseShellExecute = $false
+    $proceso.StartInfo.CreateNoWindow = $true
+    $proceso.StartInfo.RedirectStandardOutput = $true
+    $proceso.StartInfo.RedirectStandardError = $true
+    # SqlLocalDB escribe con la pagina ANSI de Windows, que puede diferir de UTF-8 en PowerShell 7.
+    $paginaCodigo = [Globalization.CultureInfo]::CurrentCulture.TextInfo.ANSICodePage
+    try { $paginaCodigo = [int](Get-ItemPropertyValue -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage' -Name ACP -ErrorAction Stop) } catch { }
+    $codificacion = [Text.Encoding]::GetEncoding($paginaCodigo)
+    $proceso.StartInfo.StandardOutputEncoding = $codificacion
+    $proceso.StartInfo.StandardErrorEncoding = $codificacion
+    try {
+        if (-not $proceso.Start()) { throw 'No se pudo crear el proceso SqlLocalDB.' }
+        # Leer ambos canales en paralelo evita bloquear al proceso por un buffer lleno.
+        $salida = $proceso.StandardOutput.ReadToEndAsync()
+        $errorNativo = $proceso.StandardError.ReadToEndAsync()
+        $proceso.WaitForExit()
+        [pscustomobject]@{
+            ExitCode = $proceso.ExitCode
+            Salida = $salida.GetAwaiter().GetResult()
+            Error = $errorNativo.GetAwaiter().GetResult()
+        }
+    } finally { $proceso.Dispose() }
+}
+
 function Start-BaseTotaltech {
     $rutaLogsSql = Join-Path $raizTotaltech 'Desarrollo/logs'
     New-Item -ItemType Directory -Path $rutaLogsSql -Force | Out-Null
     $marcaSql = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
     $rutaDiagnosticoSql = Join-Path $rutaLogsSql "SQL-$marcaSql.log"
-    $utilidadSql = (Get-Command SqlLocalDB.exe -CommandType Application -ErrorAction Stop).Source
+    $contextoSql = Get-ContextoLocalDb
+    "[Contexto] $(ConvertTo-Json -InputObject $contextoSql -Compress)" |
+        Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+    if ($contextoSql.PosibleRedireccion) {
+        '[Contexto] LOCALAPPDATA difiere de una ruta de referencia. Puede ser una redireccion valida; no demuestra un error ni impide comprobar la conexion.' |
+            Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+    }
+    $utilidadSql = $null
     for ($intentoSql = 1; $intentoSql -le 3; $intentoSql++) {
         try {
             Test-BaseTotaltech
+            '[Disponibilidad] Consulta de solo lectura confirmada en MSSQLLocalDB / TotaltechDev.' |
+                Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
             Write-Host 'SQL disponible: MSSQLLocalDB / TotaltechDev.'
             return
         } catch {
-            "Intento $intentoSql - $($_.Exception.Message)" | Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+            $errorSql = $_.Exception
+            while ($null -ne $errorSql) {
+                $numeroSql = if ($errorSql.PSObject.Properties['Number']) { $errorSql.Number } else { 'N/A' }
+                "[Conexion] Intento $intentoSql - $($errorSql.GetType().FullName); Numero=$numeroSql; HResult=$($errorSql.HResult); $($errorSql.Message)" |
+                    Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+                $errorSql = $errorSql.InnerException
+            }
         }
-        if ($intentoSql -eq 3) { break }
-        # Capturar por separado el diagnostico del arranque nativo.
-        # El exito se decide por una consulta SQL, no solo por ExitCode de SqlLocalDB.
-        $salidaSql = Join-Path $rutaLogsSql "SQL-$marcaSql-$intentoSql.stdout.log"
-        $errorSql = Join-Path $rutaLogsSql "SQL-$marcaSql-$intentoSql.stderr.log"
-        $procesoSql = Start-Process -FilePath $utilidadSql -ArgumentList @('start', 'MSSQLLocalDB') `
-            -WindowStyle Hidden -PassThru -Wait -RedirectStandardOutput $salidaSql -RedirectStandardError $errorSql
-        try {
-            "SqlLocalDB ExitCode: $($procesoSql.ExitCode)" | Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
-        } finally { $procesoSql.Dispose() }
-        Start-Sleep -Milliseconds 500
+        if (-not $utilidadSql) {
+            try { $utilidadSql = (Get-Command SqlLocalDB.exe -CommandType Application -ErrorAction Stop).Source }
+            catch {
+                "[Instancia] No se encontro SqlLocalDB.exe para consultar o iniciar MSSQLLocalDB: $($_.Exception.Message)" |
+                    Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+                break
+            }
+        }
+        $operacionesSql = if ($intentoSql -lt 3) { @('info', 'start') } else { @('info') }
+        foreach ($operacionSql in $operacionesSql) {
+            try {
+                $resultadoSql = Invoke-UtilidadLocalDb $utilidadSql "$operacionSql MSSQLLocalDB"
+            } catch {
+                "[Instancia] No se pudo ejecutar SqlLocalDB $operacionSql MSSQLLocalDB: $($_.Exception.Message)" |
+                    Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+                continue
+            }
+            "[Instancia] SqlLocalDB $operacionSql MSSQLLocalDB - ExitCode=$($resultadoSql.ExitCode) (0x$('{0:X8}' -f $resultadoSql.ExitCode))" |
+                Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+            "stdout: $($resultadoSql.Salida)", "stderr: $($resultadoSql.Error)" |
+                Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+            $sufijoSql = if ($operacionSql -eq 'info') { '-info' } else { '' }
+            $resultadoSql.Salida | Out-File -LiteralPath (Join-Path $rutaLogsSql "SQL-$marcaSql-$intentoSql$sufijoSql.stdout.log") -Encoding utf8
+            $resultadoSql.Error | Out-File -LiteralPath (Join-Path $rutaLogsSql "SQL-$marcaSql-$intentoSql$sufijoSql.stderr.log") -Encoding utf8
+        }
+        if ($intentoSql -lt 3) { Start-Sleep -Milliseconds 500 }
     }
-    $rutaErrorLocalDb = Join-Path $env:LOCALAPPDATA 'Microsoft/Microsoft SQL Server Local DB/Instances/MSSQLLocalDB/error.log'
-    throw "SQL no esta disponible en MSSQLLocalDB / TotaltechDev. No se iniciaron aplicaciones nuevas. Diagnostico: $rutaDiagnosticoSql. Registro de LocalDB: $rutaErrorLocalDb."
+    '[Disponibilidad] La consulta de solo lectura no pudo confirmarse; el codigo de SqlLocalDB por si solo no confirma disponibilidad.' |
+        Out-File -LiteralPath $rutaDiagnosticoSql -Append -Encoding utf8
+    throw "[Disponibilidad] SQL no esta disponible en MSSQLLocalDB / TotaltechDev. Revisar [Conexion], [Instancia] y [Contexto] en $rutaDiagnosticoSql. Registro de LocalDB segun este contexto: $($contextoSql.RegistroLocalDbEfectivo). Una diferencia de perfil es una hipotesis, no una causa confirmada. No se iniciaron aplicaciones nuevas."
 }
 
 function Start-ComponentesTotaltech {
