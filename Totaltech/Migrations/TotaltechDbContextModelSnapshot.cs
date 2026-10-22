@@ -22,6 +22,54 @@ namespace Totaltech.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Totaltech.Entidades.AuditoriaUsuario", b =>
+                {
+                    b.Property<int>("IdAuditoriaUsuario")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdAuditoriaUsuario"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<bool?>("ActivoAnterior")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("ActivoNuevo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CamposModificados")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("FechaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdActor")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdUsuario")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RolAnterior")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RolNuevo")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdAuditoriaUsuario");
+
+                    b.HasIndex("IdActor");
+
+                    b.HasIndex("IdUsuario");
+
+                    b.ToTable("AuditoriaUsuarios");
+                });
+
             modelBuilder.Entity("Totaltech.Entidades.Carrito", b =>
                 {
                     b.Property<int>("IdCarrito")
@@ -354,6 +402,10 @@ namespace Totaltech.Migrations
                     b.Property<int>("IdProveedor")
                         .HasColumnType("int");
 
+                    b.Property<string>("ImagenUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -463,6 +515,11 @@ namespace Totaltech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdUsuario"));
 
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("Apellido")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -491,12 +548,32 @@ namespace Totaltech.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("VersionSesion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.HasKey("IdUsuario");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
                     b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("Totaltech.Entidades.AuditoriaUsuario", b =>
+                {
+                    b.HasOne("Totaltech.Entidades.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("IdActor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Totaltech.Entidades.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Totaltech.Entidades.Carrito", b =>

@@ -54,7 +54,6 @@ namespace Totaltech.Repositorios
 
         public async Task ActualizarAsync(Producto producto)
         {
-            _context.Productos.Update(producto);
             await _context.SaveChangesAsync();
         }
 
@@ -123,6 +122,7 @@ namespace Totaltech.Repositorios
                     IdProducto = producto.IdProducto,
                     Nombre = producto.Nombre,
                     Descripcion = producto.Descripcion,
+                    ImagenUrl = producto.ImagenUrl,
                     Precio = producto.Precio,
                     Stock = producto.Stock,
                     IdCategoria = producto.IdCategoria,

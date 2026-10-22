@@ -1,1 +1,9 @@
-/* Estructura reservada. Implementación pendiente. */
+.compra-demo__pedidos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1rem; }
+.compra-demo__pedidos h2 { font-size: 1rem; }
+.compra-demo__estado { display: inline-block; padding: .3rem .7rem; border-radius: 999px; background: #eff6ff; color: #174ea6; font-weight: 600; }
+.compra-demo__seguimiento { list-style: none; padding: 0; margin: 1.5rem 0; }
+.compra-demo__seguimiento li { position: relative; padding: .65rem 1rem .65rem 2rem; border-left: 3px solid #cbd5e1; color: #475569; transition: background-color .25s ease; }
+.compra-demo__seguimiento li::before { content: ""; position: absolute; width: 12px; height: 12px; left: -7.5px; top: 1rem; border-radius: 50%; background: #cbd5e1; }
+.compra-demo__seguimiento .compra-demo__paso-completo { border-left-color: #15803d; color: #166534; }
+.compra-demo__seguimiento .compra-demo__paso-completo::before { background: #15803d; }
+.compra-demo__seguimiento [aria-current] { font-weight: 700; background: #f0fdf4; border-radius: 0 .5rem .5rem 0; }

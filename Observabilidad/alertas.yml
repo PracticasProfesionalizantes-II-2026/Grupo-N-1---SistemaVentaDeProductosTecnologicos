@@ -1,0 +1,51 @@
+groups:
+  - name: totaltech
+    rules:
+      - alert: TotaltechServicioCaido
+        expr: up{job=~"totaltech_api|totaltech_frontend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Servicio {{ $labels.job }} no disponible"
+          description: "Prometheus no puede extraer métricas desde hace un minuto. Revisar proceso, puerto y configuración local."
+
+      - alert: TotaltechSqlNoDisponible
+        expr: totaltech_dependency_up{job="totaltech_api",dependency="sqlserver"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SQL Server no disponible"
+          description: "La comprobación de conexión SQL del backend falla desde hace un minuto."
+
+      - alert: TotaltechErroresElevados
+        expr: |
+          (
+            sum by (job) (rate(totaltech_http_requests_total{job=~"totaltech_api|totaltech_frontend",code=~"5.."}[5m]))
+            /
+            sum by (job) (rate(totaltech_http_requests_total{job=~"totaltech_api|totaltech_frontend"}[5m]))
+          ) > 0.05
+          and on (job)
+          sum by (job) (increase(totaltech_http_requests_total{job=~"totaltech_api|totaltech_frontend"}[5m])) >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Respuestas 5xx elevadas en {{ $labels.job }}"
+          description: "Más del 5 % de solicitudes fallan, con al menos 20 solicitudes en cinco minutos. Condición sostenida cinco minutos."
+
+      - alert: TotaltechLatenciaElevada
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (job, le) (rate(totaltech_http_request_duration_seconds_bucket{job=~"totaltech_api|totaltech_frontend"}[5m]))
+          ) > 1
+          and on (job)
+          sum by (job) (increase(totaltech_http_requests_total{job=~"totaltech_api|totaltech_frontend"}[5m])) >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia elevada en {{ $labels.job }}"
+          description: "La latencia p95 supera un segundo, con al menos 20 solicitudes en cinco minutos. Condición sostenida cinco minutos."

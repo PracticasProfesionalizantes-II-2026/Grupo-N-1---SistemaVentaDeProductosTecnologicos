@@ -288,6 +288,50 @@
   margin-top: auto;
 }
 
+.admin-shell .catalogo__producto-acciones,
+.admin-shell .producto-edicion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-shell .catalogo__producto-acciones {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.admin-shell .catalogo__producto-acciones form,
+.admin-shell .catalogo__producto-acciones .btn {
+  margin: 0;
+}
+
+.admin-shell .producto-edicion__acciones {
+  margin-top: 1.5rem;
+}
+
+.admin-shell .producto-edicion__imagen {
+  margin-top: 1.5rem;
+  min-width: 0;
+}
+
+.admin-shell .producto-edicion__imagen label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
+.admin-shell .producto-edicion__preview {
+  width: min(100%, 20rem);
+  height: 14rem;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background: #eef3f9;
+}
+
 .admin-shell .pagination {
   flex-wrap: wrap;
 }
@@ -332,5 +376,59 @@
 
   .admin-shell .catalogo__acciones .btn {
     flex: 1;
+  }
+}
+
+
+.admin-shell .usuarios-list .usuarios-table {
+  min-width: 0;
+  width: 100%;
+}
+.admin-shell .usuarios-list .usuarios-table th,
+.admin-shell .usuarios-list .usuarios-table td {
+  padding: 0.8rem 0.6rem;
+}
+.admin-shell .usuarios-list .usuarios-table td,
+.admin-shell .usuarios-list .usuarios-table th {
+  white-space: normal;
+}
+.admin-shell .usuarios-contacto {
+  max-width: 16rem;
+  overflow-wrap: anywhere;
+}
+.admin-shell .usuarios-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.admin-shell .usuarios-acciones .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  .admin-shell .usuarios-list .usuarios-table,
+  .admin-shell .usuarios-list .usuarios-table tbody,
+  .admin-shell .usuarios-list .usuarios-table tr,
+  .admin-shell .usuarios-list .usuarios-table td {
+    display: block;
+    width: 100%;
+    max-width: none;
+  }
+  .admin-shell .usuarios-list .usuarios-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .admin-shell .usuarios-list .usuarios-table tr + tr {
+    border-top: 2px solid var(--admin-border);
+  }
+  .admin-shell .usuarios-list .usuarios-table td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--admin-blue-deep);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
   }
 }

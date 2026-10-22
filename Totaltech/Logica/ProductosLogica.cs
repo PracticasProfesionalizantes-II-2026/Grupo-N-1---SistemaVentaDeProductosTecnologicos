@@ -1,9 +1,18 @@
+using Microsoft.EntityFrameworkCore;
 using Totaltech.Entidades;
 using Totaltech.Repositorios;
 using Totaltech.Logica.DTOs;
+using Totaltech.Validaciones;
 
 namespace Totaltech.Logica
 {
+    public enum ResultadoActualizacionStock
+    {
+        Actualizado,
+        NoEncontrado,
+        Conflicto
+    }
+
     public interface IProductosLogica
     {
         Task<List<Producto>> ObtenerTodosAsync();
@@ -14,7 +23,7 @@ namespace Totaltech.Logica
         Task<List<Producto>> BuscarAsync(string? texto);
         Task<List<Producto>> ObtenerPorCategoriaAsync(int idCategoria);
         Task<List<Producto>> ObtenerDisponiblesAsync();
-        Task<bool> ActualizarStockAsync(int id, int stock);
+        Task<ResultadoActualizacionStock> ActualizarStockAsync(int id, int stock, int stockOriginal);
         Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(
             FiltroCatalogoProductos filtro,
             CancellationToken cancellationToken = default);
@@ -97,17 +106,29 @@ namespace Totaltech.Logica
             return _repositorio.ObtenerDisponiblesAsync();
         }
 
-        public async Task<bool> ActualizarStockAsync(int id, int stock)
+        public async Task<ResultadoActualizacionStock> ActualizarStockAsync(int id, int stock, int stockOriginal)
         {
             var producto = await _repositorio.ObtenerPorIdAsync(id);
             if (producto is null)
             {
-                return false;
+                return ResultadoActualizacionStock.NoEncontrado;
+            }
+
+            if (producto.Stock != stockOriginal)
+            {
+                return ResultadoActualizacionStock.Conflicto;
             }
 
             producto.Stock = stock;
-            await _repositorio.ActualizarAsync(producto);
-            return true;
+            try
+            {
+                await _repositorio.ActualizarAsync(producto);
+                return ResultadoActualizacionStock.Actualizado;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return ResultadoActualizacionStock.Conflicto;
+            }
         }
 
         public async Task<(CatalogoProductosResponse? Catalogo, string? Error)> ObtenerCatalogoAsync(
@@ -135,6 +156,11 @@ namespace Totaltech.Logica
             if (producto.Precio < 0 || producto.Stock < 0)
             {
                 return "El precio y el stock no pueden ser negativos.";
+            }
+
+            if (!ProductoImagenUrl.EsValida(producto.ImagenUrl))
+            {
+                return "La imagen debe ser una ruta local permitida de hasta 500 caracteres (JPG, PNG o WebP).";
             }
 
             if (!await _categoriasRepositorio.ExisteAsync(producto.IdCategoria))

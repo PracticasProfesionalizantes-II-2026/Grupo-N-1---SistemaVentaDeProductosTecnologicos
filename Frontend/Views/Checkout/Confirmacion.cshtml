@@ -1,1 +1,21 @@
-@* Estructura reservada. Implementación pendiente. *@
+@model Frontend.Models.ViewModels.Checkout.ConfirmacionCompraViewModel
+@{ ViewData["Title"] = "Confirmación demo"; }
+<link rel="stylesheet" href="~/css/pages/checkout.css" asp-append-version="true" />
+<section class="compra-demo container" data-demo-page="confirmacion" data-user-id="@Model.IdUsuario" data-order-id="@Model.IdPedido"
+         data-detalle-url="@Url.Action("Detalle", "Pedidos", new { id = "__id__" })">
+    <partial name="_CompraDemoAviso" />
+    <h1>Resultado de tu simulación</h1>
+    <p data-demo-feedback role="status" aria-live="polite" tabindex="-1">Buscando el pedido en este navegador…</p>
+    <div data-demo-content hidden class="compra-demo__panel compra-demo__confirmacion">
+        <svg class="compra-demo__check" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" /><path d="m18 32 9 9 19-20" /></svg>
+        <h2>¡Compra ficticia aprobada!</h2>
+        <p>El pedido demo se guardó en este navegador. Tu carrito conserva todos sus productos.</p>
+        <div data-demo-resumen></div>
+        <a data-demo-detail class="btn btn-primary">Ver seguimiento demo</a>
+    </div>
+    <noscript><p class="alert alert-warning">Activá JavaScript para consultar tus pedidos ficticios.</p></noscript>
+    <div class="compra-demo__acciones"><a asp-controller="Pedidos" asp-action="Index">Mis pedidos demo</a><a asp-action="Index" asp-route-nuevo="true">Nueva simulación</a><a asp-controller="Carrito" asp-action="Index">Volver al carrito</a></div>
+</section>
+@section Scripts {
+    <script type="module" src="~/js/pages/pedidos-demo.js" asp-append-version="true"></script>
+}

@@ -239,6 +239,24 @@ body.admin-menu-lock {
   color: rgb(255 255 255 / 72%);
 }
 
+.admin-logout {
+  margin: 0;
+}
+
+.admin-logout__button {
+  width: 100%;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.admin-logout__button:hover,
+.admin-logout__button:focus-visible {
+  background: var(--admin-blue-dark);
+}
+
 .admin-nav-link--disabled small {
   grid-column: 2;
   justify-self: start;

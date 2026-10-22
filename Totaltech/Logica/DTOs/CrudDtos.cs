@@ -104,8 +104,10 @@ namespace Totaltech.Logica.DTOs
     {
         public string Nombre { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
+        public string? ImagenUrl { get; set; }
         public decimal Precio { get; set; }
         public int Stock { get; set; }
+        public int? StockOriginal { get; set; }
         public int IdCategoria { get; set; }
         public int IdProveedor { get; set; }
 
@@ -113,6 +115,7 @@ namespace Totaltech.Logica.DTOs
         {
             Nombre = Nombre,
             Descripcion = Descripcion,
+            ImagenUrl = ImagenUrl,
             Precio = Precio,
             Stock = Stock,
             IdCategoria = IdCategoria,
@@ -214,8 +217,18 @@ namespace Totaltech.Logica.DTOs
         };
     }
 
+    public class UsuarioActualizacionRequest
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Apellido { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Telefono { get; set; } = string.Empty;
+        public RolUsuario Rol { get; set; }
+    }
+
     public class UsuarioResponse
     {
+        public bool Activo { get; set; }
         public int IdUsuario { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public string Apellido { get; set; } = string.Empty;
@@ -241,6 +254,7 @@ namespace Totaltech.Logica.DTOs
     public class ActualizarStockRequest
     {
         public int Stock { get; set; }
+        public int? StockOriginal { get; set; }
     }
 
     public class ActualizarEstadoPedidoRequest

@@ -14,6 +14,45 @@ env:
   INTEGRATION_TEST_PROJECT: Tests/Totaltech.IntegrationTests/Totaltech.IntegrationTests.csproj
 
 jobs:
+  prometheus-validation:
+    name: Prometheus configuration and alert tests
+    runs-on: windows-2025
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download and verify Prometheus
+        shell: pwsh
+        run: |
+          $version = '3.15.0'
+          $archive = "prometheus-$version.windows-amd64.zip"
+          $release = "https://github.com/prometheus/prometheus/releases/download/v$version"
+          $directory = Join-Path $env:RUNNER_TEMP 'totaltech-prometheus'
+          New-Item -ItemType Directory -Path $directory -Force | Out-Null
+          $archivePath = Join-Path $directory $archive
+          $checksumsPath = Join-Path $directory 'sha256sums.txt'
+          Invoke-WebRequest -Uri "$release/$archive" -OutFile $archivePath
+          Invoke-WebRequest -Uri "$release/sha256sums.txt" -OutFile $checksumsPath
+          $escapedArchive = [regex]::Escape($archive)
+          $entry = @(Get-Content -LiteralPath $checksumsPath | Where-Object { $_ -match "^[a-fA-F0-9]{64}\s+\*?$escapedArchive$" })
+          if ($entry.Count -ne 1) { throw 'No se encontró un checksum oficial único para el ZIP.' }
+          $expected = ($entry[0] -split '\s+')[0]
+          $actual = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw 'El checksum SHA256 de Prometheus no coincide.' }
+          Expand-Archive -LiteralPath $archivePath -DestinationPath $directory
+          $promtool = Join-Path $directory "prometheus-$version.windows-amd64/promtool.exe"
+          "PROMTOOL=$promtool" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Validate configuration, rules and scenarios
+        shell: pwsh
+        run: |
+          & $env:PROMTOOL check config Observabilidad/prometheus.yml
+          if ($LASTEXITCODE -ne 0) { throw 'Configuración Prometheus inválida.' }
+          & $env:PROMTOOL check rules Observabilidad/alertas.yml
+          if ($LASTEXITCODE -ne 0) { throw 'Reglas Prometheus inválidas.' }
+          & $env:PROMTOOL test rules Observabilidad/tests/alertas.test.yml
+          if ($LASTEXITCODE -ne 0) { throw 'Pruebas de alertas fallidas.' }
+
   fast-tests:
     name: Build and fast tests
     runs-on: windows-2025

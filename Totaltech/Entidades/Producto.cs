@@ -13,6 +13,9 @@ namespace Totaltech.Entidades
 
         public string Descripcion { get; set; } = string.Empty;
 
+        [MaxLength(500)]
+        public string? ImagenUrl { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal Precio { get; set; }
 

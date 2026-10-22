@@ -18,7 +18,8 @@ public sealed class SeguridadEndpointsTests
         "password",
         "passwordHash",
         "hash",
-        "salt"
+        "salt",
+        "versionSesion"
     ];
 
     [Fact]
@@ -339,6 +340,46 @@ public sealed class SeguridadEndpointsTests
         var jsonUsuario = await LeerJsonAsync(usuarioResponse);
         Assert.Equal(HttpStatusCode.OK, usuarioResponse.StatusCode);
         VerificarAusenciaDeDatosSensibles(jsonUsuario);
+    }
+
+    [Fact]
+    public async Task RespuestasConUsuarioRelacionado_NoExponenCredencialesNiVersionDeSesion()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        factory.VerificarPersistenciaAislada();
+
+        var cliente = await CrearClienteAutenticadoAsync(client, "relaciones-seguras@test.local");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", cliente.Token);
+
+        using var direccion = await client.PostAsJsonAsync("/direcciones/", CrearDireccion(cliente.IdUsuario));
+        var idDireccion = await VerificarUsuarioRelacionadoSeguroAsync(direccion, HttpStatusCode.Created, cliente.IdUsuario, "idDireccion");
+        using var direccionConsultada = await client.GetAsync($"/direcciones/{idDireccion}");
+        await VerificarUsuarioRelacionadoSeguroAsync(direccionConsultada, HttpStatusCode.OK, cliente.IdUsuario, "idDireccion");
+
+        using var carrito = await client.PostAsJsonAsync("/carritos/", new { idUsuario = cliente.IdUsuario });
+        var idCarrito = await VerificarUsuarioRelacionadoSeguroAsync(carrito, HttpStatusCode.Created, cliente.IdUsuario, "idCarrito");
+        using var carritoConsultado = await client.GetAsync($"/carritos/{idCarrito}");
+        await VerificarUsuarioRelacionadoSeguroAsync(carritoConsultado, HttpStatusCode.OK, cliente.IdUsuario, "idCarrito");
+
+        using var consulta = await client.PostAsJsonAsync("/consultas/", new
+        {
+            nombre = "Cliente",
+            email = "relaciones-seguras@test.local",
+            mensaje = "Consulta de prueba"
+        });
+        await VerificarUsuarioRelacionadoSeguroAsync(consulta, HttpStatusCode.Created, cliente.IdUsuario, "idConsulta");
+
+        var administrador = await AutenticarAsync(client, "Admin@admin.com", "Admin123456789");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", administrador.Token);
+        using var reporte = await client.PostAsJsonAsync("/reportes/", new
+        {
+            tipoReporte = (int)TipoReporte.Ventas,
+            fechaInicio = DateTime.UtcNow.Date.AddDays(-1),
+            fechaFin = DateTime.UtcNow.Date,
+            idUsuario = administrador.IdUsuario
+        });
+        await VerificarUsuarioRelacionadoSeguroAsync(reporte, HttpStatusCode.Created, administrador.IdUsuario, "idReporte");
     }
 
     [Fact]
@@ -706,6 +747,16 @@ public sealed class SeguridadEndpointsTests
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var document = await JsonDocument.ParseAsync(stream);
         return document.RootElement.Clone();
+    }
+
+    private static async Task<int> VerificarUsuarioRelacionadoSeguroAsync(
+        HttpResponseMessage response, HttpStatusCode estadoEsperado, int idUsuario, string propiedadId)
+    {
+        Assert.Equal(estadoEsperado, response.StatusCode);
+        var json = await LeerJsonAsync(response);
+        Assert.Equal(idUsuario, json.GetProperty("usuario").GetProperty("idUsuario").GetInt32());
+        VerificarAusenciaDeDatosSensibles(json);
+        return json.GetProperty(propiedadId).GetInt32();
     }
 
     private static void VerificarAusenciaDeDatosSensibles(JsonElement elemento)

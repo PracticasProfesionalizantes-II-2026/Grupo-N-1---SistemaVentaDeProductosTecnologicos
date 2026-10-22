@@ -1,1 +1,21 @@
-@* Estructura reservada. Implementación pendiente. *@
+@model Frontend.Models.ViewModels.Pedidos.PedidoDetalleViewModel
+@{ ViewData["Title"] = "Seguimiento demo"; }
+<link rel="stylesheet" href="~/css/pages/checkout.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/pages/pedidos.css" asp-append-version="true" />
+<section class="compra-demo container" data-demo-page="detalle" data-user-id="@Model.IdUsuario" data-order-id="@Model.IdPedido">
+    <partial name="_CompraDemoAviso" />
+    <h1>Seguimiento del pedido demo</h1>
+    <p data-demo-feedback role="status" aria-live="polite" tabindex="-1">Buscando el pedido en este navegador…</p>
+    <div data-demo-content hidden class="compra-demo__panel">
+        <div data-demo-resumen></div>
+        <h2>Seguimiento ficticio</h2>
+        <ol data-demo-timeline class="compra-demo__seguimiento" aria-label="Estado del pedido"></ol>
+        <button data-demo-advance type="button" class="btn btn-primary">Avanzar estado demo</button>
+        <p>El avance es manual y no representa un envío real.</p>
+    </div>
+    <noscript><p class="alert alert-warning">Activá JavaScript para consultar tus pedidos ficticios.</p></noscript>
+    <div class="compra-demo__acciones"><a asp-action="Index">Mis pedidos demo</a><a asp-controller="Carrito" asp-action="Index">Volver al carrito</a></div>
+</section>
+@section Scripts {
+    <script type="module" src="~/js/pages/pedidos-demo.js" asp-append-version="true"></script>
+}

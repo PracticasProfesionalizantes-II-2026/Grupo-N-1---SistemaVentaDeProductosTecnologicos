@@ -25,12 +25,12 @@ public class CategoriasApiService
         return _httpClientFactory.CreateClient("TotaltechApi");
     }
 
-    public async Task<List<CategoriaResponse>> ObtenerTodosAsync()
+    public async Task<List<CategoriaResponse>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
     {
         var cliente = CrearCliente();
 
         var categorias = await cliente.GetFromJsonAsync<List<CategoriaResponse>>(
-            "/categorias/");
+            "/categorias/", cancellationToken);
 
         return categorias ?? new List<CategoriaResponse>();
     }

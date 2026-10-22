@@ -26,7 +26,25 @@ public sealed class ProductoImagenResolver
             [Normalizar("Teclado Logitech G213")] = "/images/categorias/Perisfericos/Teclados/3compragamer_Imganen_general_12000_Teclado_Logitech_G21.jpg",
             [Normalizar("Teclado mecánico Redragon")] = "/images/categorias/Perisfericos/Teclados/4compragamer_Imganen_general_43025_Teclado_Mecanico_Red.jpg",
             [Normalizar("Teclado mecánico Razer")] = "/images/categorias/Perisfericos/Teclados/5compragamer_Imganen_general_47210_Teclado_Mecanico_Raz.jpg",
-            [Normalizar("Teclado mecánico ASUS")] = "/images/categorias/Perisfericos/Teclados/6compragamer_Imganen_general_48522_Teclado_Mecanico_ASU.jpg"
+            [Normalizar("Teclado mecánico ASUS")] = "/images/categorias/Perisfericos/Teclados/6compragamer_Imganen_general_48522_Teclado_Mecanico_ASU.jpg",
+            [Normalizar("Celular Honor Magic 7 Lite 5G 12 GB 512 GB Titanium Black")] = "/images/categorias/Celulares/Celular Honor Magic 7 Lite 5G 12gb 512gb Titanium Black.png",
+            [Normalizar("Celular iPhone 16 128 GB Black")] = "/images/categorias/Celulares/Celular Iphone 16 128gb Black.png",
+            [Normalizar("Celular Samsung A57 5G")] = "/images/categorias/Celulares/Celular Samsung A57 5G.png",
+            [Normalizar("Celular Samsung S26 Ultra 12 GB 256 GB Cobalt Violet")] = "/images/categorias/Celulares/Celular Samsung S26 Ultra 12gb 256gb Cobalt Violet.png",
+            [Normalizar("Celular Xiaomi 17 12 GB 512 GB Black")] = "/images/categorias/Celulares/Celular Xiaomi 17 12gb 512gb Black.png",
+            [Normalizar("Celular Xiaomi Redmi Note 14 Pro 8 GB 256 GB Midnight Black con cargador")] = "/images/categorias/Celulares/Celular Xiaomi Redmi Note 14 Pro 8gb 256gb Midnight Black con cargador.png",
+            [Normalizar("SSD Kingston NV3 1 TB (SNV3S/1000G)")] = "/images/categorias/Almacenamiento/snv3s-1000g.png",
+            [Normalizar("SSD Samsung 870 EVO 500 GB (MZ-77E500B)")] = "/images/categorias/Almacenamiento/mz-77e500b.png",
+            [Normalizar("Disco rígido Western Digital Blue 1 TB (WD10EZEX)")] = "/images/categorias/Almacenamiento/wd10ezex.png",
+            [Normalizar("Disco externo Seagate Expansion Portable 2 TB (STKM2000400)")] = "/images/categorias/Almacenamiento/stkm2000400.png",
+            [Normalizar("Pendrive SanDisk Ultra Flair 128 GB (SDCZ73-128G-G46)")] = "/images/categorias/Almacenamiento/sdcz73-128g-g46.png",
+            [Normalizar("SanDisk Ultra microSDXC 128 GB (SDSQUAB-128G-GN6MA)")] = "/images/categorias/Almacenamiento/sdsquab-128g-gn6ma.png",
+            [Normalizar("MSI GeForce RTX 4060 VENTUS 2X BLACK OC")] = "/images/categorias/Placas de Video/msi-geforce-rtx-4060-ventus-2x-black-oc.png",
+            [Normalizar("Gigabyte GeForce RTX 5060 Ti WINDFORCE OC")] = "/images/categorias/Placas de Video/gigabyte-geforce-rtx-5060-ti-windforce-oc.png",
+            [Normalizar("ASUS PRIME GeForce RTX 5070")] = "/images/categorias/Placas de Video/asus-prime-geforce-rtx-5070.png",
+            [Normalizar("XFX Speedster SWFT 210 Radeon RX 7600 Core Edition")] = "/images/categorias/Placas de Video/xfx-speedster-swft-210-radeon-rx-7600-core-edition.png",
+            [Normalizar("Sapphire PULSE Radeon RX 9060 XT OC")] = "/images/categorias/Placas de Video/sapphire-pulse-radeon-rx-9060-xt-oc.png",
+            [Normalizar("Intel Arc B580 Limited Edition")] = "/images/categorias/Placas de Video/intel-arc-b580-limited-edition.png"
         };
 
     public string? Resolver(string nombre)

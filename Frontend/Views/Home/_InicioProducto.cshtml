@@ -1,0 +1,23 @@
+@model Frontend.Models.Api.Responses.ProductoResponse
+<article class="inicio-producto" data-producto-id="@Model.IdProducto">
+    <div class="inicio-producto__foto">
+        @if (!string.IsNullOrWhiteSpace(Model.ImagenUrl))
+        {
+            <img src="@Model.ImagenUrl" alt="@Model.Nombre" loading="lazy" decoding="async" width="400" height="300" />
+        }
+        else
+        {
+            <div class="inicio-producto__sin-imagen" role="img" aria-label="@Model.Nombre: imagen no disponible">
+                <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="10" width="34" height="24" rx="3" /><path d="M16 40h16M24 34v6M14 18h20M14 25h12" /></svg>
+                <span>Imagen no disponible</span>
+            </div>
+        }
+    </div>
+    <div class="inicio-producto__cuerpo">
+        <span class="inicio-producto__disponibilidad @(Model.Stock > 0 ? null : "inicio-producto__disponibilidad--agotado")">@(Model.Stock > 0 ? "Disponible" : "Sin stock")</span>
+        <h3>@Model.Nombre</h3>
+        <p class="inicio-producto__descripcion">@Model.Descripcion</p>
+        <p class="inicio-producto__precio">$ @Model.Precio.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("es-AR"))</p>
+        <a asp-controller="Productos" asp-action="Detalle" asp-route-id="@Model.IdProducto" class="btn inicio-producto__boton">Ver producto <span aria-hidden="true">→</span></a>
+    </div>
+</article>

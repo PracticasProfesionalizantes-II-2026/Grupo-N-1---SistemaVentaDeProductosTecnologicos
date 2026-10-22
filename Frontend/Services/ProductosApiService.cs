@@ -47,8 +47,10 @@ public class ProductosApiService
 		string descripcion,
 		decimal precio,
 		int stock,
+		int stockOriginal,
 		int idCategoria,
-		int idProveedor)
+		int idProveedor,
+		string? imagenUrl = null)
 	{
 		return CrearCliente().PutAsJsonAsync($"/productos/{id}", new
 		{
@@ -56,8 +58,10 @@ public class ProductosApiService
 			descripcion,
 			precio,
 			stock,
+			stockOriginal,
 			idCategoria,
-			idProveedor
+			idProveedor,
+			imagenUrl
 		});
 	}
 
@@ -66,12 +70,12 @@ public class ProductosApiService
 		return CrearCliente().DeleteAsync($"/productos/{id}");
 	}
 
-	public async Task<List<ProductoResponse>> ObtenerTodosAsync()
+	public async Task<List<ProductoResponse>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
 	{
 		var cliente = CrearCliente();
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
-			"/productos/");
+			"/productos/", cancellationToken);
 
 		return AplicarImagenes(productos);
 	}
@@ -167,7 +171,7 @@ public class ProductosApiService
 
 	private ProductoResponse? AplicarImagen(ProductoResponse? producto)
 	{
-		if (producto is not null)
+		if (producto is not null && string.IsNullOrWhiteSpace(producto.ImagenUrl))
 		{
 			producto.ImagenUrl = _imagenResolver.Resolver(producto.Nombre);
 		}

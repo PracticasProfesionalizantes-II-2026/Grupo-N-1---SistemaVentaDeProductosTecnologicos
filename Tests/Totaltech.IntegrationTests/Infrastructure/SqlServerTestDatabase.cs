@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Totaltech.Datos;
 
 namespace Totaltech.IntegrationTests.Infrastructure;
@@ -41,7 +42,7 @@ public sealed class SqlServerTestDatabase : IAsyncLifetime
         await context.Database.EnsureDeletedAsync();
     }
 
-    public TotaltechDbContext CreateContext()
+    public TotaltechDbContext CreateContext(params IInterceptor[] interceptors)
     {
         ValidateConnectionString(ConnectionString);
 
@@ -49,6 +50,7 @@ public sealed class SqlServerTestDatabase : IAsyncLifetime
             .UseSqlServer(
                 ConnectionString,
                 sqlServerOptions => sqlServerOptions.EnableRetryOnFailure())
+            .AddInterceptors(interceptors)
             .Options;
 
         return new TotaltechDbContext(options);

@@ -1,1 +1,45 @@
-/* Estructura reservada. Implementación pendiente. */
+.compra-demo { max-width: 1080px; padding-top: 2rem; padding-bottom: 3rem; color: #17233b; overflow-wrap: anywhere; }
+.compra-demo [hidden] { display: none !important; }
+.compra-demo h1 { font-weight: 750; margin: 1.5rem 0 .5rem; }
+.compra-demo h2 { font-size: 1.3rem; margin-bottom: 1rem; }
+.compra-demo h3 { font-size: 1.1rem; }
+.compra-demo__intro { color: #475569; }
+.compra-demo__aviso { padding: 1rem 1.25rem; border: 1px solid #bfdbfe; border-radius: 1rem; background: #eff6ff; color: #174ea6; }
+.compra-demo__aviso p { margin: .5rem 0 0; }
+.compra-demo__etiqueta { display: inline-block; padding: .2rem .7rem; border-radius: 999px; background: #174ea6; color: white; font-size: .85rem; font-weight: 650; }
+.compra-demo__pasos { display: flex; flex-wrap: wrap; gap: .75rem; list-style: none; padding: 0; margin: 1.5rem 0; }
+.compra-demo__pasos li { padding: .6rem 1rem; background: #f1f5f9; border-radius: .6rem; }
+.compra-demo__pasos [aria-current] { background: #174ea6; color: white; }
+.compra-demo__grilla { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.5rem; align-items: start; }
+.compra-demo__panel { min-width: 0; padding: 1.5rem; background: #fff; border: 1px solid #dbe5f5; border-radius: 1rem; box-shadow: 0 6px 24px rgb(23 35 59 / 5%); animation: demo-entrada .3s ease-out; }
+.compra-demo__linea { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .35rem .75rem; padding: .9rem 0; border-bottom: 1px solid #e2e8f0; }
+.compra-demo__linea strong { grid-column: 1 / -1; }
+.compra-demo__linea span { color: #475569; }
+.compra-demo__total { display: block; font-weight: 750; font-size: 1.25rem; margin-top: 1rem; }
+.compra-demo__tarjeta { display: flex; flex-direction: column; gap: .75rem; padding: 1.25rem; margin-bottom: 1.5rem; border-radius: .9rem; background: linear-gradient(135deg, #145fda, #174ea6); color: #fff; }
+.compra-demo__tarjeta strong { font-size: 1.2rem; letter-spacing: .08em; }
+.compra-demo label { display: block; margin-bottom: .5rem; font-weight: 600; }
+.compra-demo__comprar { width: 100%; margin-top: 1rem; min-height: 44px; }
+.compra-demo__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.compra-demo__acciones a { min-height: 44px; display: inline-flex; align-items: center; }
+.compra-demo__procesamiento { display: flex; align-items: center; gap: .75rem; padding-top: 1rem; }
+.compra-demo__spinner { width: 22px; height: 22px; flex-shrink: 0; border: 3px solid #bfdbfe; border-top-color: #174ea6; border-radius: 50%; animation: demo-giro .8s linear infinite; }
+.compra-demo__error { padding: .8rem; margin-top: 1rem; border-radius: .5rem; background: #fff1f2; color: #9f1239; }
+.compra-demo__mensaje:not(:empty) { padding: .8rem; margin-top: 1rem; border-radius: .5rem; background: #f0fdf4; color: #166534; }
+.compra-demo__check { display: block; width: 80px; height: 80px; margin: 0 auto 1rem; fill: #f0fdf4; stroke: #15803d; stroke-width: 4; }
+.compra-demo__check path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 50; animation: demo-check .5s ease-out; }
+.compra-demo__confirmacion > h2 { text-align: center; }
+.compra-demo :focus-visible { outline: 3px solid #174ea6; outline-offset: 3px; }
+@keyframes demo-giro { to { transform: rotate(360deg); } }
+@keyframes demo-entrada { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes demo-check { from { stroke-dashoffset: 50; } to { stroke-dashoffset: 0; } }
+@media (max-width: 767px) {
+    .compra-demo__grilla { grid-template-columns: 1fr; }
+    .compra-demo__panel { padding: 1rem; }
+    .compra-demo__pasos { gap: .4rem; font-size: .85rem; }
+    .compra-demo__pasos li { padding: .5rem .65rem; }
+    .compra-demo__tarjeta strong { font-size: 1rem; letter-spacing: .03em; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .compra-demo *, .compra-demo *::before, .compra-demo *::after { animation: none !important; transition: none !important; }
+}

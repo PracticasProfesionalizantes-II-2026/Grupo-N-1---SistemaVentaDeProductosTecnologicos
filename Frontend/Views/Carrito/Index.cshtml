@@ -1,4 +1,5 @@
 @model Frontend.Models.ViewModels.Carrito.CarritoViewModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{ ViewData["Title"] = "Carrito"; }
 <main class="container py-4 carrito">
     <h1>Mi carrito</h1>
@@ -31,5 +32,12 @@
         }
         </div>
         <section class="carrito__total" aria-label="Resumen de compra"><span>@Model.CantidadTotal unidad(es)</span><strong>Total: $ @Model.Total.ToString("N2")</strong></section>
+        @if (Configuration.GetValue<bool>("CompraDemo:Enabled"))
+        {
+            <div class="mt-3 carrito__checkout">
+                <a asp-controller="Checkout" asp-action="Index" asp-route-nuevo="true" class="btn btn-primary">Simular compra <span aria-hidden="true">→</span></a>
+                <p class="mt-2">Compra ficticia: no se realizará ningún cobro ni se modificará tu carrito.</p>
+            </div>
+        }
     }
 </main>
