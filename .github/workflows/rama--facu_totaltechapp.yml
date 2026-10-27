@@ -24,7 +24,7 @@ jobs:
           dotnet-version: '10.x'
 
       - name: Build with dotnet
-        run: dotnet build ./Totaltech/Totaltech.csproj --configuration Releasee
+        run: dotnet build ./Totaltech/Totaltech.csproj --configuration Release
 
       - name: dotnet publish
         run: dotnet publish ./Totaltech/Totaltech.csproj -c Release -o ./publish/api
