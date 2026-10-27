@@ -57,6 +57,8 @@ Credenciales.txt
 *.sqlite3
 
 # Logs, cachés y archivos temporales
+**/__pycache__/
+*.pyc
 **/logs/
 *.log
 *.tmp

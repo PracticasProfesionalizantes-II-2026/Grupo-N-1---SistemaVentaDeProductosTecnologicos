@@ -1,0 +1,265 @@
+{
+  "uid": "totaltech-local",
+  "title": "TotalTech | Estado y Diagnóstico",
+  "schemaVersion": 40,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Estado API",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "up{job=\"totaltech_api\"}",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 2,
+      "title": "Estado Frontend",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "up{job=\"totaltech_frontend\"}",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 3,
+      "title": "Estado SQL",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "totaltech_dependency_up{job=\"totaltech_api\",dependency=\"sqlserver\"}",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 4,
+      "title": "Errores HTTP 5xx (%)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by(job)(rate(totaltech_http_requests_total{code=~\"5..\"}[5m])) / clamp_min(sum by(job)(rate(totaltech_http_requests_total[5m])), 0.000001)",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 5,
+      "title": "Latencia p95 por ruta (s)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by(job,route,le)(rate(totaltech_http_request_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 6,
+      "title": "Top rutas con 5xx / segundo",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "topk(5, sum by(job,route)(rate(totaltech_http_requests_total{code=~\"5..\"}[5m])))",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 7,
+      "title": "Latencia p95 EF Core (s)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by(le)(rate(totaltech_db_command_duration_seconds_bucket{job=\"totaltech_api\"}[5m])))",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 8,
+      "title": "Fallos SQL / 5 minutos",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "totaltech-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(totaltech_db_commands_total{job=\"totaltech_api\",result=\"error\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "{{job}} {{route}}",
+          "range": true
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {}
+    }
+  ],
+  "tags": [
+    "totaltech",
+    "prometheus",
+    "observabilidad"
+  ]
+}

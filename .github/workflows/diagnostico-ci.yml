@@ -1,0 +1,18 @@
+name: TotalTech diagnostic agent
+on:
+  push:
+    branches: [main, Develop, Rama--Facu]
+  pull_request:
+    branches: [main, Develop]
+permissions:
+  contents: read
+jobs:
+  diagnostic-tests:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test diagnostic agent without application or SQL
+        run: python -m unittest discover -s Observabilidad/AgenteDiagnostico -p test_*.py -v

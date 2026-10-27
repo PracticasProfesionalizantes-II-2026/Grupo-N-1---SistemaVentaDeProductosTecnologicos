@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: TotalTech
+    orgId: 1
+    folder: TotalTech
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: $TOTALTECH_GRAFANA_DASHBOARDS_PATH

@@ -27,6 +27,17 @@ Abrir [Prometheus](http://127.0.0.1:9090), comprobar ambos servicios en [Targets
 
 La [guía de observabilidad](Documentacion/Observabilidad.md) incluye instalación, configuración, seguridad, consultas y diagnóstico. `/metrics` está habilitado en Development y restringido a loopback.
 
+El [dashboard de Grafana y agente de diagnóstico](Documentacion/Agente-Diagnostico-Observabilidad.md)
+incluye ocho paneles, provisioning y un monitor Python sin dependencias de pago:
+
+```powershell
+.\Observabilidad\iniciar-grafana.ps1
+python .\Observabilidad\AgenteDiagnostico\diagnostico.py --watch --interval 30
+```
+
+Si Grafana ya ocupa el puerto 3000, importar el JSON en esa instancia según la guía
+o usar `iniciar-grafana.ps1 -Port 3001` con estado independiente.
+
 ## Conexión SQL Server en Development
 
 Los comandos manuales de esta seccion son una alternativa al gestor. Antes de usarlos, ejecutar `totaltech.ps1 detener`; no mezclar los dos modos de inicio.
