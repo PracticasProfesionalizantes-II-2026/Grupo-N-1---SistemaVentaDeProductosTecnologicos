@@ -1,0 +1,65 @@
+{
+  "tipo": "hipotesis_de_diagnostico_no_confirmada",
+  "fecha_utc": "2026-10-23T20:46:13.003580+00:00",
+  "alerta": "TotaltechLatenciaElevada",
+  "job": "totaltech_api",
+  "estado": "firing",
+  "inicio_alerta_utc": "2026-10-23T20:00:00Z",
+  "confianza": "baja",
+  "ruta_candidata": "/productos/catalogo",
+  "evidencia_prometheus": {
+    "errores_por_ruta": [
+      {
+        "labels": {
+          "route": "/productos/catalogo"
+        },
+        "valor": 0.082
+      }
+    ],
+    "p95_por_ruta": [
+      {
+        "labels": {
+          "route": "/productos/catalogo"
+        },
+        "valor": 2.4
+      }
+    ],
+    "p95_sql_segundos": [
+      {
+        "labels": {},
+        "valor": 0.12
+      }
+    ],
+    "fallos_sql_5m": [
+      {
+        "labels": {},
+        "valor": 2.0
+      }
+    ]
+  },
+  "consultas_promql": {
+    "errores_por_ruta": "topk(5, sum by (route) (rate(totaltech_http_requests_total{job=\"totaltech_api\",code=~\"5..\"}[5m])) > 0)",
+    "p95_por_ruta": "topk(5, histogram_quantile(0.95, sum by (route,le) (rate(totaltech_http_request_duration_seconds_bucket{job=\"totaltech_api\"}[5m]))) > 0)",
+    "p95_sql_segundos": "histogram_quantile(0.95, sum by (le) (rate(totaltech_db_command_duration_seconds_bucket{job=\"totaltech_api\"}[5m])))",
+    "fallos_sql_5m": "sum(increase(totaltech_db_commands_total{job=\"totaltech_api\",result=\"error\"}[5m]))"
+  },
+  "errores_consulta": {},
+  "indicadores_logs": {
+    "archivos_inspeccionados": 0,
+    "indicadores": {
+      "sql_exception": 0,
+      "timeout": 0,
+      "ef_core": 0,
+      "http_exception": 0
+    },
+    "limitacion": "Directorio de logs inexistente"
+  },
+  "conclusion": "Investigar primero /productos/catalogo; correlación temporal y SQL por verificar.",
+  "limitaciones": [
+    "Las series SQL agregadas no identifican la consulta LINQ, ni demuestran que causó esta alerta.",
+    "La prioridad por ruta refleja un agregado estadístico, no causalidad.",
+    "La identificación precisa requiere logs estructurados con trace_id y operation_id, sin datos sensibles."
+  ],
+  "acciones_automaticas": "Ninguna: sólo lectura y generación de informe local",
+  "origen": "EJEMPLO SIMULADO. No son mediciones de TotalTech."
+}

@@ -1,6 +1,6 @@
 # Observabilidad local de TotalTech
 
-Actualización: 09/10/2026. UC-46 queda parcialmente cubierto con métricas y alertas visibles en Prometheus. Grafana, Docker, trazas distribuidas, Alertmanager, notificaciones externas y despliegue en producción quedan fuera de esta entrega. No requiere migraciones.
+Actualización: 23/10/2026. UC-46 queda parcialmente cubierto con métricas y alertas visibles en Prometheus. La [extensión de Grafana y agente de diagnóstico](Agente-Diagnostico-Observabilidad.md) agrega dashboard, provisioning e informes locales. Docker, trazas distribuidas, Alertmanager, notificaciones externas y despliegue en producción quedan pendientes. No requiere migraciones de SQL Server.
 
 ## Arranque en Windows
 
