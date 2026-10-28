@@ -7,6 +7,10 @@ on:
   push:
     branches:
       - 'Rama--Facu'
+    paths:
+      - 'Totaltech/**'
+      - 'Observabilidad/Instrumentacion/**'
+      - 'global.json'
   workflow_dispatch:
 
 jobs:

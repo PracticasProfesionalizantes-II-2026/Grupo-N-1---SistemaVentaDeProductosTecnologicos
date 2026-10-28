@@ -1,4 +1,5 @@
--- Preparado para revisión. Requiere autorización específica y respaldo previo.
+-- Aplicado con autorización el 28/10/2026 a las 18:26:27 UTC.
+-- Revalidar autorización específica, destino y respaldo antes de una nueva ejecución.
 -- Replica solo GestionAdministrativaUsuarios; no ejecuta migraciones ni altera su historial.
 SET NOCOUNT ON;
 SET XACT_ABORT ON;

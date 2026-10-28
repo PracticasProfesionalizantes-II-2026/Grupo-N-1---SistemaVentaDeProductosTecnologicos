@@ -1,6 +1,14 @@
 # TotalTech en Azure: despliegue full stack
 
-Fecha de trabajo: 28/10/2026, America/Buenos_Aires. Rama: Rama--Facu. Base de los cambios: 4bb94b4. Estado de esta revisión: **PARCIALMENTE**, hasta completar publicación, OIDC y pruebas públicas.
+Fecha de trabajo: 28/10/2026, America/Buenos_Aires. Rama: Rama--Facu. Base de los cambios: 4bb94b4; implementación publicada en b98d9d8. **El flujo MVC → API → SQL está operativo y probado. El alcance integral sigue PARCIALMENTE completado por las diferencias conocidas de Pedidos y las funciones deshabilitadas/no verificadas.**
+
+## Resultado ejecutivo
+
+- Frontend público HTTPS operativo, con 6 categorías y los 11 productos originales. Home, catálogo, detalle, contacto, garantía, login, registro, CSS y JavaScript devolvieron HTTP 200.
+- Registro, duplicado, login válido/inválido, logout, roles, CSRF e invalidación por baja: PASS con datos dedicados autorizados.
+- Sesiones de cliente y administrador, producto, carrito y dos imágenes: conservados tras reinicio y redeploy del mismo paquete frontend.
+- Pipeline frontend completo con OIDC: PASS en [ejecución 40746660793](https://github.com/PracticasProfesionalizantes-II-2026/Grupo-N-1---SistemaVentaDeProductosTecnologicos/actions/runs/40746660793), SHA b98d9d869edc9bc1b7adc8e545733e3d5043f997. Todos los gates, publish, login, deploy y smoke terminaron correctamente.
+- Lote TT-AZURE-20261028 limpiado: producto 12, carrito 11 y dos imágenes eliminados; cliente 15 inactivo y su auditoría conservada. Los productos comerciales coinciden exactamente con el JSON público inicial; pedidos y pagos conservaron sus conteos.
 
 ## Arquitectura e inventario
 
@@ -70,9 +78,13 @@ Gates: build y pruebas rápidas, SQL en bases LocalDB desechables y navegador co
 
 Issuer: https://token.actions.githubusercontent.com; audience: api://AzureADTokenExchange; subject: repo:PracticasProfesionalizantes-II-2026/Grupo-N-1---SistemaVentaDeProductosTecnologicos:ref:refs/heads/Rama--Facu. Se reutilizan las referencias de configuración de identidad existentes. No se usan publish profiles ni contraseñas de publicación.
 
-El workflow backend queda sin cambios y conserva despliegue automático. El smoke test comprueba API, HTML MVC con un producto real, CSS y cantidades; HTTP 200 de una página vacía no es suficiente.
+El workflow backend conserva destino, OIDC, build y deploy. Se agregó un filtro de rutas Totaltech/**, Observabilidad/Instrumentacion/** y global.json para respetar la instrucción posterior de no redesplegar la API por un cambio de frontend/documentación. Conserva workflow_dispatch. El smoke test comprueba API, HTML MVC con un producto real, CSS y cantidades; HTTP 200 de una página vacía no es suficiente.
 
-Estado GitHub previo: deploy backend exitoso en 4bb94b4; CI .NET falló en fast-tests porque incluía tests que necesitaban Chromium. El job de diagnóstico también falló: su reloj produjo nombres de informe iguales en dos incidentes consecutivos (test_recuperacion_y_nuevo_incidente, 1 archivo en vez de 2). Sus 13 tests pasaron localmente en Python 3.14; esto no acredita que la ejecución histórica de CI haya pasado. No se deshabilitó ni se modificó ese agente.
+Estado GitHub previo: deploy backend exitoso en 4bb94b4; CI .NET falló en fast-tests porque incluía tests que necesitaban Chromium. El job de diagnóstico también falló: su reloj produjo nombres de informe iguales en dos incidentes consecutivos (test_recuperacion_y_nuevo_incidente, 1 archivo en vez de 2). Sus 13 tests pasaron localmente en Python 3.14 y la ejecución posterior de diagnóstico en b98d9d8 pasó. La colisión de timestamps sigue como riesgo intermitente; no se deshabilitó ni se modificó ese agente.
+
+Durante el trabajo apareció el commit b98d9d8 publicado externamente, que incorporó los 24 archivos preparados. Su pipeline backend se ejecutó automáticamente el 28/10 a partir de 18:36 UTC y terminó exitosamente; no se inició ese deploy manualmente. La instrucción controlada posterior del lote prohíbe repetirlo, por lo que las operaciones del lote se limitaron al frontend y el filtro de rutas evita repetirlo con el próximo push.
+
+Despliegue manual inicial: f119555fea9945e499be3190cde8c593. Redeploy del mismo ZIP: 540ccc640dea4ba89b526d637cd5af34. SHA256 del ZIP validado: A2E9FC4B95712D9A4C524F3152300E944404F45271E1CCD1306D9A62AD454E51. El redeploy conservó el artefacto y no incorporó cambios de aplicación.
 
 ## Azure SQL
 
@@ -94,15 +106,17 @@ Compras de demostración permanecen deshabilitadas. Administración puede mostra
 | Publish exclusivamente MVC | PASS | DLL y web.config inspeccionados |
 | Unitarias | PASS | 21 |
 | Integración rápida | PASS | 193, incluyendo Production y uploads |
-| SQL Server aislado | PASS | 29 existentes + prueba de reparación/idempotencia |
+| SQL Server aislado | PASS | 30, incluyendo reparación/idempotencia |
 | Agente Python local | PASS | 13 en Python 3.14; CI histórico falló |
 | Workflow YAML/expresiones | PASS | actionlint 1.7.12, checksum oficial verificado |
-| E2E navegador | En validación | Corridas iniciales detectaron capturas compartidas y timeouts; no se omiten pruebas |
+| E2E navegador | PASS | 41 en la corrida completa aislada; también PASS en GitHub. Corridas iniciales fallaron y se corrigió aislamiento, sin omitir pruebas |
 | Production local → API Azure → SQL | PASS | Home, catálogo y CSS 200; producto real de API en HTML |
-| Frontend público / OIDC del nuevo pipeline | Pendiente | Requiere publicación Git autorizada y ejecución |
-| Registro/login/logout Azure | Pendiente | Requiere datos dedicados autorizados |
-| Rol administrador Azure | Pendiente | Requiere credenciales privadas del administrador existente |
-| Persistencia upload/sesión tras reinicio y redeploy | Pendiente | Debe verificarse en App Service |
+| Frontend público / OIDC del nuevo pipeline | PASS | Ejecución 40746660793, b98d9d8; smoke con datos reales |
+| Registro/login/logout Azure | PASS | Cliente dedicado 15; contraseña solo en memoria |
+| Rol administrador Azure | PASS | Cuenta existente ingresada por el usuario; producto/imagen y baja del cliente dedicado desde MVC |
+| Persistencia upload/sesión tras reinicio y redeploy | PASS | Cliente y administrador, producto 12, carrito 11, dos PNG accesibles |
+| CSRF / autorización / revocación | PASS | Logout sin token 400; cliente sin admin; tras baja cookie redirige, JWT 401 y login 403 |
+| Limpieza e integridad del lote | PASS | Ver Pruebas-Azure-DatosDedicados.md; productos comerciales idénticos |
 | CompraDemo/pagos productivos | N/A para demo | Deshabilitados; pruebas completas solo en LocalDB aislado |
 
 Registrar cada resultado nuevo con hora, SHA, URL de Actions y limitaciones. Los TRX y capturas están en Tests/*/TestResults, ignorados por Git.
@@ -126,8 +140,8 @@ Rollback: conservar el último paquete frontend verificado y redeployarlo con la
 
 ## Pendientes priorizados
 
-P0: verificar frontend público y pipeline sobre el SHA autorizado.
+P0 completado en b98d9d8: frontend público y pipeline sobre SHA identificado. Los cambios documentales/operativos posteriores se registran con su propio commit, sin atribuirles un artefacto de aplicación diferente.
 
-P1: pruebas de escritura dedicadas, autenticación privada, persistencia real después de reinicio/redeploy y auditoría de módulos disponibles. No elevar cuentas ni borrar datos reales.
+P1 del lote completado: pruebas de escritura dedicadas, autenticación privada, persistencia real después de reinicio/redeploy y auditoría conservada. No se elevaron cuentas ni se borraron datos comerciales. No implica cobertura de módulos que siguen deshabilitados o desalineados.
 
 P2: conciliación restante de Pedidos, constraints e historial; corrección separada de la colisión temporal del agente diagnóstico; observabilidad avanzada sin servicios pagos automáticos.

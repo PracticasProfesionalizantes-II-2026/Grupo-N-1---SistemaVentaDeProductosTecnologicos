@@ -1,6 +1,6 @@
 # Comparación de esquema Azure SQL — 28/10/2026
 
-Fuente esperada: script CREATE generado desde el DbContext actual, sin conexión a Azure. Fuente real: sys.columns, índices, FK, restricciones e historial de TotatechDB. Lecturas únicamente.
+Fuente esperada: script CREATE generado desde el DbContext actual, sin conexión a Azure. Fuente real: sys.columns, índices, FK, restricciones e historial de TotatechDB. Esta tabla refleja el estado previo a la reparación de usuarios del 28/10/2026 18:26:27 UTC; Activo, VersionSesion y AuditoriaUsuarios ya fueron incorporados mediante autorización específica. El resto continúa pendiente.
 
 | Entidad/tabla | Columnas esperadas | Diferencias | Impacto |
 |---|---:|---|---|
@@ -28,3 +28,5 @@ Fuente esperada: script CREATE generado desde el DbContext actual, sin conexión
 - Historial EF: cinco migraciones de junio; la inicial actual y las de septiembre/octubre no figuran.
 - Productos.ImagenUrl ya existe con nvarchar(500) NULL.
 - No registrar una baseline ficticia ni activar migraciones automáticas. Comparar por separado columnas nuevas, defaults, índices y constraints antes de reconciliar el historial.
+
+Índices ausentes en la lectura previa: los dos de AuditoriaUsuarios (ya incorporados) e IX_Pedidos_IdCarrito (pendiente). FK ausentes: las dos de auditoría (ya incorporadas) y FK_Pedidos_Carritos_IdCarrito (pendiente). No figuraban CK_Pedidos_Total_NoNegativo ni CK_Productos_Stock_NoNegativo. No se agregaron como parte del lote de pruebas ni se modificó el historial.
