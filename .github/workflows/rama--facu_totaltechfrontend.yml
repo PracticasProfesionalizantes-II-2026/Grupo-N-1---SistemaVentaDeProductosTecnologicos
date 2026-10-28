@@ -1,0 +1,78 @@
+name: Build and deploy TotalTech Frontend
+
+on:
+  push:
+    branches: [Rama--Facu]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: totaltech-frontend-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    uses: ./.github/workflows/dotnet-ci.yml
+
+  publish:
+    needs: validate
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet restore ./Frontend/Frontend.csproj
+      - run: dotnet publish ./Frontend/Frontend.csproj -c Release --no-restore -o ./publish/frontend
+      - name: Verify frontend artifact
+        shell: pwsh
+        run: |
+          foreach ($file in @('Frontend.dll', 'Frontend.deps.json', 'Frontend.runtimeconfig.json', 'web.config', 'wwwroot/css/site.css')) {
+            if (-not (Test-Path -LiteralPath (Join-Path ./publish/frontend $file))) { throw "Falta $file en el artefacto." }
+          }
+          if (Test-Path ./publish/frontend/Totaltech.dll) { throw 'El paquete contiene el backend.' }
+          [xml]$config = Get-Content ./publish/frontend/web.config
+          if ($config.configuration.location.'system.webServer'.aspNetCore.arguments -ne '.\Frontend.dll') { throw 'web.config apunta a otra aplicación.' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: totaltech-frontend
+          path: ./publish/frontend
+          if-no-files-found: error
+          retention-days: 3
+
+  deploy:
+    needs: publish
+    runs-on: windows-2025
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: totaltech-frontend
+          path: ./publish/frontend
+      - name: Login with existing federated identity
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_89C11739268B41FEB3320A8236A52BF3 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_D90CEA24BB894112900C62413BA6CEAF }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_632EE0877BEE48BABA469E3A3178D585 }}
+      - name: Resolve frontend hostname
+        shell: pwsh
+        run: |
+          $hostName = az webapp show -g Servidores -n TotaltechFrontend --query defaultHostName -o tsv
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($hostName)) { throw 'No se pudo resolver TotaltechFrontend.' }
+          "FRONTEND_URL=https://$hostName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Deploy frontend only
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: TotaltechFrontend
+          package: ./publish/frontend
+      - name: Verify real frontend and API
+        shell: pwsh
+        run: |
+          ./Desarrollo/Test-TotaltechPublic.ps1 -FrontendUrl $env:FRONTEND_URL -ApiUrl 'https://totaltechapp-ghd2etambcgcfgcb.brazilsouth-01.azurewebsites.net/'
+          if ($LASTEXITCODE -ne 0) { throw 'Falló la verificación pública.' }

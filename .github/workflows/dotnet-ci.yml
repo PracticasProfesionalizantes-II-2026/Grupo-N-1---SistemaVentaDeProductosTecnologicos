@@ -2,9 +2,10 @@ name: TotalTech .NET CI
 
 on:
   push:
-    branches: [main, Develop, Rama--Facu]
+    branches: [main, Develop]
   pull_request:
     branches: [main, Develop]
+  workflow_call:
 
 permissions:
   contents: read

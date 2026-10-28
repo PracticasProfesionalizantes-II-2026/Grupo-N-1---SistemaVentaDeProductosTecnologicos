@@ -30,7 +30,7 @@ public class CategoriasApiService
         var cliente = CrearCliente();
 
         var categorias = await cliente.GetFromJsonAsync<List<CategoriaResponse>>(
-            "/categorias/", cancellationToken);
+            "categorias/", cancellationToken);
 
         return categorias ?? new List<CategoriaResponse>();
     }
@@ -39,7 +39,7 @@ public class CategoriasApiService
     {
         var cliente = CrearCliente();
 
-        var respuesta = await cliente.GetAsync($"/categorias/{id}");
+        var respuesta = await cliente.GetAsync($"categorias/{id}");
 
         if (respuesta.StatusCode == HttpStatusCode.NotFound)
         {
@@ -57,7 +57,7 @@ public class CategoriasApiService
         var cliente = CrearCliente();
 
         var respuesta = await cliente.PostAsJsonAsync(
-            "/categorias/",
+            "categorias/",
             request);
 
         if (respuesta.IsSuccessStatusCode)
@@ -77,7 +77,7 @@ public class CategoriasApiService
         var cliente = CrearCliente();
 
         var respuesta = await cliente.PutAsJsonAsync(
-            $"/categorias/{id}",
+            $"categorias/{id}",
             request);
 
         if (respuesta.IsSuccessStatusCode)
@@ -95,7 +95,7 @@ public class CategoriasApiService
     {
         var cliente = CrearCliente();
 
-        var respuesta = await cliente.DeleteAsync($"/categorias/{id}");
+        var respuesta = await cliente.DeleteAsync($"categorias/{id}");
 
         if (respuesta.IsSuccessStatusCode)
         {
@@ -121,20 +121,20 @@ public sealed class CarritosApiService : ICarritosApiService
 
     public async Task<CarritoResumenResponse?> ObtenerActualAsync(CancellationToken cancellationToken = default)
     {
-        var respuesta = await Cliente().GetAsync("/carritos/actual", cancellationToken);
+        var respuesta = await Cliente().GetAsync("carritos/actual", cancellationToken);
         if (respuesta.StatusCode == HttpStatusCode.Unauthorized) return null;
         respuesta.EnsureSuccessStatusCode();
         return AplicarImagenes(await respuesta.Content.ReadFromJsonAsync<CarritoResumenResponse>(cancellationToken));
     }
 
     public Task<CarritoApiResultado> AgregarAsync(int idProducto, int cantidad, CancellationToken cancellationToken = default) =>
-        EnviarAsync(HttpMethod.Post, "/carritos/actual/productos", new { idProducto, cantidad }, cancellationToken);
+        EnviarAsync(HttpMethod.Post, "carritos/actual/productos", new { idProducto, cantidad }, cancellationToken);
 
     public Task<CarritoApiResultado> ActualizarCantidadAsync(int idProducto, int cantidad, CancellationToken cancellationToken = default) =>
-        EnviarAsync(HttpMethod.Patch, $"/carritos/actual/productos/{idProducto}", new { cantidad }, cancellationToken);
+        EnviarAsync(HttpMethod.Patch, $"carritos/actual/productos/{idProducto}", new { cantidad }, cancellationToken);
 
     public Task<CarritoApiResultado> EliminarAsync(int idProducto, CancellationToken cancellationToken = default) =>
-        EnviarAsync(HttpMethod.Delete, $"/carritos/actual/productos/{idProducto}", null, cancellationToken);
+        EnviarAsync(HttpMethod.Delete, $"carritos/actual/productos/{idProducto}", null, cancellationToken);
 
     private async Task<CarritoApiResultado> EnviarAsync(HttpMethod metodo, string ruta, object? cuerpo,
         CancellationToken cancellationToken)

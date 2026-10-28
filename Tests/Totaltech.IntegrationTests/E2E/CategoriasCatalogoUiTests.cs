@@ -12,6 +12,7 @@ using Microsoft.Playwright;
 
 namespace Totaltech.IntegrationTests.E2E;
 
+[Trait("Category", "E2E")]
 public sealed class CategoriasCatalogoUiTests
 {
     [Fact]

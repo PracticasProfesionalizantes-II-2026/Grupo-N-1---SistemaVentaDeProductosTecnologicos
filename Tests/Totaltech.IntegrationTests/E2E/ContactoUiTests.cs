@@ -2,6 +2,8 @@ using Microsoft.Playwright;
 
 namespace Totaltech.IntegrationTests.E2E;
 
+[Trait("Category", "E2E")]
+[Collection("Contacto UI")]
 public sealed class ContactoUiTests
 {
     [Fact]

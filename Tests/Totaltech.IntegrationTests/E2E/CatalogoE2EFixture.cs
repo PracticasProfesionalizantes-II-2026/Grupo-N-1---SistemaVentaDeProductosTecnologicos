@@ -245,5 +245,5 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
     }
 }
 
-[CollectionDefinition("Catalogo E2E")]
+[CollectionDefinition("Catalogo E2E", DisableParallelization = true)]
 public sealed class CatalogoE2ECollection : ICollectionFixture<CatalogoE2EFixture>;
