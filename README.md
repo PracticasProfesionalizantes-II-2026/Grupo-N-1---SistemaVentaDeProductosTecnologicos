@@ -17,6 +17,8 @@ No combinar este modo con otra ejecucion en Visual Studio o con `dotnet run`. El
 
 ## Métricas locales con Prometheus
 
+TotalTech implementa Prometheus para monitorear la disponibilidad de la API y del frontend, las solicitudes HTTP de los últimos 5 minutos y la latencia p95. Ver la [explicación sencilla de las tres métricas y las capturas de la implementación](Documentacion/Prometheus-Metricas.md).
+
 Con el sistema iniciado, ejecutar desde esta raíz:
 
 ```powershell
