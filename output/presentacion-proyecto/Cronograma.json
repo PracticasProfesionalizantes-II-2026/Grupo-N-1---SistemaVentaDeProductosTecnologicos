@@ -1,0 +1,114 @@
+[
+  {
+    "diapositiva": 1,
+    "titulo": "TotalTech",
+    "expositor": "Facundo",
+    "inicio": "0:00",
+    "fin": "0:30",
+    "segundos": 30
+  },
+  {
+    "diapositiva": 2,
+    "titulo": "El problema de la operación comercial",
+    "expositor": "Daiana",
+    "inicio": "0:30",
+    "fin": "1:15",
+    "segundos": 45
+  },
+  {
+    "diapositiva": 3,
+    "titulo": "Los usuarios de TotalTech",
+    "expositor": "Facundo",
+    "inicio": "1:15",
+    "fin": "2:00",
+    "segundos": 45
+  },
+  {
+    "diapositiva": 4,
+    "titulo": "Visión y alcance de la entrega",
+    "expositor": "Daiana",
+    "inicio": "2:00",
+    "fin": "3:00",
+    "segundos": 60
+  },
+  {
+    "diapositiva": 5,
+    "titulo": "Cinco capacidades implementadas",
+    "expositor": "Facundo",
+    "inicio": "3:00",
+    "fin": "4:15",
+    "segundos": 75
+  },
+  {
+    "diapositiva": 6,
+    "titulo": "Registro de clientes",
+    "expositor": "Daiana",
+    "inicio": "4:15",
+    "fin": "5:45",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 7,
+    "titulo": "Inicio de sesión y permisos",
+    "expositor": "Facundo",
+    "inicio": "5:45",
+    "fin": "7:15",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 8,
+    "titulo": "Catálogo y detalle del producto",
+    "expositor": "Daiana",
+    "inicio": "7:15",
+    "fin": "9:30",
+    "segundos": 135
+  },
+  {
+    "diapositiva": 9,
+    "titulo": "Carrito del cliente",
+    "expositor": "Facundo",
+    "inicio": "9:30",
+    "fin": "11:45",
+    "segundos": 135
+  },
+  {
+    "diapositiva": 10,
+    "titulo": "Administración de productos",
+    "expositor": "Daiana",
+    "inicio": "11:45",
+    "fin": "14:15",
+    "segundos": 150
+  },
+  {
+    "diapositiva": 11,
+    "titulo": "Recorrido de una solicitud",
+    "expositor": "Facundo",
+    "inicio": "14:15",
+    "fin": "16:00",
+    "segundos": 105
+  },
+  {
+    "diapositiva": 12,
+    "titulo": "Cinco criterios de calidad",
+    "expositor": "Daiana",
+    "inicio": "16:00",
+    "fin": "17:30",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 13,
+    "titulo": "Estado del proyecto y próximos pasos",
+    "expositor": "Facundo",
+    "inicio": "17:30",
+    "fin": "19:30",
+    "segundos": 120
+  },
+  {
+    "diapositiva": 14,
+    "titulo": "Resultado de la entrega",
+    "expositor": "Daiana",
+    "inicio": "19:30",
+    "fin": "20:00",
+    "segundos": 30
+  }
+]

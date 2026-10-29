@@ -6,11 +6,26 @@ public sealed class ProductoImagenStorage
     private const string PrefijoUrl = "/uploads/productos/";
     private readonly string _directorio;
 
-    public ProductoImagenStorage(IWebHostEnvironment environment)
+    public string Directorio => _directorio;
+
+    public ProductoImagenStorage(IWebHostEnvironment environment, IConfiguration? configuration = null)
     {
         var webRoot = environment.WebRootPath
             ?? Path.Combine(environment.ContentRootPath, "wwwroot");
-        _directorio = Path.Combine(webRoot, "uploads", "productos");
+        var configurado = configuration?["ProductoImagenes:Directorio"];
+        if (string.IsNullOrWhiteSpace(configurado))
+        {
+            _directorio = Path.Combine(webRoot, "uploads", "productos");
+            return;
+        }
+
+        var expandido = Environment.ExpandEnvironmentVariables(configurado);
+        if (!Path.IsPathFullyQualified(expandido) || expandido.Contains('%'))
+            throw new InvalidOperationException("ProductoImagenes:Directorio debe ser una ruta absoluta con variables de entorno resueltas.");
+        _directorio = Path.GetFullPath(expandido);
+        if (string.Equals(_directorio.TrimEnd(Path.DirectorySeparatorChar),
+            Path.GetPathRoot(_directorio)?.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("ProductoImagenes:Directorio no puede ser la raíz de una unidad.");
     }
 
     public async Task<(string? ImagenUrl, string? Error)> GuardarAsync(

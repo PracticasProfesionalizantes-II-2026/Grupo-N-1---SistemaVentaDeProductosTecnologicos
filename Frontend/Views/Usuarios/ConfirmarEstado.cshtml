@@ -1,0 +1,15 @@
+@model Frontend.Models.ViewModels.Usuarios.UsuarioEstadoViewModel
+@{
+    var accion = Model.Activar ? "Reactivar" : "DarBaja";
+    ViewData["Title"] = Model.Activar ? "Reactivar usuario" : "Dar de baja usuario";
+}
+<section class="admin-module py-4">
+    <header class="admin-module__header"><div><p class="admin-module__eyebrow">Usuarios</p><h1>@ViewData["Title"]</h1></div></header>
+    <form asp-action="@accion" asp-route-id="@Model.Usuario.IdUsuario" method="post" class="admin-form admin-panel">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <p>Cuenta: <strong>@Model.Usuario.Nombre @Model.Usuario.Apellido</strong> (@Model.Usuario.Email).</p>
+        @if (Model.Activar) { <p>Podrá volver a iniciar sesión con sus credenciales existentes.</p> }
+        else { <p>Se impedirá el ingreso y finalizarán sus sesiones. Sus pedidos y demás datos se conservarán.</p> }
+        <div class="d-flex flex-wrap gap-2"><button type="submit" class="btn @(Model.Activar ? "btn-success" : "btn-danger")">@(Model.Activar ? "Confirmar reactivación" : "Confirmar baja")</button><a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a></div>
+    </form>
+</section>

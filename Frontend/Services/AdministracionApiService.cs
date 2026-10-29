@@ -42,7 +42,7 @@ public sealed class AdministracionApiService
         try
         {
             var catalogo = await CrearCliente().GetFromJsonAsync<CatalogoProductosResponse>(
-                "/productos/catalogo?pagina=1&tamanoPagina=1",
+                "productos/catalogo?pagina=1&tamanoPagina=1",
                 cancellationToken);
             return catalogo?.TotalItems;
         }
@@ -59,7 +59,7 @@ public sealed class AdministracionApiService
         try
         {
             var usuarios = await CrearCliente().GetFromJsonAsync<List<UsuarioResumenResponse>>(
-                "/usuarios/",
+                "usuarios/",
                 cancellationToken);
             return usuarios?.Count;
         }
@@ -76,7 +76,7 @@ public sealed class AdministracionApiService
         try
         {
             var pedidos = await CrearCliente().GetFromJsonAsync<List<PedidoResumenResponse>>(
-                "/pedidos/estado/Pendiente",
+                "pedidos/estado/Pendiente",
                 cancellationToken);
             return pedidos?.Count;
         }

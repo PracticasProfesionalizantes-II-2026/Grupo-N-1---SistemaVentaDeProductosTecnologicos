@@ -6,6 +6,7 @@ using Totaltech.Datos;
 using Totaltech.Entidades;
 using Totaltech.IntegrationTests.Infrastructure;
 using Totaltech.Logica.DTOs;
+using Totaltech.Repositorios;
 using Totaltech.Seguridad;
 
 namespace Totaltech.IntegrationTests.Endpoints;
@@ -13,6 +14,62 @@ namespace Totaltech.IntegrationTests.Endpoints;
 public sealed class ProductosAdministracionEndpointsTests
 {
     private const string Imagen = "/uploads/productos/0123456789abcdef0123456789abcdef.jpg";
+
+    [Fact]
+    public async Task EdicionYParcheDeStockObsoletos_DevuelvenConflictoSinReponerUnidades()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        factory.VerificarPersistenciaAislada();
+        Autenticar(factory, client, RolUsuario.Administrador);
+        var producto = await SembrarAsync(factory);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var contexto = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+            Assert.True(await new ProductosRepositorio(contexto).DescontarStockAsync(producto.IdProducto, 1));
+        }
+
+        var solicitudObsoleta = Solicitud(producto, null);
+        solicitudObsoleta.Descripcion = "Descripción que no debe guardarse";
+        using var edicion = await client.PutAsJsonAsync($"/productos/{producto.IdProducto}", solicitudObsoleta);
+        using var parche = await client.PatchAsJsonAsync($"/productos/{producto.IdProducto}/stock", new
+        {
+            stock = 5,
+            stockOriginal = producto.Stock
+        });
+        Assert.Equal(HttpStatusCode.Conflict, edicion.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, parche.StatusCode);
+
+        var actual = await client.GetFromJsonAsync<Producto>($"/productos/{producto.IdProducto}");
+        Assert.Equal(2, actual!.Stock);
+        Assert.Equal(producto.Descripcion, actual.Descripcion);
+
+        using var ajusteVigente = await client.PatchAsJsonAsync($"/productos/{producto.IdProducto}/stock", new
+        {
+            stock = 5,
+            stockOriginal = actual.Stock
+        });
+        Assert.Equal(HttpStatusCode.NoContent, ajusteVigente.StatusCode);
+        Assert.Equal(5, (await client.GetFromJsonAsync<Producto>($"/productos/{producto.IdProducto}"))!.Stock);
+    }
+
+    [Fact]
+    public async Task EdicionYParcheSinStockOriginal_DevuelvenBadRequest()
+    {
+        await using var factory = new TotaltechWebApplicationFactory();
+        using var client = factory.CreateClient();
+        Autenticar(factory, client, RolUsuario.Administrador);
+        var producto = await SembrarAsync(factory);
+        var solicitud = Solicitud(producto, null);
+        solicitud.StockOriginal = null;
+
+        using var edicion = await client.PutAsJsonAsync($"/productos/{producto.IdProducto}", solicitud);
+        using var parche = await client.PatchAsJsonAsync($"/productos/{producto.IdProducto}/stock", new { stock = 5 });
+        Assert.Equal(HttpStatusCode.BadRequest, edicion.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, parche.StatusCode);
+        Assert.Equal(producto.Stock, (await client.GetFromJsonAsync<Producto>($"/productos/{producto.IdProducto}"))!.Stock);
+    }
 
     [Fact]
     public async Task Imagen_PersisteYSeDevuelveEnDetalleListadoYCatalogo()
@@ -44,6 +101,7 @@ public sealed class ProductosAdministracionEndpointsTests
         using var omitida = await client.PutAsJsonAsync($"/productos/{producto.IdProducto}", new
         {
             nombre = "Nombre nuevo", producto.Descripcion, producto.Precio, producto.Stock,
+            stockOriginal = producto.Stock,
             producto.IdCategoria, producto.IdProveedor
         });
         Assert.Equal(HttpStatusCode.OK, omitida.StatusCode);
@@ -152,17 +210,20 @@ public sealed class ProductosAdministracionEndpointsTests
 
     private static void Autenticar(TotaltechWebApplicationFactory factory, HttpClient client, RolUsuario rol)
     {
-        var token = factory.Services.GetRequiredService<IJwtTokenService>().Crear(new Usuario
-        {
-            IdUsuario = 100, Nombre = "Prueba", Email = "imagen@test.local", Rol = rol
-        });
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TotaltechDbContext>();
+        var usuario = new Usuario { Nombre = "Prueba", Email = $"imagen-{Guid.NewGuid():N}@test.local", Rol = rol };
+        db.Usuarios.Add(usuario);
+        db.SaveChanges();
+        var token = factory.Services.GetRequiredService<IJwtTokenService>().Crear(usuario);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
     }
 
     private static ProductoRequest Solicitud(Producto producto, string? imagen) => new()
     {
         Nombre = producto.Nombre, Descripcion = producto.Descripcion, Precio = producto.Precio,
-        Stock = producto.Stock, IdCategoria = producto.IdCategoria, IdProveedor = producto.IdProveedor,
+        Stock = producto.Stock, StockOriginal = producto.Stock,
+        IdCategoria = producto.IdCategoria, IdProveedor = producto.IdProveedor,
         ImagenUrl = imagen
     };
 

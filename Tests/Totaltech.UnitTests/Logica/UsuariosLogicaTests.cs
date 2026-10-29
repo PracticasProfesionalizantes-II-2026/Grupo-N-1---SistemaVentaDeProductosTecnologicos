@@ -88,14 +88,21 @@ public sealed class UsuariosLogicaTests
     }
 
     [Fact]
-    public async Task AsegurarAdministradorAsync_RestauraLaContrasenaCanonica()
+    public async Task AsegurarAdministradorAsync_ConservaCredencialesRolYEstadoExistentes()
     {
         var repositorio = new FakeUsuariosRepositorio();
         var logica = new UsuariosLogica(repositorio);
         var administrador = CrearUsuario("Admin@admin.com", "OtraClave123", RolUsuario.Administrador);
         await logica.CrearAsync(administrador);
 
+        administrador.Rol = RolUsuario.Cliente;
+        administrador.Activo = false;
+        var hash = administrador.Contrasena;
         await logica.AsegurarAdministradorAsync("Admin@admin.com", "Admin123456789");
+        Assert.Equal(RolUsuario.Cliente, administrador.Rol);
+        Assert.False(administrador.Activo);
+        Assert.Equal(hash, administrador.Contrasena);
+        administrador.Activo = true;
 
         var loginCanonico = await logica.LoginAsync(new LoginDto
         {
@@ -108,8 +115,95 @@ public sealed class UsuariosLogicaTests
             Contrasena = "OtraClave123"
         });
 
-        Assert.NotNull(loginCanonico);
-        Assert.Null(loginAnterior);
+        Assert.Null(loginCanonico);
+        Assert.NotNull(loginAnterior);
+    }
+
+    [Fact]
+    public async Task Modificacion_ConservaHashFechaYEstadoYAuditaSoloCampos()
+    {
+        var repo = new FakeUsuariosRepositorio();
+        var logica = new UsuariosLogica(repo);
+        var usuario = CrearUsuario("editar@test.local", "Correcta123456", RolUsuario.Cliente);
+        await logica.RegistrarAsync(usuario);
+        var hash = usuario.Contrasena;
+        var fecha = usuario.FechaRegistro;
+        var resultado = await logica.ActualizarAsync(usuario.IdUsuario, new()
+        {
+            Nombre = "Nuevo", Apellido = usuario.Apellido, Email = usuario.Email,
+            Telefono = usuario.Telefono, Rol = RolUsuario.Administrador
+        }, usuario.IdUsuario, esAdministrador: false);
+        Assert.Equal(EstadoOperacionUsuario.Exito, resultado.Estado);
+        Assert.Equal("Nuevo", usuario.Nombre);
+        Assert.Equal(hash, usuario.Contrasena);
+        Assert.Equal(fecha, usuario.FechaRegistro);
+        Assert.Equal(RolUsuario.Cliente, usuario.Rol);
+        Assert.True(usuario.Activo);
+        Assert.Equal(1, usuario.VersionSesion);
+        Assert.Equal("nombre", Assert.Single(repo.Auditorias).CamposModificados);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UltimoAdministrador_NoPuedeDesactivarseNiDegradarse(bool cambiarRol)
+    {
+        var repo = new FakeUsuariosRepositorio();
+        var logica = new UsuariosLogica(repo);
+        await logica.AsegurarAdministradorAsync("admin@test.local", "Correcta123456");
+        var admin = Assert.Single(repo.Usuarios);
+        var resultado = cambiarRol
+            ? await logica.ActualizarAsync(admin.IdUsuario, new()
+            {
+                Nombre = admin.Nombre, Apellido = admin.Apellido, Email = admin.Email,
+                Telefono = admin.Telefono, Rol = RolUsuario.Cliente
+            }, admin.IdUsuario, true)
+            : await logica.CambiarEstadoAsync(admin.IdUsuario, false, admin.IdUsuario);
+        Assert.Equal(EstadoOperacionUsuario.Conflicto, resultado.Estado);
+        Assert.True(admin.Activo);
+        Assert.Equal(RolUsuario.Administrador, admin.Rol);
+        Assert.Empty(repo.Auditorias);
+    }
+
+    [Fact]
+    public async Task BajaReactivacion_SonIdempotentesReservanEmailYRevocanSesiones()
+    {
+        var repo = new FakeUsuariosRepositorio();
+        var logica = new UsuariosLogica(repo);
+        var usuario = CrearUsuario("baja@test.local", "Correcta123456", RolUsuario.Cliente);
+        await logica.RegistrarAsync(usuario);
+        await logica.CambiarEstadoAsync(usuario.IdUsuario, false, usuario.IdUsuario);
+        await logica.CambiarEstadoAsync(usuario.IdUsuario, false, usuario.IdUsuario);
+        Assert.False(usuario.Activo);
+        Assert.Equal(2, usuario.VersionSesion);
+        Assert.Null(await logica.LoginAsync(new() { Email = usuario.Email, Contrasena = "Correcta123456" }));
+        Assert.NotNull(await logica.AutenticarAsync(new() { Email = usuario.Email, Contrasena = "Correcta123456" }));
+        Assert.NotNull(await logica.RegistrarAsync(CrearUsuario(usuario.Email, "Correcta123456", RolUsuario.Cliente)));
+        await logica.CambiarEstadoAsync(usuario.IdUsuario, true, usuario.IdUsuario);
+        await logica.CambiarEstadoAsync(usuario.IdUsuario, true, usuario.IdUsuario);
+        Assert.Equal(3, usuario.VersionSesion);
+        Assert.Equal(2, repo.Auditorias.Count);
+        Assert.NotNull(await logica.LoginAsync(new() { Email = usuario.Email, Contrasena = "Correcta123456" }));
+    }
+
+    [Theory]
+    [InlineData("", "Apellido", "email@test.local", "111", 0)]
+    [InlineData("Nombre", "", "email@test.local", "111", 0)]
+    [InlineData("Nombre", "Apellido", "invalido", "111", 0)]
+    [InlineData("Nombre", "Apellido", "email@test.local", "", 0)]
+    [InlineData("Nombre", "Apellido", "email@test.local", "111", 8)]
+    public async Task ModificacionInvalida_NoPersiste(string nombre, string apellido, string email, string telefono, int rol)
+    {
+        var repo = new FakeUsuariosRepositorio();
+        var logica = new UsuariosLogica(repo);
+        var usuario = CrearUsuario("original@test.local", "Correcta123456", RolUsuario.Cliente);
+        await logica.RegistrarAsync(usuario);
+        var resultado = await logica.ActualizarAsync(usuario.IdUsuario, new()
+        { Nombre = nombre, Apellido = apellido, Email = email, Telefono = telefono, Rol = (RolUsuario)rol },
+            usuario.IdUsuario, true);
+        Assert.Equal(EstadoOperacionUsuario.Invalido, resultado.Estado);
+        Assert.Equal("original@test.local", usuario.Email);
+        Assert.Empty(repo.Auditorias);
     }
 
     private static Usuario CrearUsuario(string email, string contrasena, RolUsuario rol)

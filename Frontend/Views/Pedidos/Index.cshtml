@@ -1,1 +1,25 @@
-@* Estructura reservada. Implementación pendiente. *@
+@model Frontend.Models.ViewModels.Pedidos.PedidoListadoViewModel
+@{ ViewData["Title"] = "Mis pedidos demo"; }
+<link rel="stylesheet" href="~/css/pages/checkout.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/pages/pedidos.css" asp-append-version="true" />
+<section class="compra-demo container" data-demo-page="listado" data-user-id="@Model.IdUsuario"
+         data-detalle-url="@Url.Action("Detalle", "Pedidos", new { id = "__id__" })">
+    <partial name="_CompraDemoAviso" />
+    <h1>Mis pedidos demo</h1>
+    <p>Este historial es ficticio, no tiene validez comercial y pertenece a este navegador. Puede perderse al borrar sus datos.</p>
+    <p data-demo-feedback role="status" aria-live="polite" tabindex="-1">Cargando historial local…</p>
+    <div data-demo-content class="compra-demo__pedidos"></div>
+    <div class="compra-demo__acciones">
+        <button type="button" data-demo-clear class="btn btn-outline-danger" disabled>Borrar mis pedidos demo</button>
+        <a asp-controller="Carrito" asp-action="Index" class="btn btn-primary">Ir al carrito</a>
+    </div>
+    <div data-demo-clear-confirm hidden class="compra-demo__panel">
+        <p>¿Borrar todos tus pedidos ficticios de este navegador?</p>
+        <button type="button" data-demo-clear-yes class="btn btn-danger">Confirmar borrado demo</button>
+        <button type="button" data-demo-clear-no class="btn btn-outline-secondary">Conservar pedidos</button>
+    </div>
+    <noscript><p class="alert alert-warning">Activá JavaScript para consultar tus pedidos ficticios.</p></noscript>
+</section>
+@section Scripts {
+    <script type="module" src="~/js/pages/pedidos-demo.js" asp-append-version="true"></script>
+}

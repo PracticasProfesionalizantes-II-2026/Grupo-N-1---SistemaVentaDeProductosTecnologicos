@@ -1,6 +1,10 @@
 # TotalTech - Estado actual y planificación hasta el 25 de octubre de 2026
 
+Actualización puntual **08/10/2026 — Gestión administrativa de usuarios**: implementados listado MVC, edición de datos/rol, baja lógica y reactivación; JWT/cookie revocados por cambios de rol/estado; último administrador protegido con transacción serializable; auditoría persistente de usuarios. UC-24 sigue parcial por reset de credenciales pendiente. UC-32 tiene registro de usuarios, sin consulta general de bitácora. El corte histórico y sus porcentajes no se recalculan con esta actualización.
+
 Fecha de corte: **17 de septiembre de 2026**
+
+Actualización puntual **09/10/2026 — Observabilidad con Prometheus**: métricas HTTP/runtime en API y MVC, clientes HTTP, comandos SQL/disponibilidad y resultados de autenticación/checkout/usuarios; `/metrics` protegido por loopback; configuración local, consultas, cuatro alertas y pruebas sintéticas con `promtool`. **UC-46 pasa a parcial (P)** por notificaciones externas y operación en producción pendientes. Evidencia y arranque: `Documentacion/Observabilidad.md`. No requiere migraciones. La medición y los porcentajes del corte histórico 17/09 no se recalculan con esta actualización.
 
 Rama y revisión analizadas: `Rama--Facu` en `d6afef3`
 
@@ -96,7 +100,7 @@ Cuando la documentación contradice el repositorio, el código probado en `d6afe
 | UC-21 ABM de promociones | N | Sin implementación. | Módulo completo. |
 | UC-22 Gestionar pedidos | P | Listado, detalle y transiciones válidas en Backend. | Pantallas Admin, datos de envío, feedback y E2E de transiciones. |
 | UC-23 Emitir reembolso | N | Sin implementación. | Política, integración de pago, autorización e idempotencia. |
-| UC-24 Gestionar usuarios | P | CRUD y autorización Backend. | Pantalla Admin, bloqueo/desbloqueo, reset administrativo y auditoría. |
+| UC-24 Gestionar usuarios | P | MVC/API de edición, baja lógica/reactivación, roles, revocación de sesiones y auditoría de usuarios (08/10). | Reset administrativo de credenciales y UAT final. |
 | UC-25 Gestionar proveedores | C* | CRUD MVC/API Admin y condiciones comerciales. | Baja lógica coherente, errores/timeouts y E2E. |
 | UC-26 Asociar productos a proveedor | P | Cada producto referencia un proveedor. | Múltiples/preferente/costo o exclusión formal del alcance ampliado. |
 | UC-27 Ajuste de stock | P | Edición y endpoint Admin de stock. | Caso dedicado, motivo, historial de movimientos y pruebas de concurrencia. |
@@ -104,7 +108,7 @@ Cuando la documentación contradice el repositorio, el código probado en `d6afe
 | UC-29 Reportes operativos | P | Agregados Backend de ventas, ingresos y más vendidos. | Períodos, conciliación SQL, estados/promociones y UI Admin. |
 | UC-30 Zonas y costos de envío | N | Sin implementación. | Reglas y UI de administración. |
 | UC-31 Configurar medios de pago | N | Sin implementación. | Configuración segura por ambiente y sin exponer secretos. |
-| UC-32 Auditoría del sistema | N | Sin bitácora funcional. | Eventos, actor, fecha, datos mínimos y consulta protegida. |
+| UC-32 Auditoría del sistema | P | Registro persistente de acciones sobre usuarios (08/10). | Extensión a otros módulos y consulta protegida de bitácora. |
 | UC-33 Gestionar reseñas | N | Reseñas no implementadas. | Depende de UC-16. |
 
 ### Proveedor: UC-34 a UC-36
@@ -133,11 +137,11 @@ Cuando la documentación contradice el repositorio, el código probado en `d6afe
 | UC-43 Autorización por rol | C* | Cliente/Admin protegidos en API y MVC; tests 401/403. | Matriz completa de recorridos; rol Proveedor sólo si entra en alcance. |
 | UC-44 Sesiones y tokens | P | JWT con expiración, cookie MVC y handler Bearer. | Logout, renovación o decisión de no renovarla, expiración E2E. |
 | UC-45 Backup/restore | N | Sin procedimiento probado. | Política, automatización y prueba de restauración. |
-| UC-46 Monitoreo y alertas | N | Sin observabilidad acreditada. | Logs, métricas, salud y alertas mínimas. |
+| UC-46 Monitoreo y alertas | P | Métricas Prometheus en API/MVC, salud SQL, consultas y cuatro alertas locales con pruebas sintéticas (09/10). | Notificaciones externas, operación en producción y validación de umbrales en carga real. |
 
-### Resumen cuantitativo del inventario
+### Resumen cuantitativo del inventario histórico (17/09)
 
-| Clasificación actual | Cantidad | UC |
+| Clasificación histórica | Cantidad | UC |
 |---|---:|---|
 | Núcleo construido (C*) | 8 | 01, 02, 07, 09, 19, 20, 25, 43 |
 | Parcial (P) | 15 | 04, 05, 06, 08, 10, 11, 13, 14, 18, 22, 24, 26, 27, 29, 44 |
@@ -442,6 +446,8 @@ El hito se considera logrado sólo cuando exista evidencia de todos estos puntos
 - [ ] Documentación, API y matriz UC coinciden con el producto entregado.
 
 ## 13. Registro de avances ya ejecutados
+
+- **09/10 — Observabilidad local:** métricas técnicas y resultados de negocio mediante Prometheus, extracción loopback, consultas, reglas y job CI con checksum oficial. UC-46 parcial; no se acredita operación productiva ni notificación externa. Compilación Release sin advertencias; 202 pruebas aprobadas, incluidas SQL desechable y navegador. `promtool check config`, `check rules` y cuatro escenarios de `test rules` correctos con 3.15.0. Tres targets `UP`; caída real de API con alerta `firing` y recuperación comprobadas. Evidencia completa y limitación local de Scalar: `Documentacion/Observabilidad.md`.
 
 - **Wave 1:** CI .NET 10, configuración segura, pruebas rápidas/SQL aisladas y tratamiento de credenciales.
 - **Wave 2:** checkout Backend idempotente y transaccional, total/dirección históricos, stock, pagos manuales contenidos y DTO explícitos.

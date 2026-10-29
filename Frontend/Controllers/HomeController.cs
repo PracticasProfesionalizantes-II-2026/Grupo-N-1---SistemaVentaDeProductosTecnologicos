@@ -8,10 +8,14 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Frontend.Models;
+using Frontend.Models.ViewModels.Home;
+using Frontend.Services;
 
 namespace Frontend.Controllers;
 
@@ -19,16 +23,58 @@ public class HomeController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<HomeController> _logger;
+    private readonly ProductosApiService _productos;
+    private readonly CategoriasApiService _categorias;
 
-    public HomeController(IHttpClientFactory httpClientFactory, ILogger<HomeController> logger)
+    public HomeController(IHttpClientFactory httpClientFactory, ILogger<HomeController> logger,
+        ProductosApiService productos, CategoriasApiService categorias)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _productos = productos;
+        _categorias = categorias;
     }
 
-    public IActionResult Index()
+    [HttpGet]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        return View();
+        var productos = ConsultarInicioAsync(() => _productos.ObtenerTodosAsync(cancellationToken),
+            "No pudimos cargar los productos. Volvé a intentarlo en unos minutos.", cancellationToken);
+        var categorias = ConsultarInicioAsync(() => _categorias.ObtenerTodosAsync(cancellationToken),
+            "No pudimos cargar las categorías. Volvé a intentarlo en unos minutos.", cancellationToken);
+        await Task.WhenAll(productos, categorias);
+        var resultadoProductos = await productos;
+        var resultadoCategorias = await categorias;
+        return View(InicioViewModel.Desde(resultadoProductos.Datos, resultadoCategorias.Datos,
+            resultadoProductos.Error, resultadoCategorias.Error));
+    }
+
+    private async Task<(List<T> Datos, string? Error)> ConsultarInicioAsync<T>(
+        Func<Task<List<T>>> consultar, string mensaje, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return (await consultar(), null);
+        }
+        catch (Exception exception) when (exception is HttpRequestException or JsonException ||
+            exception is TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(exception, "Consulta del inicio no disponible: {Mensaje}", mensaje);
+            return ([], mensaje);
+        }
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout()
+    {
+        var esAdministrador = User.IsInRole("Admin");
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData.Remove("AuthWelcome");
+        TempData["AuthSuccess"] = "Sesión cerrada correctamente.";
+        return RedirectToAction(esAdministrador ? nameof(Login) : nameof(Index));
     }
 
     public IActionResult Privacy()
@@ -72,6 +118,12 @@ public class HomeController : Controller
                 return View(model);
             }
 
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                ModelState.AddModelError(string.Empty, "Tu cuenta está desactivada. Contactá al administrador.");
+                return View(model);
+            }
+
             if (!response.IsSuccessStatusCode)
             {
                 ModelState.AddModelError(string.Empty, await LeerErrorApiAsync(response, cancellationToken));
@@ -112,7 +164,8 @@ public class HomeController : Controller
                 new ClaimsPrincipal(identity),
                 propiedades);
 
-            TempData["AuthSuccess"] = $"¡Bienvenido, {usuario.Nombre}!";
+            TempData.Remove("AuthSuccess");
+            TempData["AuthWelcome"] = $"¡Bienvenido, {usuario.Nombre}!";
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return LocalRedirect(model.ReturnUrl);
             return usuario.Rol == 1 ? RedirectToAction("Index", "Administracion") : RedirectToAction(nameof(Index));

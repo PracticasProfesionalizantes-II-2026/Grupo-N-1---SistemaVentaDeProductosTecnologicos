@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Totaltech.Datos;
 using Totaltech.Entidades;
 using Totaltech.Logica.DTOs;
+using Totaltech.Observabilidad;
 using Totaltech.Repositorios;
 
 namespace Totaltech.Logica
@@ -33,17 +34,20 @@ namespace Totaltech.Logica
         private readonly ICarritosRepositorio _carritosRepositorio;
         private readonly IProductosRepositorio _productosRepositorio;
         private readonly IUsuariosRepositorio _usuariosRepositorio;
+        private readonly MetricasNegocio? _metricas;
 
         public CarritosLogica(
             TotaltechDbContext context,
             ICarritosRepositorio carritosRepositorio,
             IProductosRepositorio productosRepositorio,
-            IUsuariosRepositorio usuariosRepositorio)
+            IUsuariosRepositorio usuariosRepositorio,
+            MetricasNegocio? metricas = null)
         {
             _context = context;
             _carritosRepositorio = carritosRepositorio;
             _productosRepositorio = productosRepositorio;
             _usuariosRepositorio = usuariosRepositorio;
+            _metricas = metricas;
         }
 
         public Task<List<Carrito>> ObtenerTodosAsync()
@@ -410,7 +414,12 @@ namespace Totaltech.Logica
             };
         }
 
-        public async Task<ConfirmarCarritoResultado> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto)
+        public Task<ConfirmarCarritoResultado> ConfirmarAsync(int idCarrito, ConfirmarCarritoDto dto) =>
+            _metricas is null
+                ? ConfirmarOperacionAsync(idCarrito, dto)
+                : _metricas.MedirCheckoutAsync(() => ConfirmarOperacionAsync(idCarrito, dto));
+
+        private async Task<ConfirmarCarritoResultado> ConfirmarOperacionAsync(int idCarrito, ConfirmarCarritoDto dto)
         {
             if (dto.IdDireccion <= 0)
             {

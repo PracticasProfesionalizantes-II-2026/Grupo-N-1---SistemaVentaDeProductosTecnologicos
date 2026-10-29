@@ -26,13 +26,13 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
     public string FrontendUrl { get; private set; } = string.Empty;
     public IBrowser Browser => _browser ?? throw new InvalidOperationException("El navegador no está iniciado.");
 
-    public async Task<(string Email, string Contrasena)> CrearClienteAsync()
-        => await CrearUsuarioAsync(Entidades.RolUsuario.Cliente);
+    public async Task<(string Email, string Contrasena)> CrearClienteAsync(string nombre = "Usuario")
+        => await CrearUsuarioAsync(Entidades.RolUsuario.Cliente, nombre);
 
     public async Task<(string Email, string Contrasena)> CrearAdministradorAsync()
         => await CrearUsuarioAsync(Entidades.RolUsuario.Administrador);
 
-    private async Task<(string Email, string Contrasena)> CrearUsuarioAsync(Entidades.RolUsuario rol)
+    private async Task<(string Email, string Contrasena)> CrearUsuarioAsync(Entidades.RolUsuario rol, string nombre = "Usuario")
     {
         var email = $"catalogo-{Guid.NewGuid():N}@test.local";
         const string contrasena = "Catalogo123456";
@@ -40,11 +40,17 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
         var logica = new UsuariosLogica(new UsuariosRepositorio(db));
         var error = await logica.CrearAsync(new Entidades.Usuario
         {
-            Nombre = "Usuario", Apellido = "E2E", Email = email, Contrasena = contrasena,
+            Nombre = nombre, Apellido = "E2E", Email = email, Contrasena = contrasena,
             Telefono = "1111111111", FechaRegistro = DateTime.UtcNow, Rol = rol
         });
         if (error is not null) throw new InvalidOperationException(error);
         return (email, contrasena);
+    }
+
+    public async Task<Entidades.Usuario> ObtenerUsuarioAsync(string email)
+    {
+        await using var db = _database.CreateContext();
+        return await db.Usuarios.AsNoTracking().SingleAsync(u => u.Email == email);
     }
 
     public async Task<Entidades.Producto> CrearProductoAsync(string nombre, string? descripcion = null)
@@ -67,6 +73,23 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
     {
         await using var db = _database.CreateContext();
         return await db.Productos.AsNoTracking().SingleOrDefaultAsync(producto => producto.IdProducto == id);
+    }
+
+    public async Task<string> ObtenerEstadoCompraAsync(string email, int idProducto)
+    {
+        await using var db = _database.CreateContext();
+        var usuario = await db.Usuarios.AsNoTracking().SingleAsync(u => u.Email == email);
+        var carritos = await db.Carritos.AsNoTracking().Where(c => c.IdUsuario == usuario.IdUsuario)
+            .OrderBy(c => c.IdCarrito).Select(c => new { c.IdCarrito, c.Estado, c.FechaCreacion }).ToListAsync();
+        var ids = carritos.Select(c => c.IdCarrito).ToArray();
+        var detalles = await db.DetalleCarritos.AsNoTracking().Where(d => ids.Contains(d.IdCarrito))
+            .OrderBy(d => d.IdDetalleCarrito).Select(d => new { d.IdDetalleCarrito, d.IdCarrito, d.IdProducto, d.Cantidad, d.PrecioUnitario, d.Subtotal }).ToListAsync();
+        var stock = await db.Productos.Where(p => p.IdProducto == idProducto).Select(p => p.Stock).SingleAsync();
+        var pedidos = await db.Pedidos.AsNoTracking().Where(p => p.IdUsuario == usuario.IdUsuario)
+            .OrderBy(p => p.IdPedido).Select(p => new { p.IdPedido, p.Estado, p.Total }).ToListAsync();
+        var pagos = await db.Pagos.AsNoTracking().Where(p => p.Pedido!.IdUsuario == usuario.IdUsuario)
+            .OrderBy(p => p.IdPago).Select(p => new { p.IdPago, p.IdPedido, p.Estado, p.Monto }).ToListAsync();
+        return System.Text.Json.JsonSerializer.Serialize(new { carritos, detalles, stock, pedidos, pagos });
     }
 
     public async Task AsociarCarritoAsync(int idProducto)
@@ -113,18 +136,19 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
     }
 
-    public async Task ReiniciarFrontendAsync()
+    public async Task ReiniciarFrontendAsync(bool compraDemo = true)
     {
         if (_frontend is not null) await DetenerAsync(_frontend);
-        await IniciarFrontendAsync();
+        await IniciarFrontendAsync(compraDemo);
     }
 
-    private async Task IniciarFrontendAsync()
+    private async Task IniciarFrontendAsync(bool compraDemo = true)
     {
         _frontend = Iniciar(_raiz, "Frontend/Frontend.csproj", new()
         {
             ["ASPNETCORE_ENVIRONMENT"] = "Development", ["ASPNETCORE_URLS"] = FrontendUrl,
-            ["ASPNETCORE_WEBROOT"] = _webRoot, ["ApiBaseUrl"] = _backendUrl
+            ["ASPNETCORE_WEBROOT"] = _webRoot, ["ApiBaseUrl"] = _backendUrl,
+            ["CompraDemo__Enabled"] = compraDemo.ToString()
         });
         _procesos.Add(_frontend);
         await EsperarAsync($"{FrontendUrl}/Productos", _frontend);
@@ -147,7 +171,13 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
 
     private Process Iniciar(string raiz, string proyecto, Dictionary<string, string> entorno)
     {
-        var info = new ProcessStartInfo("dotnet", $"run --no-build --no-launch-profile --configuration Release --project {proyecto}")
+        // Ejecutar la misma configuración que el ensamblado de pruebas.
+#if DEBUG
+        const string configuracion = "Debug";
+#else
+        const string configuracion = "Release";
+#endif
+        var info = new ProcessStartInfo("dotnet", $"run --no-build --no-launch-profile --configuration {configuracion} --project {proyecto}")
         { WorkingDirectory = raiz, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var item in entorno) info.Environment[item.Key] = item.Value;
         var proceso = Process.Start(info) ?? throw new InvalidOperationException($"No se pudo iniciar {proyecto}.");
@@ -215,5 +245,5 @@ public sealed class CatalogoE2EFixture : IAsyncLifetime
     }
 }
 
-[CollectionDefinition("Catalogo E2E")]
+[CollectionDefinition("Catalogo E2E", DisableParallelization = true)]
 public sealed class CatalogoE2ECollection : ICollectionFixture<CatalogoE2EFixture>;

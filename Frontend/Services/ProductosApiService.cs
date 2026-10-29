@@ -30,7 +30,7 @@ public class ProductosApiService
 		int idCategoria,
 		int idProveedor)
 	{
-		return CrearCliente().PostAsJsonAsync("/productos/", new
+		return CrearCliente().PostAsJsonAsync("productos/", new
 		{
 			nombre,
 			descripcion,
@@ -47,16 +47,18 @@ public class ProductosApiService
 		string descripcion,
 		decimal precio,
 		int stock,
+		int stockOriginal,
 		int idCategoria,
 		int idProveedor,
 		string? imagenUrl = null)
 	{
-		return CrearCliente().PutAsJsonAsync($"/productos/{id}", new
+		return CrearCliente().PutAsJsonAsync($"productos/{id}", new
 		{
 			nombre,
 			descripcion,
 			precio,
 			stock,
+			stockOriginal,
 			idCategoria,
 			idProveedor,
 			imagenUrl
@@ -65,15 +67,15 @@ public class ProductosApiService
 
 	public Task<HttpResponseMessage> EliminarAsync(int id)
 	{
-		return CrearCliente().DeleteAsync($"/productos/{id}");
+		return CrearCliente().DeleteAsync($"productos/{id}");
 	}
 
-	public async Task<List<ProductoResponse>> ObtenerTodosAsync()
+	public async Task<List<ProductoResponse>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
 	{
 		var cliente = CrearCliente();
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
-			"/productos/");
+			"productos/", cancellationToken);
 
 		return AplicarImagenes(productos);
 	}
@@ -82,7 +84,7 @@ public class ProductosApiService
 	{
 		var cliente = CrearCliente();
 
-		var respuesta = await cliente.GetAsync($"/productos/{id}");
+		var respuesta = await cliente.GetAsync($"productos/{id}");
 
 		if (respuesta.StatusCode == HttpStatusCode.NotFound)
 		{
@@ -99,8 +101,8 @@ public class ProductosApiService
 	{
 		var cliente = CrearCliente();
 		var ruta = string.IsNullOrWhiteSpace(texto)
-			? "/productos/buscar"
-			: $"/productos/buscar?texto={Uri.EscapeDataString(texto)}";
+			? "productos/buscar"
+			: $"productos/buscar?texto={Uri.EscapeDataString(texto)}";
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(ruta);
 
@@ -112,7 +114,7 @@ public class ProductosApiService
 		var cliente = CrearCliente();
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
-			$"/productos/categoria/{idCategoria}");
+			$"productos/categoria/{idCategoria}");
 
 		return AplicarImagenes(productos);
 	}
@@ -122,7 +124,7 @@ public class ProductosApiService
 		var cliente = CrearCliente();
 
 		var productos = await cliente.GetFromJsonAsync<List<ProductoResponse>>(
-			"/productos/disponibles");
+			"productos/disponibles");
 
 		return AplicarImagenes(productos);
 	}
@@ -144,7 +146,7 @@ public class ProductosApiService
 		var query = string.Join("&", parametros
 			.Where(item => !string.IsNullOrWhiteSpace(item.Value))
 			.Select(item => $"{item.Key}={Uri.EscapeDataString(item.Value!)}"));
-		var respuesta = await CrearCliente().GetAsync($"/productos/catalogo?{query}");
+		var respuesta = await CrearCliente().GetAsync($"productos/catalogo?{query}");
 		if (respuesta.StatusCode == HttpStatusCode.BadRequest)
 		{
 			var error = await respuesta.Content.ReadFromJsonAsync<ErrorCatalogoResponse>();

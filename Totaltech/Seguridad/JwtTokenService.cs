@@ -33,6 +33,7 @@ public sealed class JwtTokenService : IJwtTokenService
         var vencimiento = ahora.AddMinutes(_options.ExpirationMinutes);
         var claims = new[]
         {
+            new Claim("version_sesion", usuario.VersionSesion.ToString()),
             new Claim(JwtRegisteredClaimNames.Sub, usuario.IdUsuario.ToString()),
             new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
             new Claim(ClaimTypes.Name, $"{usuario.Nombre} {usuario.Apellido}".Trim()),

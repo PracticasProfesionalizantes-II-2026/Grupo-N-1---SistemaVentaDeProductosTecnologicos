@@ -36,16 +36,20 @@ internal sealed class FakeUsuariosRepositorio : IUsuariosRepositorio
         return Task.CompletedTask;
     }
 
-    public Task ActualizarAsync(Usuario usuario)
+    public Task ActualizarContrasenaAsync(Usuario usuario)
     {
         return Task.CompletedTask;
     }
 
-    public Task EliminarAsync(Usuario usuario)
+    public List<AuditoriaUsuario> Auditorias { get; } = [];
+    public Task<int> ContarAdministradoresActivosAsync() =>
+        Task.FromResult(_usuarios.Count(u => u.Activo && u.Rol == RolUsuario.Administrador));
+    public Task GuardarCambioAsync(Usuario usuario, AuditoriaUsuario auditoria)
     {
-        _usuarios.Remove(usuario);
+        Auditorias.Add(auditoria);
         return Task.CompletedTask;
     }
+    public Task<T> EjecutarTransaccionAsync<T>(Func<Task<T>> operacion) => operacion();
 
     public Task<Usuario?> ObtenerPorEmailAsync(string email)
     {

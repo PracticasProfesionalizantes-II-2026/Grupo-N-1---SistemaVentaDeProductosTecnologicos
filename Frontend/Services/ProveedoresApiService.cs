@@ -24,11 +24,11 @@ public class ProveedoresApiService
         return _httpClientFactory.CreateClient("TotaltechApi");
     }
 
-    public Task<HttpResponseMessage> CrearAsync(ProveedorRequest request) => CrearCliente().PostAsJsonAsync("/proveedores/", request);
+    public Task<HttpResponseMessage> CrearAsync(ProveedorRequest request) => CrearCliente().PostAsJsonAsync("proveedores/", request);
 
-    public Task<HttpResponseMessage> ActualizarAsync(int id, ProveedorRequest request) => CrearCliente().PutAsJsonAsync($"/proveedores/{id}", request);
+    public Task<HttpResponseMessage> ActualizarAsync(int id, ProveedorRequest request) => CrearCliente().PutAsJsonAsync($"proveedores/{id}", request);
 
-    public Task<HttpResponseMessage> EliminarAsync(int id) => CrearCliente().DeleteAsync($"/proveedores/{id}");
+    public Task<HttpResponseMessage> EliminarAsync(int id) => CrearCliente().DeleteAsync($"proveedores/{id}");
 
     public async Task<List<ProveedorResponse>> ObtenerTodosAsync()
     {
@@ -36,7 +36,7 @@ public class ProveedoresApiService
 
         var proveedores =
             await cliente.GetFromJsonAsync<List<ProveedorResponse>>(
-                "/proveedores/");
+                "proveedores/");
 
         return proveedores ?? new List<ProveedorResponse>();
     }
@@ -46,7 +46,7 @@ public class ProveedoresApiService
         var cliente = CrearCliente();
 
         var respuesta =
-            await cliente.GetAsync($"/proveedores/{id}");
+            await cliente.GetAsync($"proveedores/{id}");
 
         if (respuesta.StatusCode == HttpStatusCode.NotFound)
         {

@@ -1,0 +1,86 @@
+[
+  {
+    "diapositiva": 1,
+    "tema": "TotalTech",
+    "expositor": "Facundo",
+    "segundos": 30
+  },
+  {
+    "diapositiva": 2,
+    "tema": "Problema y alcance actual",
+    "expositor": "Daiana",
+    "segundos": 30
+  },
+  {
+    "diapositiva": 3,
+    "tema": "Documentación y trazabilidad",
+    "expositor": "Facundo",
+    "segundos": 60
+  },
+  {
+    "diapositiva": 4,
+    "tema": "Cinco requerimientos funcionales",
+    "expositor": "Daiana",
+    "segundos": 45
+  },
+  {
+    "diapositiva": 5,
+    "tema": "Cinco requerimientos no funcionales",
+    "expositor": "Facundo",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 6,
+    "tema": "Cinco casos de uso de la demostración",
+    "expositor": "Daiana",
+    "segundos": 45
+  },
+  {
+    "diapositiva": 7,
+    "tema": "Recorrido de una solicitud",
+    "expositor": "Facundo",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 8,
+    "tema": "CU01 · Registro de clientes",
+    "expositor": "Daiana",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 9,
+    "tema": "CU02 · Login, cookie y JWT",
+    "expositor": "Facundo",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 10,
+    "tema": "CU03 · Catálogo y detalle",
+    "expositor": "Daiana",
+    "segundos": 150
+  },
+  {
+    "diapositiva": 11,
+    "tema": "CU04 · Carrito propio",
+    "expositor": "Facundo",
+    "segundos": 150
+  },
+  {
+    "diapositiva": 12,
+    "tema": "CU05 · Administración de productos",
+    "expositor": "Daiana",
+    "segundos": 150
+  },
+  {
+    "diapositiva": 13,
+    "tema": "Pruebas y tratamiento de errores",
+    "expositor": "Facundo",
+    "segundos": 90
+  },
+  {
+    "diapositiva": 14,
+    "tema": "Funciones logradas y pendientes",
+    "expositor": "Daiana",
+    "segundos": 90
+  }
+]
