@@ -1,5 +1,27 @@
 ﻿# TotalTech
 
+## Integrantes
+
+- Daiana Chinellato
+- Facundo Sola
+
+
+## Documentación
+
+### 2025
+
+1. [Documentación del proyecto - V1](https://docs.google.com/document/d/1idN0nMrU14dppRBvilRWNK-GQ6nmxF0acxeDvIJIo_k/edit?usp=sharing)
+2. [TotalTech (Sitio Web) - Mockups](https://www.canva.com/design/DAGoTYBn5R4/PfSsqsz8WeJDvvYYRsEFwQ/edit?utm_content=DAGoTYBn5R4&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+3. [Modo Admin - Mockup](https://www.canva.com/design/DAGqLYRgPZY/HbV_7BlRgIPMg8gacrfS9g/edit?utm_content=DAGqLYRgPZY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+4. [Entidades en TotalTech](https://docs.google.com/document/d/1PgBgvqaqTyXGyQlAV0TaM2t2NB27jsaP67cjlDrJkS4/edit?usp=sharing)
+5. [Caso de uso - finalizar compra](https://docs.google.com/document/d/1mUmk0ukjldsHGFpCCWxbOn7o7U-sOEqPokAhohkMDGo/edit?tab=t.0)
+6. [Diagrama de Clases](https://lucid.app/lucidchart/0f14ca39-b612-47e3-9553-0a5563bd2c7a/edit?invitationId=inv_5640e91e-a9b6-4d73-8e42-e457f405b683&page=0_0#)
+
+### 2026
+
+1. [Documentación del Proyecto-V2](https://docs.google.com/document/d/14_6aZhFY5ACk26mPNe4lj_6eVJhEZgfSD8BGV72ycTA/edit?usp=drive_link)
+2. [Documentacioón de API](https://drive.google.com/file/d/1uB4R9esellhJg2zGNR4G1xXL_0wX-4_U/view?usp=drive_link)
+
 ## Inicio local recomendado
 
 Desde esta raiz (la que contiene `AGENTS.md`, `Frontend/` y `Totaltech/`):
@@ -15,30 +37,11 @@ Desde esta raiz (la que contiene `AGENTS.md`, `Frontend/` y `Totaltech/`):
 
 No combinar este modo con otra ejecucion en Visual Studio o con `dotnet run`. El gestor detecta puertos ocupados antes de compilar o conectar a SQL, sin iniciar otra instancia. La [guia de desarrollo local y comandos utiles](Documentacion/DesarrolloLocal.md) incluye logs, diagnostico y el modo manual de dos terminales.
 
-## Métricas locales con Prometheus
+## Métricas con Prometheus
 
-TotalTech implementa Prometheus para monitorear la disponibilidad de la API y del frontend, las solicitudes HTTP de los últimos 5 minutos y la latencia p95. Ver la [explicación sencilla de las tres métricas y las capturas de la implementación](Documentacion/Prometheus-Metricas.md).
+TotalTech utiliza Prometheus para monitorear si la API y el frontend están disponibles, cuántas solicitudes HTTP reciben en 5 minutos y cuánto tardan en responder (latencia p95). Podés ver las [tres métricas y las capturas de la implementación](Documentacion/Prometheus-Metricas.md).
 
-Con el sistema iniciado, ejecutar desde esta raíz:
-
-```powershell
-.\Observabilidad\iniciar-prometheus.ps1
-```
-
-Abrir [Prometheus](http://127.0.0.1:9090), comprobar ambos servicios en [Targets](http://127.0.0.1:9090/targets) y consultar [Alertas](http://127.0.0.1:9090/alerts). Detener con Ctrl+C. El script utiliza la distribución Windows 3.15.0 descargada en `ControlProyecto/`; no inicia aplicaciones ni aplica migraciones.
-
-La [guía de observabilidad](Documentacion/Observabilidad.md) incluye instalación, configuración, seguridad, consultas y diagnóstico. `/metrics` está habilitado en Development y restringido a loopback.
-
-El [dashboard de Grafana y agente de diagnóstico](Documentacion/Agente-Diagnostico-Observabilidad.md)
-incluye ocho paneles, provisioning y un monitor Python sin dependencias de pago:
-
-```powershell
-.\Observabilidad\iniciar-grafana.ps1
-python .\Observabilidad\AgenteDiagnostico\diagnostico.py --watch --interval 30
-```
-
-Si Grafana ya ocupa el puerto 3000, importar el JSON en esa instancia según la guía
-o usar `iniciar-grafana.ps1 -Port 3001` con estado independiente.
+Para iniciarlo, ejecutá `.\Observabilidad\iniciar-prometheus.ps1` con el sistema en marcha y abrí [Prometheus](http://127.0.0.1:9090). Más detalles en la [guía de observabilidad](Documentacion/Observabilidad.md) y la [guía de Grafana y diagnóstico](Documentacion/Agente-Diagnostico-Observabilidad.md).
 
 ## Conexión SQL Server en Development
 
@@ -65,22 +68,3 @@ La API escucha en `5070` y el frontend en `5087`. Detener cada proceso con **Ctr
 Usar una sola instancia SQL para esos archivos: no iniciar a la vez otra copia de la API que seleccione la instancia personalizada mediante User Secrets. Si aparece `The specified LocalDB instance does not exist`, comprobar `sqllocaldb info` desde la misma terminal y seleccionar una instancia que allí exista. El perfil local fija la conexión para evitar que una variable heredada o User Secrets elijan el otro servidor.
 
 Validación del 09/10/2026: el perfil corregido compiló e inició la API en `5070` contra `MSSQLLocalDB`. La base existente conservó sus tres migraciones; no se aplicaron migraciones pendientes. El catálogo y `/metrics` respondieron `200`. Se cerró la API y, tras comprobar que no quedaban otras sesiones, se detuvo la instancia SQL iniciada para la prueba para liberar los archivos.
-
-## Integrantes:
-- Daiana Chinellato
-- Facundo Sola
-
-
-## Documentación
-### 2025
-1. [Documentación del proyecto - V1](https://docs.google.com/document/d/1idN0nMrU14dppRBvilRWNK-GQ6nmxF0acxeDvIJIo_k/edit?usp=sharing)
-2. [TotalTech (Sitio Web) - Mockups](https://www.canva.com/design/DAGoTYBn5R4/PfSsqsz8WeJDvvYYRsEFwQ/edit?utm_content=DAGoTYBn5R4&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
-3. [Modo Admin - Mockup](https://www.canva.com/design/DAGqLYRgPZY/HbV_7BlRgIPMg8gacrfS9g/edit?utm_content=DAGqLYRgPZY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
-4. [Entidades en TotalTech](https://docs.google.com/document/d/1PgBgvqaqTyXGyQlAV0TaM2t2NB27jsaP67cjlDrJkS4/edit?usp=sharing)
-5. [Caso de uso - finalizar compra](https://docs.google.com/document/d/1mUmk0ukjldsHGFpCCWxbOn7o7U-sOEqPokAhohkMDGo/edit?tab=t.0)
-6. [Diagrama de Clases](https://lucid.app/lucidchart/0f14ca39-b612-47e3-9553-0a5563bd2c7a/edit?invitationId=inv_5640e91e-a9b6-4d73-8e42-e457f405b683&page=0_0#)
-
-### 2026
-1. [Documentación del Proyecto-V2](https://docs.google.com/document/d/14_6aZhFY5ACk26mPNe4lj_6eVJhEZgfSD8BGV72ycTA/edit?usp=drive_link)
-2. [Documentacioón de API](https://drive.google.com/file/d/1uB4R9esellhJg2zGNR4G1xXL_0wX-4_U/view?usp=drive_link)
-
