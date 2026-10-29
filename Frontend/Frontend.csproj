@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Los uploads se sirven localmente, pero se almacenan fuera del paquete en Azure. -->
+    <Content Update="wwwroot/uploads/**" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
     <Compile Include="../Observabilidad/Instrumentacion/*.cs" Link="Observabilidad/%(Filename)%(Extension)" />
   </ItemGroup>
