@@ -1,0 +1,114 @@
+@model Frontend.Models.ViewModels.Productos.ProductoImportacionViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Importar catálogo";
+}
+<section class="container py-4 admin-module catalogo-importacion" aria-labelledby="importacion-titulo">
+    <header class="admin-module__header">
+        <div><p class="admin-module__eyebrow">Gestión de catálogo</p><h1 id="importacion-titulo">Importar catálogo</h1><p>Subí, revisá y confirmá productos nuevos.</p></div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver al catálogo</a>
+    </header>
+    @if (ViewData.ModelState.ErrorCount > 0)
+    {
+        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    }
+    @foreach (var advertencia in Model.Advertencias)
+    {
+        <p class="alert alert-warning" role="status">@advertencia</p>
+    }
+    @if (Model.Proveedores.Count == 0)
+    {
+        <p class="alert alert-warning">No hay proveedores activos disponibles. Para confirmar necesitás un proveedor activo y validar el lote con la API.</p>
+    }
+    <form asp-action="PrevisualizarImportacion" method="post" enctype="multipart/form-data" class="admin-panel p-3 mb-4">
+        @Html.AntiForgeryToken()
+        <h2 class="h5">1. Subir archivo</h2>
+        <p id="archivo-ayuda">CSV con separador ; o coma, XLSX (primera hoja) o PDF con texto. Máximo 5 MB y 1.000 productos; PDF hasta 100 páginas. No se admite OCR.</p>
+        <p>Columnas: Nombre, Descripcion, Precio, Stock y CategoriaNombre. No se actualizan productos existentes.</p>
+        <label asp-for="Archivo" class="form-label">Archivo del catálogo</label>
+        <input asp-for="Archivo" type="file" accept=".csv,.xlsx,.pdf" class="form-control" aria-describedby="archivo-ayuda" required />
+        <span asp-validation-for="Archivo" class="text-danger"></span>
+        <label for="upload-proveedor" class="form-label mt-3">Proveedor del lote</label>
+        <select id="upload-proveedor" name="IdProveedor" class="form-select">
+            <option value="">Seleccioná un proveedor activo</option>
+            @foreach (var proveedor in Model.Proveedores)
+            {
+                <option value="@proveedor.IdProveedor" selected="@(proveedor.IdProveedor == Model.IdProveedor)">@proveedor.RazonSocial</option>
+            }
+        </select>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Extraer y previsualizar</button>
+            <a asp-action="PlantillaImportacionCsv" class="btn btn-outline-primary">Descargar plantilla CSV</a>
+        </div>
+    </form>
+    @if (Model.Filas.Count > 0)
+    {
+        <form asp-action="PrevisualizarImportacion" method="post" class="admin-panel p-3" data-importacion-revision>
+            @Html.AntiForgeryToken()
+            <input asp-for="IdOperacion" type="hidden" />
+            <h2 class="h5">2. Revisar @Model.Filas.Count producto(s)</h2>
+            <p>Revisá los valores y la categoría definitiva de cada fila. El lote completo debe ser válido; los nombres repetidos se rechazan.</p>
+            <label asp-for="IdProveedor" class="form-label">Proveedor del lote</label>
+            <select asp-for="IdProveedor" class="form-select mb-3">
+                <option value="">Seleccioná un proveedor activo</option>
+                @foreach (var proveedor in Model.Proveedores)
+                {
+                    <option value="@proveedor.IdProveedor">@proveedor.RazonSocial</option>
+                }
+            </select>
+            <span asp-validation-for="IdProveedor" class="text-danger"></span>
+            <div class="row g-3">
+                @for (var i = 0; i < Model.Filas.Count; i++)
+                {
+                    <div class="col-12 col-xl-6">
+                        <fieldset class="border rounded p-3 h-100">
+                            <legend class="float-none w-auto h6 px-1">Producto @(i + 1)</legend>
+                            <p class="small text-muted">@Model.Filas[i].Origen</p>
+                            <input asp-for="Filas[i].Origen" type="hidden" />
+                            <label asp-for="Filas[i].Nombre" class="form-label">Nombre</label>
+                            <input asp-for="Filas[i].Nombre" class="form-control" aria-describedby="nombre-error-@i" />
+                            <span asp-validation-for="Filas[i].Nombre" class="text-danger" id="nombre-error-@i"></span>
+                            <label asp-for="Filas[i].Descripcion" class="form-label mt-2">Descripción</label>
+                            <textarea asp-for="Filas[i].Descripcion" class="form-control" rows="2" aria-describedby="descripcion-error-@i"></textarea>
+                            <span asp-validation-for="Filas[i].Descripcion" class="text-danger" id="descripcion-error-@i"></span>
+                            <div class="row g-2 mt-1">
+                                <div class="col-12 col-sm-7">
+                                    <label asp-for="Filas[i].Precio" class="form-label">Precio</label>
+                                    <input asp-for="Filas[i].Precio" class="form-control" inputmode="decimal" aria-describedby="precio-error-@i" />
+                                    <span asp-validation-for="Filas[i].Precio" class="text-danger" id="precio-error-@i"></span>
+                                </div>
+                                <div class="col-12 col-sm-5">
+                                    <label asp-for="Filas[i].Stock" class="form-label">Stock</label>
+                                    <input asp-for="Filas[i].Stock" class="form-control" inputmode="numeric" aria-describedby="stock-error-@i" />
+                                    <span asp-validation-for="Filas[i].Stock" class="text-danger" id="stock-error-@i"></span>
+                                </div>
+                            </div>
+                            <label asp-for="Filas[i].CategoriaNombre" class="form-label mt-2">Categoría sugerida (texto del archivo)</label>
+                            <input asp-for="Filas[i].CategoriaNombre" class="form-control" aria-describedby="sugerencia-error-@i" />
+                            <span asp-validation-for="Filas[i].CategoriaNombre" class="text-danger" id="sugerencia-error-@i"></span>
+                            <label asp-for="Filas[i].IdCategoria" class="form-label mt-2">Categoría definitiva</label>
+                            <select asp-for="Filas[i].IdCategoria" class="form-select" aria-describedby="categoria-error-@i">
+                                <option value="">Seleccioná una categoría existente</option>
+                                @foreach (var categoria in Model.Categorias)
+                                {
+                                    <option value="@categoria.IdCategoria">@categoria.Nombre</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Filas[i].IdCategoria" class="text-danger" id="categoria-error-@i"></span>
+                        </fieldset>
+                    </div>
+                }
+            </div>
+            <p class="mt-3" role="status" data-importacion-estado>
+                @(Model.PuedeConfirmar ? "Lote validado por la API. Podés confirmar la importación completa." : "Falta validar el lote con la API antes de confirmar.")
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-outline-primary">Validar cambios</button>
+                <button type="submit" asp-action="ConfirmarImportacion" class="btn btn-primary" disabled="@(!Model.PuedeConfirmar)" data-importacion-confirmar>Confirmar importación completa</button>
+            </div>
+        </form>
+    }
+</section>
+@section Scripts {
+    <script src="~/js/productos-importacion.js" asp-append-version="true"></script>
+}

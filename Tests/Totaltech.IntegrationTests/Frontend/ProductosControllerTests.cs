@@ -195,7 +195,7 @@ public sealed class ProductosControllerTests : IDisposable
         var controller = new ProductosController(new ProductosApiService(factory, new ProductoImagenResolver()),
             new CategoriasApiService(factory), new ProveedoresApiService(factory),
             new ProductoImagenStorage(new EntornoWeb { ContentRootPath = _raiz, WebRootPath = Path.Combine(_raiz, "wwwroot") }),
-            NullLogger<ProductosController>.Instance);
+            NullLogger<ProductosController>.Instance, new CatalogoArchivoExtractor(new CatalogoExtractorHeuristico()));
         var httpContext = new DefaultHttpContext
         {
             User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, "Admin")], "Tests"))

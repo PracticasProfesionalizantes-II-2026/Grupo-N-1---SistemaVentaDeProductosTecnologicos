@@ -10,7 +10,7 @@
 <div class="container py-4 catalogo admin-module admin-module--catalog @(esAdmin ? null : "public-catalog")">
  @if (User.IsInRole("Admin"))
  {
-  <div class="catalogo__encabezado admin-module__header"><div><p class="admin-module__eyebrow">Gestión de catálogo</p><h1>Productos</h1><p>@Model.TotalItems resultado(s)</p></div><a asp-action="Crear" class="btn btn-primary">Nuevo producto</a></div>
+  <div class="catalogo__encabezado admin-module__header"><div><p class="admin-module__eyebrow">Gestión de catálogo</p><h1>Productos</h1><p>@Model.TotalItems resultado(s)</p></div><div class="d-flex flex-wrap gap-2"><a asp-action="Importar" class="btn btn-outline-primary">Importar catálogo</a><a asp-action="Crear" class="btn btn-primary">Nuevo producto</a></div></div>
  }
  else
  {
