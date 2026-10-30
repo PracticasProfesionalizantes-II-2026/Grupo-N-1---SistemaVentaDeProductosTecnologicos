@@ -5,6 +5,7 @@ using static Microsoft.Playwright.Assertions;
 
 namespace Totaltech.IntegrationTests.Frontend;
 
+[Trait("Category", "E2E")]
 public sealed class ProductoImportacionVisualTests(ITestOutputHelper output)
 {
     [Fact]
