@@ -59,6 +59,13 @@
         </div>
 
         <div class="admin-shortcuts__grid">
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Productos" asp-action="Importar" class="admin-shortcut">
+                    <strong>Importar catálogo</strong><span>Subí CSV, XLSX o PDF y revisá los productos antes de confirmar.</span>
+                    <span class="admin-shortcut__action">Importar productos <span aria-hidden="true">→</span></span>
+                </a>
+            }
             <a asp-controller="Usuarios" asp-action="Index" class="admin-shortcut">
                 <strong>Usuarios</strong><span>Administrá datos, roles y estado de las cuentas.</span>
                 <span class="admin-shortcut__action">Gestionar usuarios <span aria-hidden="true">→</span></span>

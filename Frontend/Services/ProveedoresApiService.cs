@@ -30,13 +30,13 @@ public class ProveedoresApiService
 
     public Task<HttpResponseMessage> EliminarAsync(int id) => CrearCliente().DeleteAsync($"proveedores/{id}");
 
-    public async Task<List<ProveedorResponse>> ObtenerTodosAsync()
+    public async Task<List<ProveedorResponse>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
     {
         var cliente = CrearCliente();
 
         var proveedores =
             await cliente.GetFromJsonAsync<List<ProveedorResponse>>(
-                "proveedores/");
+                "proveedores/", cancellationToken);
 
         return proveedores ?? new List<ProveedorResponse>();
     }

@@ -21,6 +21,7 @@
 
 1. [Documentación del Proyecto-V2](https://docs.google.com/document/d/14_6aZhFY5ACk26mPNe4lj_6eVJhEZgfSD8BGV72ycTA/edit?usp=drive_link)
 2. [Documentacioón de API](https://drive.google.com/file/d/1uB4R9esellhJg2zGNR4G1xXL_0wX-4_U/view?usp=drive_link)
+3. [Entrega IA — Desarrollo de UC-28 con Codex](Documentacion/Entrega-IA-UC28.md)
 
 ## Inicio local recomendado
 

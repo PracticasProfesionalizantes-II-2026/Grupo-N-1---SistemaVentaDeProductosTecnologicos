@@ -39,6 +39,8 @@ builder.Services.AddHttpClient("TotaltechSessionApi", client =>
 builder.Services.AddScoped<ICarritosApiService, CarritosApiService>();
 builder.Services.AddSingleton<ProductoImagenResolver>();
 builder.Services.AddSingleton<ProductoImagenStorage>();
+builder.Services.AddScoped<ICatalogoExtractorAgent, CatalogoExtractorHeuristico>();
+builder.Services.AddScoped<CatalogoArchivoExtractor>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

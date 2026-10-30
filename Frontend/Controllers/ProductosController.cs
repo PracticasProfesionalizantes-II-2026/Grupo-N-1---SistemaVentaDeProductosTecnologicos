@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Frontend.Controllers;
 
-public class ProductosController : Controller
+public partial class ProductosController : Controller
 {
     private readonly ProductosApiService _productosApiService;
     private readonly CategoriasApiService _categoriasApiService;
@@ -28,13 +28,15 @@ public class ProductosController : Controller
         CategoriasApiService categoriasApiService,
         ProveedoresApiService proveedoresApiService,
         ProductoImagenStorage imagenStorage,
-        ILogger<ProductosController> logger)
+        ILogger<ProductosController> logger,
+        CatalogoArchivoExtractor catalogoExtractor)
     {
         _productosApiService = productosApiService;
         _categoriasApiService = categoriasApiService;
         _proveedoresApiService = proveedoresApiService;
         _imagenStorage = imagenStorage;
         _logger = logger;
+        _catalogoExtractor = catalogoExtractor;
     }
 
     [HttpGet]

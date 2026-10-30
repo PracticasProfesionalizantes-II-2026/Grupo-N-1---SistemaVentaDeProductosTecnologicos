@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Frontend.Models.Api.Responses;
+using Frontend.Models.Api.Requests;
 
 namespace Frontend.Services;
 
@@ -21,6 +22,14 @@ public class ProductosApiService
 	{
 		return _httpClientFactory.CreateClient("TotaltechApi");
 	}
+
+	public Task<HttpResponseMessage> PrevisualizarImportacionAsync(
+		ProductoImportacionPrevisualizarRequest request, CancellationToken cancellationToken = default) =>
+		CrearCliente().PostAsJsonAsync("productos/importacion/previsualizar", request, cancellationToken);
+
+	public Task<HttpResponseMessage> ConfirmarImportacionAsync(
+		ProductoImportacionConfirmarRequest request, CancellationToken cancellationToken = default) =>
+		CrearCliente().PostAsJsonAsync("productos/importacion/confirmar", request, cancellationToken);
 
 	public Task<HttpResponseMessage> CrearAsync(
 		string nombre,
